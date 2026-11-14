@@ -1,0 +1,161 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model (prototype — see report before sharing)
+// ===============================================================
+//
+// Collection: investigations
+// Document ID: auto-ID
+// Fields:
+//   - ownerId: string, required, immutable, == request.auth.uid - owner UID
+//   - title: string, required, 1..120 chars - user-editable title
+//   - status: string, required, enum(reviewed|complete) - workflow state
+//   - postingText: string, required, 1..60000 chars - analyzed posting
+//   - report: map, required, strict keys, immutable after create - analysis
+//       occupation, employer, salary, destination_country: string <= 500
+//       employment_type: enum(full-time|part-time|contract|seasonal|
+//         apprenticeship|unknown) - matches opportunityAnalyzer.ts
+//       missing_information: optional list, <= 100 items
+//       concerns: optional list, <= 50 items
+//   - inferenceSource: string, required, <= 32 chars - e.g. on_device
+//   - latencyMs: number, required, 0..3600000 - measured client-side
+//   - cloudModel: string, required, <= 128 chars - fallback model name
+//   - mode: string, required, <= 32 chars - inference mode label
+//   - createdAt: timestamp, required, == request.time on create, immutable
+//   - updatedAt: timestamp, required, == request.time on every write
+//   - findings: NEVER writable by clients (server-side only, future step);
+//       clients cannot create it and cannot change it on update.
+//
+// Rules-language limits (honest statement): missing_information,
+// concerns, and findings are checked for list type and size only. The
+// rules language cannot iterate, so nested element contents are NOT
+// validated here; the client validates them at runtime instead.
+//
+// Client update surface: title, status, and updatedAt ONLY. Everything
+// else (report, postingText, ownership, timestamps history, findings)
+// is immutable after creation.
+//
+// Queries the app performs:
+//   - where(ownerId == uid) + orderBy(createdAt desc) + limit (needs
+//     a composite index; single get() and doc delete/update by ID)
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =============================================================
+    // Helper Functions
+    // =============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.ownerId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // =============================================================
+    // Domain Validators (used in BOTH create and update)
+    // =============================================================
+
+    function isValidReport(report) {
+      return report is map &&
+        report.keys().hasOnly([
+          'occupation', 'employer', 'salary', 'destination_country',
+          'employment_type', 'missing_information', 'concerns'
+        ]) &&
+        report.occupation is string && report.occupation.size() <= 500 &&
+        report.employer is string && report.employer.size() <= 500 &&
+        report.salary is string && report.salary.size() <= 500 &&
+        report.destination_country is string &&
+        report.destination_country.size() <= 500 &&
+        report.employment_type in [
+          'full-time', 'part-time', 'contract', 'seasonal',
+          'apprenticeship', 'unknown'
+        ] &&
+        (!('missing_information' in report) ||
+          (report.missing_information is list &&
+           report.missing_information.size() <= 100)) &&
+        (!('concerns' in report) ||
+          (report.concerns is list && report.concerns.size() <= 50));
+    }
+
+    function isValidInvestigation(data) {
+      return hasOnlyAllowedFields([
+          'ownerId', 'title', 'status', 'postingText', 'report',
+          'inferenceSource', 'latencyMs', 'cloudModel', 'mode',
+          'createdAt', 'updatedAt', 'findings'
+        ]) &&
+        hasRequiredFields([
+          'ownerId', 'title', 'status', 'postingText', 'report',
+          'inferenceSource', 'latencyMs', 'cloudModel', 'mode',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() > 0 &&
+        data.ownerId.size() <= 128 &&
+        data.title is string && data.title.size() >= 1 &&
+        data.title.size() <= 120 &&
+        data.status in ['reviewed', 'complete'] &&
+        data.postingText is string && data.postingText.size() >= 1 &&
+        data.postingText.size() <= 60000 &&
+        isValidReport(data.report) &&
+        data.inferenceSource is string && data.inferenceSource.size() <= 32 &&
+        data.latencyMs is number && data.latencyMs >= 0 &&
+        data.latencyMs <= 3600000 &&
+        data.cloudModel is string && data.cloudModel.size() <= 128 &&
+        data.mode is string && data.mode.size() <= 32 &&
+        data.createdAt is timestamp && data.updatedAt is timestamp &&
+        (!('findings' in data) ||
+          (data.findings is list && data.findings.size() <= 50));
+    }
+
+    // =============================================================
+    // investigations: owner-only access, narrow update surface
+    // =============================================================
+
+    match /investigations/{investigationId} {
+      // Owners read their own documents only.
+      allow read: if isDocOwner();
+
+      // Owners create their own documents: UID must match the caller,
+      // both timestamps must be server time (rejects client-generated
+      // timestamps), the schema must validate, and clients cannot
+      // include findings.
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time &&
+        !('findings' in request.resource.data) &&
+        isValidInvestigation(request.resource.data);
+
+      // Owners update title, status, and updatedAt only. updatedAt must
+      // be server time; ownerId, createdAt, and findings cannot change
+      // (findings are excluded from the allowed key set).
+      allow update: if isDocOwner() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['title', 'status', 'updatedAt']) &&
+        request.resource.data.updatedAt == request.time &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidInvestigation(request.resource.data);
+
+      // Owners delete their own documents.
+      allow delete: if isDocOwner();
+    }
+
+    // Default deny for everything else.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
