@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* OpporCheck design tokens (Blueprint v1.0) */
+:root {
+  --oc-blue: #2459a6;
+  --oc-blue-strong: #1c4685;
+  --oc-navy: #173b70;
+  --oc-soft: #eaf1fa;
+  --oc-canvas: #f5f7fa;
+  --oc-card: #ffffff;
+  --oc-border: #d9e1ec;
+  --oc-ink: #16233a;
+  --oc-muted: #4f5f78;
+  --oc-focus: #2459a6;
+  color-scheme: light;
+}
+
+.dark {
+  --oc-blue: #7aa7ee;
+  --oc-blue-strong: #9cc0f5;
+  --oc-navy: #d7e5fb;
+  --oc-soft: #16283f;
+  --oc-canvas: #0d1526;
+  --oc-card: #131e33;
+  --oc-border: #26344d;
+  --oc-ink: #e8eef7;
+  --oc-muted: #a3b1c7;
+  --oc-focus: #9cc0f5;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-brand: var(--oc-blue);
+  --color-brand-strong: var(--oc-blue-strong);
+  --color-navy: var(--oc-navy);
+  --color-brand-soft: var(--oc-soft);
+  --color-canvas: var(--oc-canvas);
+  --color-card: var(--oc-card);
+  --color-edge: var(--oc-border);
+  --color-ink: var(--oc-ink);
+  --color-muted: var(--oc-muted);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Arial, sans-serif;
+}
+
+body {
+  background: var(--oc-canvas);
+  color: var(--oc-ink);
+}
+
+/* Visible keyboard focus everywhere (WCAG 2.2 AA) */
+:focus-visible {
+  outline: 2px solid var(--oc-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip link: visually hidden until focused */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 50;
+  background: var(--oc-card);
+  color: var(--oc-ink);
+  border: 1px solid var(--oc-border);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  transition: top 0.15s ease-in-out;
+}
+
+.skip-link:focus-visible {
+  top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
