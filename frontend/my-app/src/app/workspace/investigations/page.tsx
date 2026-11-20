@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button, Card, EmptyState, Spinner, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { localeForCountryName } from "@/lib/corridors";
 import { getFirebaseClient } from "@/lib/firebaseClient";
 import {
   deleteInvestigation,
@@ -16,11 +17,11 @@ import {
   type Investigation,
 } from "@/lib/investigations";
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, country?: string | null): string {
   if (!iso) {
     return "—";
   }
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(localeForCountryName(country), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -224,7 +225,7 @@ export default function InvestigationsPage() {
                       {item.status === "complete" ? "Complete" : "Reviewed"}
                     </StatusLabel>
                     <span className="text-sm text-muted" title="Last updated">
-                      {formatDate(item.updatedAt ?? item.createdAt)}
+                      {formatDate(item.updatedAt ?? item.createdAt, item.report?.destination_country)}
                     </span>
                     <span className="flex gap-1 text-sm">
                       <button

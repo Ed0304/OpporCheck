@@ -1,12 +1,13 @@
 // Shared guidance list used by public and workspace resources pages.
 // External links are explicit, open in a new tab, and identify the publisher.
 
-import { UK_GUIDANCE } from "@/lib/guidance";
+import { UK_GUIDANCE, type GuidanceEntry } from "@/lib/guidance";
 
-export default function GuidanceList() {
+export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] }) {
+  const list = entries ?? UK_GUIDANCE;
   return (
     <ul className="flex flex-col gap-4">
-      {UK_GUIDANCE.map((entry) => (
+      {list.map((entry) => (
         <li
           key={entry.url}
           className="rounded-lg border border-edge bg-card p-5 shadow-[0_1px_2px_rgba(23,59,112,0.06)]"

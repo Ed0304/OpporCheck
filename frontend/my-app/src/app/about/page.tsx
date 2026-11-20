@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Disclaimer from "@/components/Disclaimer";
 import PublicShell from "@/components/PublicShell";
 
 export const metadata: Metadata = {
@@ -32,9 +33,11 @@ export default function AboutPage() {
           <h2 className="text-xl font-semibold text-ink">How analysis works</h2>
           <p>
             Reviews run in your browser using on-device AI when your device supports it, with
-            secure cloud fallback otherwise. Your postings and reports are stored in your own
+            cloud fallback otherwise. Your postings and reports are stored in your own
             account and are never shared between users.
           </p>
+          <h2 className="text-xl font-semibold text-ink">Product notice</h2>
+          <Disclaimer />
         </div>
       </div>
     </PublicShell>

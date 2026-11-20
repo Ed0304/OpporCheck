@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme";
+import { LangProvider } from "@/lib/lang";
 import { AuthProvider } from "@/lib/auth";
 
 const inter = Inter({
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <LangProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </LangProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -1,0 +1,139 @@
+// Promise-to-Paper prompt builders: pure string assembly for extraction
+// and comparison prompts. Dependency-free (type-only imports) so the
+// exact model input stays unit-testable without Firebase AI Logic.
+//
+// Extraction input embeds [Page N] markers so the model can cite pages;
+// every citation is still verified by search before display. Long inputs
+// are truncated with an explicit marker, and the UI discloses the limit.
+
+import type {
+  ContractCategory,
+  ContractDocumentText,
+  ContractDocumentType,
+  EmploymentClaim,
+} from "./contractTypes";
+
+/** Max document characters sent for extraction (UI discloses trimming). */
+export const EXTRACTION_MAX_CHARS = 12000;
+
+/** Max terms included in one comparison prompt. */
+export const COMPARISON_MAX_TERMS = 40;
+
+/** Max excerpt characters included per term in a comparison prompt. */
+export const COMPARISON_EXCERPT_CHARS = 800;
+
+export const DOCUMENT_TYPE_LABELS: Record<ContractDocumentType, string> = {
+  job_advertisement: "Job advertisement",
+  recruiter_communication: "Recruiter communication",
+  offer_letter: "Offer letter",
+  employment_contract: "Employment contract",
+};
+
+export const CATEGORY_GUIDE: Record<ContractCategory, string> = {
+  compensation:
+    "compensation: base salary, currency, payment frequency, overtime compensation, bonuses, allowances.",
+  deductions:
+    "deductions: accommodation costs, utilities, transportation, insurance, recruitment-related charges, other stated deductions.",
+  working_conditions:
+    "working_conditions: daily and weekly hours, overtime arrangements, rest days, shift arrangements.",
+  employment_period:
+    "employment_period: start date, contract duration, renewal conditions, probation.",
+  benefits: "benefits: accommodation, transportation, leave, insurance, other benefits.",
+  termination:
+    "termination: notice periods, early termination conditions, penalties or compensation clauses.",
+  immigration:
+    "immigration: visa or permit references, sponsorship claims, work authorization conditions.",
+  responsibilities:
+    "responsibilities: job title, duties, workplace location, reporting arrangements.",
+};
+
+const CATEGORY_NAMES = Object.keys(CATEGORY_GUIDE) as ContractCategory[];
+
+function truncateWithMarker(text: string, limit: number): { text: string; trimmed: boolean } {
+  if (text.length <= limit) {
+    return { text, trimmed: false };
+  }
+  return { text: `${text.slice(0, limit).trimEnd()}\n[trimmed: remaining text not analyzed]`, trimmed: true };
+}
+
+export function formatDocumentPages(doc: ContractDocumentText): string {
+  return doc.pages
+    .map((page, index) => `[Page ${index + 1}]\n${page.trim()}`)
+    .join("\n\n");
+}
+
+export function buildExtractionPrompt(doc: ContractDocumentText): string {
+  const { text, trimmed } = truncateWithMarker(formatDocumentPages(doc), EXTRACTION_MAX_CHARS);
+  const categories = CATEGORY_NAMES.map((name) => `- ${CATEGORY_GUIDE[name]}`).join("\n");
+  return (
+    `You extract structured employment terms from the ${DOCUMENT_TYPE_LABELS[doc.documentType].toLowerCase()} below. ` +
+    "Output JSON only.\n" +
+    "Rules:\n" +
+    "- For each employment term found, output its category, a short neutral claim, and the sourceExcerpt copied VERBATIM from the document text below. Never paraphrase or invent quotations.\n" +
+    "- Use only these categories:\n" +
+    `${categories}\n` +
+    "- If a category has no stated term, list it under missing_categories. Never invent a value for a missing term.\n" +
+    "- Do not judge whether any clause is legal, illegal, fair, or unfair. Describe only what the document states.\n" +
+    "- Do not label any employer, recruiter, or offer legitimate or fraudulent.\n" +
+    `- Output shape: {"terms": [{"category": "...", "claim": "...", "sourceExcerpt": "..."}], "missing_categories": ["..."]}.\n\n` +
+    `Document (${doc.fileName}${trimmed ? ", trimmed to fit" : ""}):\n${text}`
+  );
+}
+
+export interface ComparisonInput {
+  documentId: string;
+  documentType: ContractDocumentType;
+  fileName: string;
+  terms: EmploymentClaim[];
+}
+
+function formatComparisonTerm(term: EmploymentClaim, ownerLabel: string): string {
+  const excerpt =
+    term.sourceExcerpt.length > COMPARISON_EXCERPT_CHARS
+      ? `${term.sourceExcerpt.slice(0, COMPARISON_EXCERPT_CHARS).trimEnd()} [trimmed]`
+      : term.sourceExcerpt;
+  return (
+    `- [${term.category}] (${ownerLabel}, document ${term.documentReference.documentId}): ` +
+    `${term.claim} | Excerpt: "${excerpt}"`
+  );
+}
+
+export function buildPromiseComparisonPrompt(inputs: ComparisonInput[]): string {
+  const lines: string[] = [];
+  for (const input of inputs) {
+    const owner = `${DOCUMENT_TYPE_LABELS[input.documentType]} "${input.fileName}"`;
+    for (const term of input.terms) {
+      if (lines.length >= COMPARISON_MAX_TERMS) {
+        break;
+      }
+      lines.push(formatComparisonTerm(term, owner));
+    }
+    if (lines.length >= COMPARISON_MAX_TERMS) {
+      break;
+    }
+  }
+  return (
+    "You compare employment terms across the documents below. For each term that can be judged, " +
+    "output one finding as JSON. Output a JSON array only.\n" +
+    "Rules:\n" +
+    "- Every sourceExcerpt MUST be copied verbatim from the excerpts below. Never paraphrase, shorten, or invent quotations.\n" +
+    "- Every documentId MUST be copied exactly from the document list.\n" +
+    "- Status 'consistent': the documents agree on the term.\n" +
+    "- Status 'discrepancy': the documents state different terms. Example: recruiter says accommodation is free, " +
+    'the contract deducts an accommodation fee — category deductions, status discrepancy.\n' +
+    "- Status 'not_addressed': a promise-side term (advertisement or recruiter message) has no counterpart in the written documents. " +
+    "Missing terms are unverified, never false; do not infer fraud from silence.\n" +
+    "- Status 'needs_clarification': the wording is ambiguous, or the excerpts lack enough information to judge. " +
+    "Say a human reviewer should examine the comparison.\n" +
+    "- Differently worded clauses may still agree: compare actual meaning, and distinguish numerical differences (amounts, dates, hours) from semantic differences.\n" +
+    "- A general page or a missing clause NEVER proves anything about a specific employer. Do not label any employer, recruiter, or offer legitimate, fraudulent, or compliant.\n" +
+    "- Do not judge whether any clause is legal or illegal.\n" +
+    "- Every explanation MUST state the comparison's limitation in one sentence.\n" +
+    "- Skip terms no excerpt addresses rather than guessing.\n" +
+    "- Shape per finding: {\"category\": \"...\", \"recruiterStatement\"?: {\"documentId\": \"...\", \"claim\": \"...\", \"sourceExcerpt\": \"...\"}, " +
+    '"advertisementClaim\"?: {...}, "contractClause"?: {...}, "status": "...", "explanation": "...", "followUpQuestion": "..."}. ' +
+    "Use recruiterStatement only for recruiter communications, advertisementClaim only for job advertisements, " +
+    "contractClause only for offer letters and employment contracts.\n\n" +
+    `Extracted terms:\n${lines.join("\n")}`
+  );
+}

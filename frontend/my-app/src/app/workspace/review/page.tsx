@@ -5,7 +5,7 @@
 // Plain-language UI: no model IDs, inference modes, latency, or raw JSON.
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useReducer, useRef, useState } from "react";
 import {
   getGenerativeModel,
   InferenceMode,
@@ -13,9 +13,20 @@ import {
   type GenerativeModel,
 } from "firebase/ai";
 import AnalysisResults from "@/components/AnalysisResults";
+import { ContextualNotice } from "@/components/Disclaimer";
 import { Button, Card, EmptyState, Field, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
-import { apiBase, uploadPdf, validatePdfFile } from "@/lib/documents";
+import { REVIEW_PROCESSING_NOTICE, UPLOAD_SENSITIVITY_NOTICE } from "@/lib/disclaimer";
+import {
+  OCR_LANGUAGES,
+  apiBase,
+  shouldWarnLowConfidence,
+  uploadImage,
+  uploadPdf,
+  validateImageFile,
+  validatePdfFile,
+  type OcrLanguage,
+} from "@/lib/documents";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
 import {
   analyzerSchema,
@@ -28,8 +39,9 @@ import {
   getInvestigationsDb,
   saveInvestigation,
 } from "@/lib/investigations";
+import { initialOcrState, ocrReducer } from "@/lib/ocrReview";
 
-type InputTab = "paste" | "pdf";
+type InputTab = "paste" | "pdf" | "image";
 
 interface DeviceStatus {
   state: "idle" | "initializing" | "ready" | "error";
@@ -89,6 +101,7 @@ export default function ReviewPage() {
   const [tab, setTab] = useState<InputTab>("paste");
   const [postingText, setPostingText] = useState(SAMPLE_POSTING);
   const [pdf, setPdf] = useState<PdfStatus>({ phase: "idle", progress: null, message: "" });
+  const [ocr, dispatchOcr] = useReducer(ocrReducer, undefined, initialOcrState);
   const [running, setRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -98,6 +111,7 @@ export default function ReviewPage() {
 
   const modelRef = useRef<GenerativeModel | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const imageRef = useRef<HTMLInputElement | null>(null);
 
   const configOk = envProbe.missingConfigKeys.length === 0;
 
@@ -167,6 +181,41 @@ export default function ReviewPage() {
         message: err instanceof Error ? err.message : String(err),
       });
     }
+  };
+
+  const handleImageFile = async (file: File | undefined) => {
+    if (!file || ocr.phase === "uploading") {
+      return;
+    }
+    const invalid = validateImageFile(file);
+    if (invalid) {
+      dispatchOcr({ type: "invalidate", message: invalid });
+      return;
+    }
+    dispatchOcr({ type: "select", fileName: file.name });
+    try {
+      const extracted = await uploadImage(file, ocr.language, (fraction) => {
+        dispatchOcr({ type: "progress", fraction });
+      });
+      dispatchOcr({ type: "extracted", result: extracted });
+    } catch (err) {
+      dispatchOcr({
+        type: "failed",
+        message: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      if (imageRef.current) {
+        imageRef.current.value = "";
+      }
+    }
+  };
+
+  const handleUseOcrText = () => {
+    if (ocr.phase !== "ready" || ocr.draft.trim().length === 0) {
+      return;
+    }
+    setPostingText(ocr.draft);
+    setTab("paste");
   };
 
   const handleAnalyze = async () => {
@@ -313,6 +362,17 @@ export default function ReviewPage() {
           >
             Upload PDF
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "image"}
+            onClick={() => setTab("image")}
+            className={`h-9 cursor-pointer rounded-md px-4 text-sm font-medium ${
+              tab === "image" ? "bg-brand-soft text-navy" : "hover:bg-brand-soft"
+            }`}
+          >
+            Upload image
+          </button>
         </div>
 
         {tab === "paste" && (
@@ -341,6 +401,9 @@ export default function ReviewPage() {
 
         {tab === "pdf" && (
           <div role="tabpanel" className="mt-3">
+            <div className="mb-3">
+              <ContextualNotice>{UPLOAD_SENSITIVITY_NOTICE}</ContextualNotice>
+            </div>
             <Field
               label="PDF offer document"
               htmlFor="pdf-file"
@@ -379,11 +442,124 @@ export default function ReviewPage() {
           </div>
         )}
 
+        {tab === "image" && (
+          <div role="tabpanel" className="mt-3">
+            <div className="mb-3">
+              <ContextualNotice>{UPLOAD_SENSITIVITY_NOTICE}</ContextualNotice>
+            </div>
+            <div className="flex flex-wrap items-end gap-3">
+              <Field label="Document language" htmlFor="ocr-language">
+                <select
+                  id="ocr-language"
+                  value={ocr.language}
+                  onChange={(event) =>
+                    dispatchOcr({
+                      type: "language",
+                      language: event.target.value as OcrLanguage,
+                    })
+                  }
+                  disabled={ocr.phase === "uploading"}
+                  className="h-10 rounded-md border border-edge bg-card px-3 text-sm"
+                >
+                  {OCR_LANGUAGES.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field
+                label="Image offer document"
+                htmlFor="ocr-file"
+                hint={`JPG or PNG up to 10 MB (max 8000 px per side). Text is extracted by the document service at ${apiBase()}. Thai and Vietnamese are not supported.`}
+                error={
+                  ocr.phase === "invalid" || ocr.phase === "error" ? ocr.message : null
+                }
+              >
+                <input
+                  ref={imageRef}
+                  id="ocr-file"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                  onChange={(event) => void handleImageFile(event.target.files?.[0])}
+                  className="w-full text-sm"
+                />
+              </Field>
+            </div>
+            {ocr.phase === "uploading" && (
+              <div
+                className="mt-2 h-1.5 w-full rounded-full bg-brand-soft"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={
+                  ocr.progress === null ? undefined : Math.round(ocr.progress * 100)
+                }
+                aria-label="Image upload and OCR progress"
+              >
+                <div
+                  className="h-1.5 rounded-full bg-brand"
+                  style={{
+                    width: `${ocr.progress === null ? 100 : Math.round(ocr.progress * 100)}%`,
+                  }}
+                />
+              </div>
+            )}
+            {ocr.message !== "" && ocr.phase === "ready" && (
+              <p className="mt-2 text-sm" role="status">
+                {ocr.message}
+              </p>
+            )}
+            {ocr.phase === "ready" && ocr.result && (
+              <div className="mt-3 flex flex-col gap-2">
+                <StatusLabel
+                  tone={shouldWarnLowConfidence(ocr.result) ? "bad" : "ok"}
+                >
+                  {shouldWarnLowConfidence(ocr.result)
+                    ? `Low confidence on ${ocr.result.low_confidence_lines} of ${ocr.result.lines} lines ` +
+                      `(mean ${Math.round(ocr.result.mean_confidence * 100)}%). Check figures, ` +
+                      "names, and dates carefully — a high score does not guarantee correctness."
+                    : `Mean confidence ${Math.round(ocr.result.mean_confidence * 100)}% across ` +
+                      `${ocr.result.lines} lines. Always verify figures before analysis.`}
+                </StatusLabel>
+                <label htmlFor="ocr-draft" className="block text-sm font-medium">
+                  Extracted text — review and correct
+                </label>
+                <textarea
+                  id="ocr-draft"
+                  value={ocr.draft}
+                  onChange={(event) =>
+                    dispatchOcr({ type: "edit", text: event.target.value })
+                  }
+                  rows={10}
+                  maxLength={60000}
+                  className="w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={handleUseOcrText}
+                    disabled={ocr.draft.trim().length === 0}
+                  >
+                    Use this text
+                  </Button>
+                  <Button variant="ghost" onClick={() => dispatchOcr({ type: "reset" })}>
+                    Discard
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-4">
           <Button onClick={() => void handleAnalyze()} disabled={!configOk || running || postingText.trim().length === 0}>
             {running ? "Analyzing…" : "Analyze opportunity"}
           </Button>
         </div>
+        <p className="mt-2 text-sm text-muted" role="note">
+          {REVIEW_PROCESSING_NOTICE}
+        </p>
         <p aria-live="polite" className="mt-2 text-sm text-muted">
           {running ? "Reading the posting and preparing your review…" : ""}
         </p>

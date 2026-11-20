@@ -1,0 +1,52 @@
+{
+ "infer_seconds": 8.7,
+ "cpu_util_pct": 44.4,
+ "peak_rss_mb": 392.8,
+ "lines": 11,
+ "score_min": 0.988,
+ "score_mean": 0.9933,
+ "score_p10": 0.9884,
+ "frac_lines_below_09": 0.0,
+ "texts": [
+  "The Employee shall perform seasonal agricultural work including planting,",
+  "maintaining, and harvesting soft fruit crops at the sites designated by the",
+  "Employer. Normal working hours are 8 hours per day, 5 days per week, from",
+  "Monday to Friday, with a 30-minute unpaid meal break each working day. Any",
+  "work performed beyond 40 hours per week shall be compensated at 1.5 times",
+  "the basic hourly rate of GBP 11.50. The Employer shall provide shared",
+  "accommodation at a charge of GBP 80.00 per week, deducted from wages. This",
+  "agreement may be terminated by either party with 14 days written notice.",
+  "Outstanding wages for hours worked up to 30 June 2026 shall be paid in full",
+  "on the final pay date of 07 July 2026. Disputes shall first be raised with",
+  "the site supervisor within 7 calendar days of the relevant event."
+ ],
+ "scores": [
+  0.9922,
+  0.9968,
+  0.9924,
+  0.988,
+  0.9981,
+  0.9904,
+  0.9957,
+  0.9937,
+  0.9884,
+  0.9919,
+  0.9986
+ ],
+ "config": "v6small",
+ "sample": "en_dense",
+ "trial": 1,
+ "init_seconds": 43.1,
+ "cer": 0.0,
+ "wer": 0.0,
+ "numeric": {
+  "11.50": true,
+  "40": true,
+  "80.00": true,
+  "14 days": true,
+  "30 June 2026": true,
+  "07 July 2026": true,
+  "7 calendar days": true,
+  "1.5": true
+ }
+}

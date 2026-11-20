@@ -3,3 +3,28 @@ __pycache__/
 *.pyc
 firestore-debug.log
 .firebase/
+
+# Phase 0/1 OCR benchmark: ignore regenerable weight/cache/runtime dirs.
+# Keep scripts, samples, results JSON, freeze files, and reports.
+benchmarks/*/.venv/
+benchmarks/*/home/
+benchmarks/*/tmp/
+benchmarks/*/samples/multipage3.pdf
+
+# Agent/tool scratch (personal, not project source; .agents/skills stays tracked)
+.claude/
+
+# Alternate VCS metadata (never belongs in git)
+.eden/
+.sl/
+.hg/
+
+# OS and log clutter
+**/.DS_Store
+Thumbs.db
+*.log
+
+# Credential safety net (Firebase project: never commit keys)
+*.pem
+serviceAccount*.json
+**/*firebase-adminsdk*.json

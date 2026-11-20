@@ -1,6 +1,8 @@
 // Public footer: links to real pages only. No fabricated legal pages.
+// Carries the full canonical disclaimer.
 
 import Link from "next/link";
+import { FULL_DISCLAIMER_PARAGRAPHS } from "@/lib/disclaimer";
 
 const COLUMNS: Array<{ heading: string; links: Array<{ href: string; label: string }> }> = [
   {
@@ -49,10 +51,18 @@ export default function SiteFooter() {
         ))}
       </div>
       <div className="border-t border-edge">
-        <p className="mx-auto w-full max-w-6xl px-4 py-4 text-sm text-muted sm:px-6">
-          OpporCheck helps you review overseas job opportunities with evidence and clear
-          explanations. It does not verify employers and is not legal advice.
-        </p>
+        <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6">
+          <p className="text-sm font-semibold">Product notice</p>
+          {FULL_DISCLAIMER_PARAGRAPHS.map((paragraph) => (
+            <p key={paragraph.slice(0, 32)} className="mt-1 text-sm leading-6 text-muted">
+              {paragraph}
+            </p>
+          ))}
+          <p className="mt-2 text-sm text-muted">
+            OpporCheck helps you review overseas job opportunities with evidence and clear
+            explanations.
+          </p>
+        </div>
       </div>
     </footer>
   );

@@ -16,6 +16,7 @@ export interface WorkspaceNavItem {
 export const WORKSPACE_NAV: WorkspaceNavItem[] = [
   { href: "/workspace", label: "Overview", short: "Ov" },
   { href: "/workspace/review", label: "Review opportunity", short: "Re" },
+  { href: "/workspace/compare", label: "Compare documents", short: "Co" },
   { href: "/workspace/investigations", label: "My investigations", short: "In" },
   { href: "/workspace/resources", label: "Resources", short: "Rs" },
   { href: "/workspace/settings", label: "Settings", short: "Se" },

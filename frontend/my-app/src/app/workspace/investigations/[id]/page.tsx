@@ -8,9 +8,16 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AnalysisResults from "@/components/AnalysisResults";
+import EvidenceInvestigation from "@/components/EvidenceInvestigation";
 import { Button, Card, Spinner, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { localeForCountryName } from "@/lib/corridors";
 import { getFirebaseClient } from "@/lib/firebaseClient";
+import {
+  ASSESSMENT_LABELS,
+  ASSESSMENT_TONES,
+  type AssessmentTone,
+} from "@/lib/reportLanguage";
 import {
   getInvestigation,
   getInvestigationsDb,
@@ -19,11 +26,11 @@ import {
   type InvestigationFinding,
 } from "@/lib/investigations";
 
-function formatDateTime(iso: string | null): string {
+function formatDateTime(iso: string | null, country?: string | null): string {
   if (!iso) {
     return "—";
   }
-  return new Date(iso).toLocaleString("en-GB", {
+  return new Date(iso).toLocaleString(localeForCountryName(country), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -34,13 +41,12 @@ function formatDateTime(iso: string | null): string {
 
 function AssessmentLabel({ value }: { value: string }) {
   const normalized = value.trim().toLowerCase().replace(/_/g, "-");
-  if (normalized === "supported") {
-    return <StatusLabel tone="ok">Supported by source</StatusLabel>;
-  }
-  if (normalized === "conflicting") {
-    return <StatusLabel tone="bad">Conflicts with source</StatusLabel>;
-  }
-  return <StatusLabel tone="warn">Insufficient evidence</StatusLabel>;
+  const key =
+    normalized === "supported" || normalized === "conflicting"
+      ? normalized
+      : "insufficient-evidence";
+  const tone: AssessmentTone = ASSESSMENT_TONES[key];
+  return <StatusLabel tone={tone}>{ASSESSMENT_LABELS[key]}</StatusLabel>;
 }
 
 function FindingCard({ finding }: { finding: InvestigationFinding }) {
@@ -177,7 +183,8 @@ export default function InvestigationReportPage() {
         </div>
         <p className="mt-1 text-sm text-muted">
           {report?.destination_country ?? "Unknown country"} · Reviewed{" "}
-          {formatDateTime(item.createdAt)} · Updated {formatDateTime(item.updatedAt)}
+          {formatDateTime(item.createdAt, report?.destination_country)} · Updated{" "}
+          {formatDateTime(item.updatedAt, report?.destination_country)}
         </p>
         {item.status !== "complete" && (
           <div className="mt-3">
@@ -233,12 +240,14 @@ export default function InvestigationReportPage() {
           </ul>
         ) : (
           <p className="text-sm leading-6 text-muted">
-            No official-source comparison has been run for this investigation yet.
-            Official-source retrieval is planned but not connected — nothing here is
-            checked against external sources.
+            No saved official-source findings for this investigation. Client-saved
+            findings are intentionally not supported — use the transient evidence
+            check below instead. Its results are shown once and never saved.
           </p>
         )}
       </Card>
+
+      {report && <EvidenceInvestigation report={report} postingText={item.postingText} />}
 
       <details className="rounded-lg border border-edge bg-card p-5">
         <summary className="cursor-pointer font-semibold">Original posting text</summary>

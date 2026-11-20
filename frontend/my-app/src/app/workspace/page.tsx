@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, EmptyState, Spinner, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { localeForCountryName } from "@/lib/corridors";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
 import {
   getInvestigationsDb,
@@ -21,11 +22,11 @@ interface RecentState {
   message: string | null;
 }
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, country?: string | null): string {
   if (!iso) {
     return "Just now";
   }
-  return new Date(iso).toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString(localeForCountryName(country), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -138,7 +139,7 @@ export default function WorkspaceOverviewPage() {
                   <StatusLabel tone={item.status === "complete" ? "ok" : "info"}>
                     {item.status === "complete" ? "Complete" : "Reviewed"}
                   </StatusLabel>
-                  <span className="text-sm text-muted">{formatDate(item.createdAt)}</span>
+                  <span className="text-sm text-muted">{formatDate(item.createdAt, item.report?.destination_country)}</span>
                 </Link>
               </li>
             ))}

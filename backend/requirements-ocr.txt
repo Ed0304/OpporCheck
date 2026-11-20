@@ -1,0 +1,16 @@
+# OpporCheck backend OCR dependencies (Phase 1: direct image OCR).
+#
+# Install only where image OCR should run:
+#     pip install -r requirements-ocr.txt
+# Base PDF extraction and source retrieval need just requirements.txt;
+# without these packages, POST /api/v1/documents/ocr answers 503.
+#
+# Pins mirror the Phase 0 benchmark (CPU-only, Python 3.13, Windows/Linux).
+# paddlepaddle==3.3.1 is the CPU wheel on PyPI (no CUDA build required).
+
+-r requirements.txt
+paddleocr==3.7.0
+paddlepaddle==3.3.1
+paddlex==3.7.2
+opencv-contrib-python-headless==4.10.0.84
+numpy==2.3.5

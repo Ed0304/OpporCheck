@@ -1,6 +1,6 @@
-// Workspace resources: the same curated guidance, inside the workspace.
+// Workspace resources: curated guidance per destination, inside the workspace.
 
-import GuidanceList from "@/components/GuidanceList";
+import CorridorResources from "@/components/CorridorResources";
 
 export default function WorkspaceResourcesPage() {
   return (
@@ -8,11 +8,11 @@ export default function WorkspaceResourcesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Resources</h1>
         <p className="mt-1 leading-6 text-muted">
-          Official guidance worth checking against any opportunity. Coverage currently
-          focuses on seasonal agricultural work in the United Kingdom.
+          Official guidance worth checking against any opportunity. Choose a
+          destination to see its verified links.
         </p>
       </div>
-      <GuidanceList />
+      <CorridorResources />
     </div>
   );
 }

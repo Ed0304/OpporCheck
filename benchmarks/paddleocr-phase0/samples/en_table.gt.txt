@@ -1,0 +1,6 @@
+Item | Amount | Frequency
+Basic salary | GBP 1,840.00 | Monthly
+Overtime (10h) | GBP 172.50 | Monthly
+Accommodation | -GBP 320.00 | Monthly
+Transport | -5% | Of gross pay
+Net estimate | GBP 1,692.50 | Monthly

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:rules": "npx -y firebase-tools@latest emulators:exec --config ../../firebase.json --only firestore \"node --test test/rules/firestore.rules.test.mjs\""
+    "test:rules": "npx -y firebase-tools@latest emulators:exec --config ../../firebase.json --only firestore \"node --test test/rules/firestore.rules.test.mjs\"",
+    "test:unit": "node scripts/run-unit-tests.mjs"
   },
   "dependencies": {
     "firebase": "^13.3.0",

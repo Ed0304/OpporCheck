@@ -1,0 +1,248 @@
+[
+ {
+  "config": "v6small",
+  "sample": "id_offer",
+  "init_seconds": 6.1,
+  "infer_seconds": 7.7,
+  "peak_rss_mb": 430.2,
+  "lines": 13,
+  "score_mean": 0.9914,
+  "cer": 0.0395,
+  "wer": 0.0147,
+  "numeric": {
+   "4.500.000": true,
+   "750.000": true,
+   "8 jam": true,
+   "3%": true,
+   "35.000": true,
+   "10 Agustus 2026": true,
+   "24 bulan": true
+  }
+ },
+ {
+  "config": "v6small",
+  "sample": "ms_offer",
+  "init_seconds": 6.1,
+  "infer_seconds": 7.2,
+  "peak_rss_mb": 464.0,
+  "lines": 13,
+  "score_mean": 0.9934,
+  "cer": 0.0407,
+  "wer": 0.0167,
+  "numeric": {
+   "1,800.00": true,
+   "200.00": true,
+   "8 jam": true,
+   "11%": true,
+   "13.50": true,
+   "05 Januari 2027": true,
+   "12 bulan": true
+  }
+ },
+ {
+  "config": "v6small",
+  "sample": "ja_offer",
+  "init_seconds": 6.1,
+  "infer_seconds": 6.3,
+  "peak_rss_mb": 470.8,
+  "lines": 13,
+  "score_mean": 0.9817,
+  "cer": 0.1443,
+  "wer": null,
+  "numeric": {
+   "220,000": true,
+   "1,720": true,
+   "8時間": true,
+   "40時間": true,
+   "25,000": true,
+   "10,000": true,
+   "2026年9月1日": true,
+   "12か月": true
+  }
+ },
+ {
+  "config": "v6small",
+  "sample": "zh_hant_offer",
+  "init_seconds": 6.1,
+  "infer_seconds": 6.6,
+  "peak_rss_mb": 469.4,
+  "lines": 13,
+  "score_mean": 0.9659,
+  "cer": 0.1546,
+  "wer": null,
+  "numeric": {
+   "28,000": true,
+   "175": true,
+   "8小時": true,
+   "40小時": true,
+   "2,500": true,
+   "1,200": true,
+   "2027年2月1日": true,
+   "36個月": true
+  }
+ },
+ {
+  "config": "v6small",
+  "sample": "zh_hans_offer",
+  "init_seconds": 6.1,
+  "infer_seconds": 6.6,
+  "peak_rss_mb": 470.9,
+  "lines": 13,
+  "score_mean": 0.9823,
+  "cer": 0.1495,
+  "wer": null,
+  "numeric": {
+   "28,000": true,
+   "175": true,
+   "8小时": true,
+   "40小时": true,
+   "2,500": true,
+   "1,200": true,
+   "2027年2月1日": true,
+   "36个月": true
+  }
+ },
+ {
+  "config": "v6medium",
+  "sample": "id_offer",
+  "init_seconds": 1.7,
+  "infer_seconds": 29.7,
+  "peak_rss_mb": 478.2,
+  "lines": 13,
+  "score_mean": 0.9982,
+  "cer": 0.0395,
+  "wer": 0.0147,
+  "numeric": {
+   "4.500.000": true,
+   "750.000": true,
+   "8 jam": true,
+   "3%": true,
+   "35.000": true,
+   "10 Agustus 2026": true,
+   "24 bulan": true
+  }
+ },
+ {
+  "config": "v6medium",
+  "sample": "ms_offer",
+  "init_seconds": 1.7,
+  "infer_seconds": 27.5,
+  "peak_rss_mb": 517.0,
+  "lines": 13,
+  "score_mean": 0.996,
+  "cer": 0.0407,
+  "wer": 0.0167,
+  "numeric": {
+   "1,800.00": true,
+   "200.00": true,
+   "8 jam": true,
+   "11%": true,
+   "13.50": true,
+   "05 Januari 2027": true,
+   "12 bulan": true
+  }
+ },
+ {
+  "config": "v6medium",
+  "sample": "ja_offer",
+  "init_seconds": 1.7,
+  "infer_seconds": 27.5,
+  "peak_rss_mb": 463.8,
+  "lines": 13,
+  "score_mean": 0.9875,
+  "cer": 0.1592,
+  "wer": null,
+  "numeric": {
+   "220,000": true,
+   "1,720": true,
+   "8時間": true,
+   "40時間": true,
+   "25,000": true,
+   "10,000": true,
+   "2026年9月1日": true,
+   "12か月": true
+  }
+ },
+ {
+  "config": "v6medium",
+  "sample": "zh_hant_offer",
+  "init_seconds": 1.7,
+  "infer_seconds": 26.9,
+  "peak_rss_mb": 397.6,
+  "lines": 13,
+  "score_mean": 0.962,
+  "cer": 0.1031,
+  "wer": null,
+  "numeric": {
+   "28,000": true,
+   "175": true,
+   "8小時": true,
+   "40小時": true,
+   "2,500": true,
+   "1,200": true,
+   "2027年2月1日": true,
+   "36個月": true
+  }
+ },
+ {
+  "config": "v6medium",
+  "sample": "zh_hans_offer",
+  "init_seconds": 1.7,
+  "infer_seconds": 25.1,
+  "peak_rss_mb": 292.3,
+  "lines": 13,
+  "score_mean": 0.9748,
+  "cer": 0.1753,
+  "wer": null,
+  "numeric": {
+   "28,000": true,
+   "175": true,
+   "8小时": true,
+   "40小时": true,
+   "2,500": true,
+   "1,200": true,
+   "2027年2月1日": true,
+   "36个月": true
+  }
+ },
+ {
+  "config": "v5latin",
+  "sample": "id_offer",
+  "init_seconds": 0.6,
+  "infer_seconds": 9.4,
+  "peak_rss_mb": 233.6,
+  "lines": 13,
+  "score_mean": 0.9926,
+  "cer": 0.0395,
+  "wer": 0.0147,
+  "numeric": {
+   "4.500.000": true,
+   "750.000": true,
+   "8 jam": true,
+   "3%": true,
+   "35.000": true,
+   "10 Agustus 2026": true,
+   "24 bulan": true
+  }
+ },
+ {
+  "config": "v5latin",
+  "sample": "ms_offer",
+  "init_seconds": 0.6,
+  "infer_seconds": 9.3,
+  "peak_rss_mb": 239.7,
+  "lines": 13,
+  "score_mean": 0.9936,
+  "cer": 0.0407,
+  "wer": 0.0167,
+  "numeric": {
+   "1,800.00": true,
+   "200.00": true,
+   "8 jam": true,
+   "11%": true,
+   "13.50": true,
+   "05 Januari 2027": true,
+   "12 bulan": true
+  }
+ }
+]

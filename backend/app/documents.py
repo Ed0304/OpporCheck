@@ -27,6 +27,14 @@ class ExtractionResult:
     text: str
     pages: int
     truncated: bool
+    # Per-page normalized text ("" for blank pages); index + 1 is the page number.
+    page_texts: tuple[str, ...]
+
+
+def _normalize_page(part: str) -> str:
+    """Normalizes one page the same way the joined text is normalized."""
+    text = "\n".join(" ".join(line.split()) for line in part.strip().splitlines())
+    return "\n\n".join(block for block in (b.strip() for b in text.split("\n\n")) if block)
 
 
 class DocumentError(Exception):
@@ -97,4 +105,5 @@ def extract_pdf_text(filename: str, content: bytes) -> ExtractionResult:
         text=text[:MAX_TEXT_CHARS],
         pages=pages,
         truncated=truncated,
+        page_texts=tuple(_normalize_page(part) for part in parts),
     )

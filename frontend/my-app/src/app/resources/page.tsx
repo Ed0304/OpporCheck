@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import CorridorResources from "@/components/CorridorResources";
 import PublicShell from "@/components/PublicShell";
-import GuidanceList from "@/components/GuidanceList";
 
 export const metadata: Metadata = {
   title: "Employment guidance — OpporCheck",
@@ -12,13 +12,12 @@ export default function ResourcesPage() {
       <div className="max-w-3xl">
         <h1 className="text-3xl font-bold tracking-tight text-navy">Employment guidance</h1>
         <p className="mt-3 leading-7 text-muted">
-          Curated official guidance for overseas employment. Coverage currently focuses on
-          seasonal agricultural work in the United Kingdom — more countries will be added only
-          when their sources are verified.
+          Curated official guidance for overseas employment. Destinations appear
+          with verified links only — more are added as their sources are verified.
         </p>
       </div>
       <div className="mt-6 max-w-3xl">
-        <GuidanceList />
+        <CorridorResources />
       </div>
     </PublicShell>
   );

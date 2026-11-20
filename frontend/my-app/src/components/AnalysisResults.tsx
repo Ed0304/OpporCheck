@@ -3,7 +3,15 @@
 // next action. Concerns pair the model's quoted evidence with short static
 // guidance; confidence is shown as information, never as proof of fraud.
 
+import { ContextualNotice } from "@/components/Disclaimer";
+import {
+  DEFAULT_CORRIDOR_CODE,
+  resolveCorridorCode,
+  type CorridorCode,
+} from "@/lib/corridors";
+import { ANALYSIS_CONTEXT_NOTICE } from "@/lib/disclaimer";
 import type { AnalysisConcern, OpportunityReport } from "@/lib/opportunityAnalyzer";
+import { MISSING_INFO_LABEL } from "@/lib/reportLanguage";
 
 function isSpecified(value: string): boolean {
   const normalized = value.trim().toLowerCase();
@@ -48,10 +56,21 @@ const CONCERN_GUIDANCE: Array<{ match: RegExp; guidance: string }> = [
 const GENERIC_GUIDANCE =
   "This detail is unusual enough to question. Ask for it in writing and compare the answer against official guidance.";
 
-function guidanceFor(concern: AnalysisConcern): string {
+function guidanceFor(concern: AnalysisConcern, corridorCode: CorridorCode): string {
   const haystack = `${concern.concern} ${concern.evidence}`;
   const hit = CONCERN_GUIDANCE.find((entry) => entry.match.test(haystack));
-  return hit ? hit.guidance : GENERIC_GUIDANCE;
+  if (!hit) {
+    return GENERIC_GUIDANCE;
+  }
+  // The fee-ban sentence states United Kingdom rules; other destinations
+  // get the generic wording so no country's rules are misattributed.
+  if (hit === CONCERN_GUIDANCE[0] && corridorCode !== "GB") {
+    return (
+      "Any requested payment deserves written justification before you send " +
+      "anything. Check the destination's official fee rules first."
+    );
+  }
+  return hit.guidance;
 }
 
 function buildSummary(report: OpportunityReport): string {
@@ -111,9 +130,19 @@ function ConfidenceNote({ value }: { value: string }) {
   );
 }
 
-export default function AnalysisResults({ report }: { report: OpportunityReport }) {
+export default function AnalysisResults({
+  report,
+  destinationCode,
+}: {
+  report: OpportunityReport;
+  destinationCode?: string | null;
+}) {
   const missing = report.missing_information ?? [];
   const concerns = report.concerns ?? [];
+  const corridorCode =
+    (destinationCode != null
+      ? resolveCorridorCode(destinationCode)
+      : resolveCorridorCode(report.destination_country)) ?? DEFAULT_CORRIDOR_CODE;
   return (
     <div className="flex flex-col gap-6">
       <section aria-labelledby="oc-summary">
@@ -155,7 +184,7 @@ export default function AnalysisResults({ report }: { report: OpportunityReport 
                 className="rounded-md border border-edge bg-card p-4"
               >
                 <p className="font-semibold">{item.concern}</p>
-                <p className="mt-1 text-sm leading-6 text-muted">{guidanceFor(item)}</p>
+                <p className="mt-1 text-sm leading-6 text-muted">{guidanceFor(item, corridorCode)}</p>
                 <blockquote className="mt-2 border-l-2 border-edge pl-3 text-sm italic leading-6">
                   &ldquo;{item.evidence}&rdquo;
                 </blockquote>
@@ -175,7 +204,7 @@ export default function AnalysisResults({ report }: { report: OpportunityReport 
 
       <section aria-labelledby="oc-missing">
         <h3 id="oc-missing" className="font-semibold">
-          Missing information
+          {MISSING_INFO_LABEL}
         </h3>
         {missing.length > 0 ? (
           <ul className="mt-1 list-disc pl-5 text-sm leading-7">
@@ -197,6 +226,8 @@ export default function AnalysisResults({ report }: { report: OpportunityReport 
         </h3>
         <p className="mt-1 text-sm leading-6">{nextAction(report)}</p>
       </section>
+
+      <ContextualNotice>{ANALYSIS_CONTEXT_NOTICE}</ContextualNotice>
     </div>
   );
 }

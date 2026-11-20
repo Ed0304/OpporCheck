@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PublicShell from "@/components/PublicShell";
 import { Card } from "@/components/ui";
+import { CONCISE_NOTICE } from "@/lib/disclaimer";
 
 export const metadata: Metadata = {
-  title: "OpporCheck — Review overseas job opportunities",
+  title: "OpporCheck — Understand the opportunity before you commit",
 };
 
 const WORKFLOW = [
@@ -46,11 +47,12 @@ export default function LandingPage() {
     <PublicShell>
       <div className="max-w-2xl">
         <h1 className="text-4xl font-bold leading-tight tracking-tight text-navy">
-          Your next opportunity deserves a closer look.
+          Understand the opportunity before you commit.
         </h1>
         <p className="mt-3 text-lg leading-8 text-muted">
-          Review overseas job opportunities, understand potential concerns, and find reliable
-          information before making a decision.
+          OpporCheck helps you understand what was promised, what appears in your written
+          employment agreement, what remains unclear, and what you should verify before
+          signing.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
@@ -66,6 +68,9 @@ export default function LandingPage() {
             How it works
           </Link>
         </div>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted" role="note">
+          {CONCISE_NOTICE}
+        </p>
       </div>
 
       <section aria-labelledby="what-is" className="mt-12">

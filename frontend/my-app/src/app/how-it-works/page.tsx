@@ -18,7 +18,7 @@ const STEPS = [
   },
   {
     title: "3. Investigate with sources",
-    text: "Save the review as an investigation and compare its claims against curated official guidance, with each finding labelled as supported, conflicting, or lacking evidence.",
+    text: "Save the review as an investigation and compare its claims against curated official guidance, with each finding labelled as supported, conflicting, or insufficient evidence.",
   },
   {
     title: "4. Decide with evidence",

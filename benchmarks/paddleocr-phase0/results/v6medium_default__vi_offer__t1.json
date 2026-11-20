@@ -1,0 +1,51 @@
+{
+ "infer_seconds": 26.2,
+ "cpu_util_pct": 32.7,
+ "peak_rss_mb": 432.1,
+ "lines": 11,
+ "score_min": 0.8701,
+ "score_mean": 0.961,
+ "score_p10": 0.9351,
+ "frac_lines_below_09": 0.0909,
+ "texts": [
+  "THU' MÒI LÀM VIÊC",
+  "V trí: Công nhân may mc",
+  "Công ty: Công ty TNHH Dt May Sài Gòn",
+  "Nơi làm vic: Qun 12, TP. Hồ Chí Minh",
+  "Ngày bt đàu: 15/09/2026",
+  "Thi hn hp đồng: 24 tháng",
+  "Lương co bn: 8.000.000 đồng/tháng",
+  "Ph cp ăn trưa: 800.000 đồng/tháng",
+  "Gi làm vic: 8 gi/ngày, 6 ngày/tun",
+  "Khu tr bo him: 8% lưng co bn",
+  "Lưong tăng ca: 55.000 đòng/giò"
+ ],
+ "scores": [
+  0.8701,
+  0.9657,
+  0.9968,
+  0.9913,
+  0.9788,
+  0.9895,
+  0.9524,
+  0.9778,
+  0.9687,
+  0.9351,
+  0.9446
+ ],
+ "config": "v6medium_default",
+ "sample": "vi_offer",
+ "trial": 1,
+ "init_seconds": 5.5,
+ "cer": 0.0922,
+ "wer": 0.4348,
+ "numeric": {
+  "8.000.000": true,
+  "800.000": true,
+  "8 giờ": false,
+  "8%": true,
+  "55.000": true,
+  "15/09/2026": true,
+  "24 tháng": true
+ }
+}

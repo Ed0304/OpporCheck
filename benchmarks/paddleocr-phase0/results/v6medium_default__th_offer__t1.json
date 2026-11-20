@@ -1,0 +1,47 @@
+{
+ "infer_seconds": 21.6,
+ "cpu_util_pct": 32.7,
+ "peak_rss_mb": 423.2,
+ "lines": 10,
+ "score_min": 0.3749,
+ "score_mean": 0.6762,
+ "score_p10": 0.4679,
+ "frac_lines_below_09": 1.0,
+ "texts": [
+  "HAOLAUOANNNU",
+  " Wuu",
+  "UnUAN: USUN AUnHWAA AnAA",
+  ": ",
+  "Ju05u: 1 U7AH 2569",
+  ": 12 ",
+  "NulAuWu5: 15,000 UlG",
+  "an: a: 95 un",
+  "a: 8 ",
+  "ahnnaWn: 2,000 unnmalau"
+ ],
+ "scores": [
+  0.4783,
+  0.3749,
+  0.6766,
+  0.8089,
+  0.7127,
+  0.8291,
+  0.6702,
+  0.8223,
+  0.6714,
+  0.7182
+ ],
+ "config": "v6medium_default",
+ "sample": "th_offer",
+ "trial": 1,
+ "init_seconds": 5.5,
+ "cer": 0.8114,
+ "wer": null,
+ "numeric": {
+  "15,000": true,
+  "95": true,
+  "8 ชั่วโมง": false,
+  "2,000": true,
+  "12 เดือน": false
+ }
+}
