@@ -190,13 +190,33 @@ export function EmptyState({
   title,
   description,
   action,
+  illustration,
 }: {
   title: string;
   description: string;
   action?: ReactNode;
+  /** Decorative glyph; defaults to a restrained document mark. */
+  illustration?: ReactNode;
 }) {
   return (
     <div className="rounded-xl border border-dashed border-edge bg-canvas/60 px-6 py-10 text-center">
+      {illustration ?? (
+        <svg
+          aria-hidden
+          width="36"
+          height="36"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="mx-auto mb-3 text-muted"
+        >
+          <rect x="5" y="3" width="14" height="18" rx="2" />
+          <path d="M9 8h6M9 12h6M9 16h4" />
+        </svg>
+      )}
       <p className="text-[15px] font-semibold tracking-tight">{title}</p>
       <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted">{description}</p>
       {action && <div className="mt-4 flex justify-center">{action}</div>}

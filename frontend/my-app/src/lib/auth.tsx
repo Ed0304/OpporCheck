@@ -26,6 +26,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updateProfile,
   type User,
 } from "firebase/auth";
 import { getFirebaseAuth, probeFirebaseConfig } from "./firebaseClient";
@@ -41,6 +42,12 @@ interface AuthState {
   signInWithGoogle: () => Promise<void>;
   sendReset: (email: string) => Promise<void>;
   signOutUser: () => Promise<void>;
+  /**
+   * Persists the Firebase Auth profile display name — the app's only
+   * profile store — and refreshes subscribers. No re-authentication
+   * needed; email, password, and providers are untouched.
+   */
+  updateDisplayName: (displayName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -110,7 +117,9 @@ export function friendlyAuthError(err: unknown, language: UiLanguage = "en"): st
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Env-only probe: safe to run as initial state on server and client.
   const [envProbe] = useState(() => probeFirebaseConfig());
-  const [user, setUser] = useState<User | null>(null);
+  // Wrapped so profile edits (which mutate the same User object without
+  // firing onAuthStateChanged) can publish a fresh state identity.
+  const [userState, setUserState] = useState<{ current: User | null }>({ current: null });
   const [resolved, setResolved] = useState(false);
 
   // Missing Firebase config is derived during render, not set in an effect.
@@ -128,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     return onAuthStateChanged(getFirebaseAuth(), (next) => {
-      setUser(next);
+      setUserState({ current: next });
       setResolved(true);
     });
   }, [setupError]);
@@ -154,9 +163,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut(getFirebaseAuth());
   }, []);
 
+  const updateDisplayName = useCallback(async (displayName: string) => {
+    const current = getFirebaseAuth().currentUser;
+    if (!current) {
+      throw new Error("Not signed in.");
+    }
+    await updateProfile(current, { displayName });
+    await current.reload();
+    setUserState({ current: getFirebaseAuth().currentUser });
+  }, []);
+
   const value = useMemo<AuthState>(
-    () => ({ user, loading, setupError, signUp, signIn, signInWithGoogle, sendReset, signOutUser }),
-    [user, loading, setupError, signUp, signIn, signInWithGoogle, sendReset, signOutUser],
+    () => ({
+      user: userState.current,
+      loading,
+      setupError,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      sendReset,
+      signOutUser,
+      updateDisplayName,
+    }),
+    [
+      userState,
+      loading,
+      setupError,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      sendReset,
+      signOutUser,
+      updateDisplayName,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,20 +1,34 @@
 "use client";
 
-// Account settings: account information, theme preference, sign out.
+// Account settings: account information (including display-name editing
+// for email/password users), theme preference, sign out.
 
 import { useRouter } from "next/navigation";
-import { Button, Card, PageHeader } from "@/components/ui";
-import { useAuth } from "@/lib/auth";
+import { useState } from "react";
+import { Button, Card, PageHeader, TextInput } from "@/components/ui";
+import { friendlyAuthError, useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
-import { getStrings } from "@/lib/strings";
+import { format, getStrings } from "@/lib/strings";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
 
+const DISPLAY_NAME_MAX_LENGTH = 60;
+
 export default function SettingsPage() {
-  const { user, signOutUser } = useAuth();
+  const { user, signOutUser, updateDisplayName } = useAuth();
   const { choice, setChoice } = useTheme();
   const { language } = useLang();
   const t = getStrings(language);
   const router = useRouter();
+
+  const hasPasswordProvider =
+    user?.providerData.some((profile) => profile.providerId === "password") ?? false;
+  // Null until the user types, so a late-arriving auth state still
+  // prefills the field without clobbering edits.
+  const [draft, setDraft] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const name = draft ?? user?.displayName ?? "";
 
   const themeOptions: Array<{ value: ThemeChoice; label: string; hint: string }> = [
     { value: "light", label: t.themeLight, hint: t.stThemeLightHint },
@@ -25,6 +39,33 @@ export default function SettingsPage() {
   const signOut = async () => {
     await signOutUser();
     router.replace("/login");
+  };
+
+  const saveDisplayName = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = name.trim();
+    if (trimmed.length === 0) {
+      setSaved(false);
+      setFormError(t.stDisplayNameEmpty);
+      return;
+    }
+    if (trimmed.length > DISPLAY_NAME_MAX_LENGTH) {
+      setSaved(false);
+      setFormError(format(t.stDisplayNameTooLong, { max: String(DISPLAY_NAME_MAX_LENGTH) }));
+      return;
+    }
+    setSaving(true);
+    setFormError(null);
+    setSaved(false);
+    try {
+      await updateDisplayName(trimmed);
+      setDraft(trimmed);
+      setSaved(true);
+    } catch (err: unknown) {
+      setFormError(friendlyAuthError(err, language));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -38,8 +79,51 @@ export default function SettingsPage() {
             <dd className="font-medium">{user?.email ?? "—"}</dd>
           </div>
           <div className="flex items-start justify-between gap-4 py-2">
-            <dt className="text-muted">{t.stDisplayName}</dt>
-            <dd className="font-medium">{user?.displayName || t.commonNotSet}</dd>
+            <dt className="pt-2 text-muted">{t.stDisplayName}</dt>
+            <dd className="w-full max-w-xs">
+              {hasPasswordProvider ? (
+                <form onSubmit={(event) => void saveDisplayName(event)}>
+                  <label htmlFor="display-name" className="sr-only">
+                    {t.stDisplayName}
+                  </label>
+                  <TextInput
+                    id="display-name"
+                    value={name}
+                    onChange={(event) => {
+                      setDraft(event.target.value);
+                      setSaved(false);
+                      setFormError(null);
+                    }}
+                    placeholder={t.stDisplayNamePlaceholder}
+                    maxLength={DISPLAY_NAME_MAX_LENGTH}
+                    autoComplete="nickname"
+                  />
+                  <p className="mt-1 text-[13px] leading-5 text-muted">{t.stDisplayNameHint}</p>
+                  {formError && (
+                    <p role="alert" className="mt-1 text-sm font-medium text-red-700 dark:text-red-300">
+                      {formError}
+                    </p>
+                  )}
+                  {saved && !formError && (
+                    <p role="status" className="mt-1 text-sm font-medium text-evidence">
+                      {t.stDisplayNameSaved}
+                    </p>
+                  )}
+                  <div className="mt-2">
+                    <Button type="submit" variant="secondary" size="sm" disabled={saving}>
+                      {saving ? t.stDisplayNameSaving : t.stDisplayNameSave}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <p className="text-right font-medium">{user?.displayName || t.commonNotSet}</p>
+                  <p className="mt-1 text-right text-[13px] leading-5 text-muted">
+                    {t.stDisplayNameManaged}
+                  </p>
+                </>
+              )}
+            </dd>
           </div>
           <div className="flex items-start justify-between gap-4 py-2">
             <dt className="text-muted">{t.stSignInMethod}</dt>

@@ -532,31 +532,37 @@ export default function ComparePage() {
     );
   }
 
-  // Stepper reflects real session state: documents added and
-  // privacy-approved, terms extracted, report generated. No mock progress.
+  // Stepper reflects real session state across the four required moves:
+  // documents added, privacy approved, terms extracted, report generated.
+  // Labels are short step names (the Stepper numbers them); the numbered
+  // card titles below use the same order. No mock progress.
   const allDocsApproved =
     docs.length > 0 &&
     docs.every((doc) => isDocPrivacyApproved(doc.privacy, doc.input.pages));
   const extractionDone = extractedDocs.length > 0 && pendingDocs.length === 0;
   const compareSteps = [
     {
-      label: t.cmpDocsTitle,
+      label: t.cmpStepDocs,
+      state: (docs.length === 0 ? "current" : "done") as "done" | "current" | "todo",
+    },
+    {
+      label: t.revPrivacyTitle,
       state: (docs.length === 0
-        ? "current"
+        ? "todo"
         : allDocsApproved
           ? "done"
           : "current") as "done" | "current" | "todo",
     },
     {
-      label: t.cmpExtractTitle,
-      state: (docs.length === 0 || !allDocsApproved
+      label: t.cmpStepExtract,
+      state: (!allDocsApproved
         ? "todo"
         : extractionDone
           ? "done"
           : "current") as "done" | "current" | "todo",
     },
     {
-      label: t.cmpReportTitle,
+      label: t.cmpStepReport,
       state: (findings
         ? "done"
         : extractedDocs.length >= 2
@@ -822,7 +828,7 @@ export default function ComparePage() {
         )}
       </AnimatePresence>
 
-      <Card title={t.cmpSettingsTitle} eyebrow="02" description={t.cmpSettingsDesc}>
+      <Card title={t.cmpSettingsTitle} description={t.cmpSettingsDesc}>
         <div role="radiogroup" aria-label={t.cmpInferenceAria} className="flex flex-col gap-2">
           {(["on-device-only", "prefer-on-device"] as const).map((option) => (
             <label

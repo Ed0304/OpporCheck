@@ -88,10 +88,46 @@ export default function WorkspaceOverviewPage() {
 
   const displayName = user?.displayName || user?.email || null;
 
+  // Title-only actions: the page subtitles they used to repeat already
+  // appear on their own pages, and the sidebar covers navigation. The
+  // review action is visually primary to match the header CTA.
   const quickActions = [
-    { href: "/workspace/review", title: t.wsNavReview, text: t.revSubtitle },
-    { href: "/workspace/compare", title: t.wsNavCompare, text: t.cmpSubtitle },
-    { href: "/workspace/resources", title: t.wsNavResources, text: t.wsResourcesSubtitle },
+    {
+      href: "/workspace/review",
+      title: t.wsNavReview,
+      primary: true,
+      art: (
+        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="3" width="11" height="14" rx="2" />
+          <path d="M7 7.5h5M7 10.5h5" />
+          <circle cx="16.5" cy="16.5" r="3.2" />
+          <path d="M18.8 18.8 21 21" />
+        </svg>
+      ),
+    },
+    {
+      href: "/workspace/compare",
+      title: t.wsNavCompare,
+      primary: false,
+      art: (
+        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="5" width="8" height="14" rx="2" />
+          <rect x="13" y="5" width="8" height="14" rx="2" />
+          <path d="M6 9h2M6 12h2M16 9h2M16 12h2" />
+        </svg>
+      ),
+    },
+    {
+      href: "/workspace/resources",
+      title: t.wsNavResources,
+      primary: false,
+      art: (
+        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 6C10 4.5 7 4 4 4v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2Z" />
+          <path d="M12 6v12" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -115,9 +151,22 @@ export default function WorkspaceOverviewPage() {
           <Link
             key={action.href}
             href={action.href}
-            className="oc-shadow-card group rounded-xl border border-edge bg-card p-5 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:border-brand/40"
+            aria-label={action.title}
+            className={`oc-shadow-card group flex items-center gap-4 rounded-xl border p-5 transition-all duration-150 ease-out hover:-translate-y-0.5 ${
+              action.primary
+                ? "border-brand/50 bg-brand-soft/50 hover:border-brand"
+                : "border-edge bg-card hover:border-brand/40"
+            }`}
           >
-            <p className="font-semibold tracking-tight">
+            <span
+              aria-hidden
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
+                action.primary ? "bg-brand text-on-action" : "bg-brand-soft text-brand"
+              }`}
+            >
+              {action.art}
+            </span>
+            <span className="min-w-0 font-semibold tracking-tight">
               {action.title}{" "}
               <span
                 aria-hidden
@@ -125,8 +174,7 @@ export default function WorkspaceOverviewPage() {
               >
                 →
               </span>
-            </p>
-            <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted">{action.text}</p>
+            </span>
           </Link>
         ))}
       </div>

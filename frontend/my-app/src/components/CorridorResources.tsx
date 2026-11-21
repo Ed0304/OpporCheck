@@ -40,7 +40,24 @@ export default function CorridorResources({
           aria-label={t.resourcesCoverageTitle}
           className="oc-shadow-card rounded-xl border border-edge bg-card p-5"
         >
-          <h2 className="font-semibold text-ink">{t.resourcesCoverageTitle}</h2>
+          <h2 className="flex items-center gap-2 font-semibold text-ink">
+            <svg
+              aria-hidden
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-evidence"
+            >
+              <path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11Z" />
+              <circle cx="12" cy="10" r="2.5" />
+            </svg>
+            {t.resourcesCoverageTitle}
+          </h2>
           <p className="mt-1 text-sm leading-6 text-muted">
             {format(t.resourcesCoverageSummary, {
               verified: String(verifiedCount),

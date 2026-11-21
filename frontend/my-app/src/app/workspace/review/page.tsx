@@ -143,7 +143,11 @@ export default function ReviewPage() {
     message: t.revDeviceIdle,
   });
   const [tab, setTab] = useState<InputTab>("paste");
-  const [postingText, setPostingText] = useState(SAMPLE_POSTING);
+  // Starts blank: the sample is opt-in via "Load sample" so it never
+  // masquerades as the user's own content. sampleLoaded tracks the
+  // explicit sample state; any edit, extraction, or approval clears it.
+  const [postingText, setPostingText] = useState("");
+  const [sampleLoaded, setSampleLoaded] = useState(false);
   const [pdf, setPdf] = useState<PdfStatus>({ phase: "idle", progress: null, message: "", result: null });
   const [pdfLanguage, setPdfLanguage] = useState<OcrLanguage>("en");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -292,6 +296,7 @@ export default function ReviewPage() {
       return;
     }
     setPostingText(pdf.result.text);
+    setSampleLoaded(false);
     setTab("paste");
   };
 
@@ -338,6 +343,7 @@ export default function ReviewPage() {
       return;
     }
     setPostingText(ocr.draft);
+    setSampleLoaded(false);
     setTab("paste");
   };
 
@@ -367,6 +373,7 @@ export default function ReviewPage() {
     }
     setApproval(next);
     setPostingText(sanitized);
+    setSampleLoaded(false);
     setPrivacyOpen(false);
     setPrivacyError(null);
   };
@@ -573,19 +580,41 @@ export default function ReviewPage() {
             <label htmlFor="posting-text" className="block text-sm font-medium">
               {t.revPostingLabel}
             </label>
+            {sampleLoaded && (
+              <p role="status" className="mt-2 flex flex-wrap items-center gap-2 text-sm leading-6">
+                <StatusLabel tone="info">{t.revSampleBadge}</StatusLabel>
+                <span className="text-muted">{t.revSampleNotice}</span>
+              </p>
+            )}
             <textarea
               id="posting-text"
               value={postingText}
-              onChange={(event) => setPostingText(event.target.value)}
+              onChange={(event) => {
+                setPostingText(event.target.value);
+                setSampleLoaded(false);
+              }}
               rows={10}
               maxLength={60000}
-              className="mt-1 w-full rounded-md border border-edge bg-card p-3 text-sm leading-7"
+              placeholder={t.revPostingPlaceholder}
+              className="mt-1 w-full rounded-md border border-edge bg-card p-3 text-sm leading-7 placeholder:text-muted"
             />
             <div className="mt-2 flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={() => setPostingText(SAMPLE_POSTING)}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setPostingText(SAMPLE_POSTING);
+                  setSampleLoaded(true);
+                }}
+              >
                 {t.revLoadSample}
               </Button>
-              <Button variant="ghost" onClick={() => setPostingText("")}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setPostingText("");
+                  setSampleLoaded(false);
+                }}
+              >
                 {t.revClear}
               </Button>
             </div>
