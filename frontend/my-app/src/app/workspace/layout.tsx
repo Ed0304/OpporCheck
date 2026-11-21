@@ -60,7 +60,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
           type="button"
           onClick={() => setDrawerOpen(true)}
           aria-haspopup="dialog"
-          className="cursor-pointer rounded-md border border-edge bg-card px-3 py-2 text-sm font-medium hover:bg-brand-soft"
+          className="cursor-pointer rounded-md border border-edge bg-card px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out hover:bg-brand-soft"
         >
           {t.wsMenuButton}
         </button>

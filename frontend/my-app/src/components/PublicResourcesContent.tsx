@@ -13,7 +13,7 @@ export default function PublicResourcesContent() {
   const t = getStrings(language);
   return (
     <>
-      <div className="max-w-3xl">
+      <div className="oc-animate-doc-arrive max-w-3xl">
         <h1 className="text-3xl font-bold tracking-tight text-navy">{t.resourcesTitle}</h1>
         <p className="mt-3 leading-7 text-muted">{t.resourcesSubtitle}</p>
       </div>

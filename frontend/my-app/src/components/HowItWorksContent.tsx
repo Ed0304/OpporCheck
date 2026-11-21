@@ -19,7 +19,7 @@ export default function HowItWorksContent() {
   ];
   return (
     <>
-      <div className="max-w-3xl">
+      <div className="oc-animate-doc-arrive max-w-3xl">
         <h1 className="text-3xl font-bold tracking-tight text-navy">{t.howTitle}</h1>
         <p className="mt-3 leading-7 text-muted">{t.howSubtitle}</p>
       </div>
@@ -29,16 +29,16 @@ export default function HowItWorksContent() {
             {index < steps.length - 1 && (
               <span
                 aria-hidden="true"
-                className="absolute left-[17px] top-10 h-[calc(100%-2.5rem)] w-px bg-edge"
+                className="absolute left-[17px] top-10 h-[calc(100%-2.5rem)] w-px bg-paper-edge"
               />
             )}
             <span
               aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-edge bg-card text-sm font-bold text-brand"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-paper-edge bg-paper text-sm font-bold text-brand shadow-[0_2px_10px_var(--oc-paper-shadow)]"
             >
               {step.n}
             </span>
-            <div className="pt-1.5">
+            <div className="flex-1 rounded-lg border border-paper-edge bg-paper p-4 shadow-[0_2px_10px_var(--oc-paper-shadow)]">
               <h2 className="font-semibold">{step.title}</h2>
               <p className="mt-1 text-sm leading-6 text-muted">{step.text}</p>
             </div>
@@ -48,13 +48,13 @@ export default function HowItWorksContent() {
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href="/register"
-          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action hover:bg-brand-strong"
+          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong"
         >
           {t.landingGetStarted}
         </Link>
         <Link
           href="/resources"
-          className="inline-flex h-11 items-center rounded-md border border-edge bg-card px-6 text-base font-medium hover:bg-brand-soft"
+          className="inline-flex h-11 items-center rounded-md border border-edge bg-card px-6 text-base font-medium transition-colors duration-150 ease-out hover:bg-brand-soft"
         >
           {t.howBrowse}
         </Link>

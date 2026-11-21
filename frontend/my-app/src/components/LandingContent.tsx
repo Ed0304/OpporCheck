@@ -4,6 +4,7 @@
 "use client";
 
 import Link from "next/link";
+import { DocSheet, DocStack } from "@/components/atelier";
 import { EvidenceQuote, StatusLabel } from "@/components/ui";
 import { getConciseNotice } from "@/lib/disclaimer";
 import { useLang } from "@/lib/lang";
@@ -50,19 +51,47 @@ export default function LandingContent() {
           </p>
         </div>
 
-        <figure
-          aria-label={t.landingExampleAria}
-          className="rounded-lg border border-edge bg-card p-5 shadow-[0_1px_2px_rgba(23,59,112,0.06)]"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="rounded border border-edge px-2 py-0.5 text-xs font-semibold text-evidence">
-              {t.landingExampleBadge}
-            </p>
-            <StatusLabel tone="ok">{t.landingExampleStatus}</StatusLabel>
-          </div>
-          <p className="mt-3 font-semibold">{t.landingExampleClaim}</p>
-          <EvidenceQuote>&ldquo;{t.landingExampleQuote}&rdquo;</EvidenceQuote>
-          <p className="mt-2 text-xs text-muted">{t.landingExampleSource}</p>
+        <figure aria-label={t.landingExampleAria} className="oc-animate-doc-arrive">
+          <DocStack label={t.landingExampleBadge} className="oc-animate-drift">
+            <DocSheet
+              eyebrow={t.landingExampleBadge}
+              title={t.landingExampleClaim}
+              actions={<StatusLabel tone="ok">{t.landingExampleStatus}</StatusLabel>}
+            >
+              <EvidenceQuote>&ldquo;{t.landingExampleQuote}&rdquo;</EvidenceQuote>
+              <p className="oc-animate-highlight mt-3 inline-flex items-center gap-1.5 rounded-full border border-edge bg-evidence-soft px-2.5 py-1 text-xs font-medium text-evidence">
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-1.5 w-1.5 rounded-full bg-evidence"
+                />
+                {t.landingPreviewAnnotation}
+              </p>
+              <p className="mt-2 text-xs text-muted">{t.landingExampleSource}</p>
+              <ol className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 border-t border-paper-edge pt-3 text-xs">
+                <li>
+                  <span className="inline-block rounded border border-paper-edge bg-page-edge px-2 py-0.5 font-medium">
+                    {t.landingPreviewPromise}
+                  </span>
+                </li>
+                <li>
+                  <span aria-hidden="true" className="mr-1.5 text-muted">
+                    &rarr;
+                  </span>
+                  <span className="inline-block rounded border border-paper-edge bg-page-edge px-2 py-0.5 font-medium">
+                    {t.landingPreviewTerm}
+                  </span>
+                </li>
+                <li>
+                  <span aria-hidden="true" className="mr-1.5 text-muted">
+                    &rarr;
+                  </span>
+                  <span className="inline-block rounded border border-paper-edge bg-page-edge px-2 py-0.5 font-medium">
+                    {t.landingPreviewClarification}
+                  </span>
+                </li>
+              </ol>
+            </DocSheet>
+          </DocStack>
           <figcaption className="mt-3 border-t border-edge pt-3 text-xs text-muted">
             {t.landingExampleCaption}
           </figcaption>

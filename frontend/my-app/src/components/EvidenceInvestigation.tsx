@@ -11,7 +11,7 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button, Card, EmptyState, EvidenceQuote, Spinner, StatusLabel } from "@/components/ui";
 import Disclaimer, { ContextualNotice } from "@/components/Disclaimer";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
@@ -23,6 +23,7 @@ import {
 } from "@/lib/privacyGate";
 import { mapServiceError } from "@/lib/aiErrors";
 import { useLang } from "@/lib/lang";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import {
   format,
   getPlanCategoryLabel,
@@ -84,13 +85,64 @@ function AssessmentLabel({ value }: { value: string }) {
   return <StatusLabel tone={tone}>{labels[key]}</StatusLabel>;
 }
 
-function TransientFindingCard({ finding }: { finding: InvestigationFinding }) {
+function findingCardKey(finding: InvestigationFinding, index: number): string {
+  return `${finding.source_url}-${finding.claim}-${index}`;
+}
+
+/**
+ * Truthful finding-to-source linkage: an exact URL match, or the finding
+ * URL extending the retrieved source URL. Anything else returns null and
+ * no link affordance is rendered, rather than a guessed one.
+ */
+function matchSourceForFinding(
+  finding: InvestigationFinding,
+  sources: RetrievedSource[],
+): RetrievedSource | null {
+  const want = finding.source_url.trim();
+  if (!want) {
+    return null;
+  }
+  return (
+    sources.find((source) => {
+      const url = source.url.trim();
+      return url !== "" && (url === want || want.startsWith(url));
+    }) ?? null
+  );
+}
+
+function TransientFindingCard({
+  finding,
+  linkedSourceId,
+  selected,
+  onSelect,
+}: {
+  finding: InvestigationFinding;
+  linkedSourceId: string | null;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   const { language } = useLang();
   const t = getStrings(language);
   return (
-    <li className="py-4">
+    <li
+      aria-current={selected ? "true" : undefined}
+      className={`rounded-md border border-transparent px-3 py-4 transition-[border-color,background-color] duration-200 ease-out hover:bg-paper ${
+        selected ? "border-paper-edge bg-paper" : ""
+      }`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-semibold">{finding.claim}</p>
+        {linkedSourceId !== null ? (
+          <button
+            type="button"
+            onClick={onSelect}
+            aria-pressed={selected}
+            className="cursor-pointer text-left font-semibold underline decoration-evidence/40 underline-offset-2 transition-[text-decoration-color] duration-150 ease-out hover:decoration-evidence"
+          >
+            {finding.claim}
+          </button>
+        ) : (
+          <p className="font-semibold">{finding.claim}</p>
+        )}
         <AssessmentLabel value={finding.assessment} />
       </div>
       <EvidenceQuote>&ldquo;{finding.excerpt}&rdquo;</EvidenceQuote>
@@ -161,6 +213,11 @@ export default function EvidenceInvestigation({
   const [approval, setApproval] = useState<PrivacyApproval | null>(null);
   const [sanitizedPosting, setSanitizedPosting] = useState<string | null>(null);
   const [privacySourceHash, setPrivacySourceHash] = useState<string | null>(null);
+  const [selectedFindingKey, setSelectedFindingKey] = useState<string | null>(null);
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
+  const [openExcerpts, setOpenExcerpts] = useState<Record<string, boolean>>({});
+  const sourceRefs = useRef(new Map<string, HTMLLIElement>());
+  const reducedMotion = useReducedMotion();
 
   const running = phase === "retrieving" || phase === "comparing";
 
@@ -196,6 +253,9 @@ export default function EvidenceInvestigation({
     setFindingIssues([]);
     setUncovered([]);
     setRunError(null);
+    setSelectedFindingKey(null);
+    setSelectedSourceId(null);
+    setOpenExcerpts({});
   };
 
   const handleRun = async () => {
@@ -227,6 +287,9 @@ export default function EvidenceInvestigation({
     setFindingIssues([]);
     setUncovered([]);
     setInferenceSource(null);
+    setSelectedFindingKey(null);
+    setSelectedSourceId(null);
+    setOpenExcerpts({});
     setPhase("retrieving");
     setStatus(t.evContacting);
     try {
@@ -319,6 +382,34 @@ export default function EvidenceInvestigation({
     ["conflicting", t.evGroupConflicting],
     ["insufficient-evidence", t.evGroupInsufficient],
   ] as const;
+
+  // Selecting a finding reveals its supporting excerpts: the matching
+  // source details open, the block highlights, and focus moves there.
+  // Scroll honors the reduced-motion preference (instant when reduced).
+  const selectFinding = (finding: InvestigationFinding, key: string) => {
+    setSelectedFindingKey(key);
+    const target = matchSourceForFinding(finding, retrievedSources);
+    if (!target) {
+      return;
+    }
+    setSelectedSourceId(target.source_id);
+    setOpenExcerpts((prev) => ({ ...prev, [target.source_id]: true }));
+    requestAnimationFrame(() => {
+      const el = sourceRefs.current.get(target.source_id);
+      if (!el) {
+        return;
+      }
+      el.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "nearest" });
+      el.focus({ preventScroll: true });
+    });
+  };
+
+  const handleSourceToggle = (sourceId: string, open: boolean) => {
+    setOpenExcerpts((prev) => ({ ...prev, [sourceId]: open }));
+    if (open) {
+      setSelectedSourceId(sourceId);
+    }
+  };
 
   return (
     <Card
@@ -458,44 +549,73 @@ export default function EvidenceInvestigation({
       )}
 
       {showResults && (
-        <div className="mt-6 flex flex-col gap-6">
+        <div className="oc-animate-doc-arrive mt-6 flex flex-col gap-6">
           <section aria-labelledby="oc-sources">
             <h3 id="oc-sources" className="font-semibold">
               {format(t.evSourcesTitle, { count: String(retrievedSources.length) })}
             </h3>
             {retrievedSources.length > 0 ? (
               <ul className="mt-2 flex flex-col gap-2">
-                {retrievedSources.map((source) => (
-                  <li key={source.source_id} className="text-sm leading-6">
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
+                {retrievedSources.map((source) => {
+                  const sourceSelected = selectedSourceId === source.source_id;
+                  return (
+                    <li
+                      key={source.source_id}
+                      ref={(el) => {
+                        if (el) {
+                          sourceRefs.current.set(source.source_id, el);
+                        } else {
+                          sourceRefs.current.delete(source.source_id);
+                        }
+                      }}
+                      tabIndex={-1}
+                      aria-current={sourceSelected ? "true" : undefined}
+                      onClick={(event) => {
+                        if ((event.target as HTMLElement).closest("a, summary")) {
+                          return;
+                        }
+                        setSelectedSourceId(source.source_id);
+                      }}
+                      className={`rounded-md border border-transparent px-3 py-1 text-sm leading-6 transition-[border-color,background-color] duration-200 ease-out hover:bg-paper ${
+                        sourceSelected ? "oc-animate-highlight border-paper-edge bg-paper" : ""
+                      }`}
                     >
-                      {source.title} {t.commonOpenInNewTab}
-                    </a>{" "}
-                    <span className="text-muted">
-                      · {t.commonRetrievedLabel} {source.retrieved_at} · {source.excerpts.length}{" "}
-                      {source.excerpts.length === 1 ? t.evExcerptOne : t.evExcerptMany}
-                    </span>
-                    <details className="mt-1">
-                      <summary className="cursor-pointer text-muted">
-                        {t.evShowExcerpts}
-                      </summary>
-                      <div className="mt-1 flex flex-col gap-2">
-                        {source.excerpts.map((excerpt, index) => (
-                          <EvidenceQuote key={`${source.source_id}-${index}`}>
-                            &ldquo;{excerpt.text}&rdquo;
-                            {excerpt.truncated && (
-                              <span className="text-muted"> {t.evTrimmed}</span>
-                            )}
-                          </EvidenceQuote>
-                        ))}
-                      </div>
-                    </details>
-                  </li>
-                ))}
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
+                      >
+                        {source.title} {t.commonOpenInNewTab}
+                      </a>{" "}
+                      <span className="text-muted">
+                        · {t.commonRetrievedLabel} {source.retrieved_at} · {source.excerpts.length}{" "}
+                        {source.excerpts.length === 1 ? t.evExcerptOne : t.evExcerptMany}
+                      </span>
+                      <details
+                        className="mt-1"
+                        open={openExcerpts[source.source_id] === true}
+                        onToggle={(event) =>
+                          handleSourceToggle(source.source_id, event.currentTarget.open)
+                        }
+                      >
+                        <summary className="cursor-pointer text-muted">
+                          {t.evShowExcerpts}
+                        </summary>
+                        <div className="mt-1 flex flex-col gap-2">
+                          {source.excerpts.map((excerpt, index) => (
+                            <EvidenceQuote key={`${source.source_id}-${index}`}>
+                              &ldquo;{excerpt.text}&rdquo;
+                              {excerpt.truncated && (
+                                <span className="text-muted"> {t.evTrimmed}</span>
+                              )}
+                            </EvidenceQuote>
+                          ))}
+                        </div>
+                      </details>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="mt-1 text-sm text-muted">{t.evNoSources}</p>
@@ -531,12 +651,22 @@ export default function EvidenceInvestigation({
                             {label} ({grouped[key]!.length})
                           </h4>
                           <ul className="mt-2 divide-y divide-edge">
-                            {grouped[key]!.map((finding, index) => (
-                              <TransientFindingCard
-                                key={`${finding.source_url}-${finding.claim}-${index}`}
-                                finding={finding}
-                              />
-                            ))}
+                            {grouped[key]!.map((finding, index) => {
+                              const cardKey = findingCardKey(finding, index);
+                              const linked = matchSourceForFinding(finding, retrievedSources);
+                              return (
+                                <TransientFindingCard
+                                  key={`${finding.source_url}-${finding.claim}-${index}`}
+                                  finding={finding}
+                                  linkedSourceId={linked?.source_id ?? null}
+                                  selected={
+                                    selectedFindingKey === cardKey ||
+                                    (linked !== null && linked.source_id === selectedSourceId)
+                                  }
+                                  onSelect={() => selectFinding(finding, cardKey)}
+                                />
+                              );
+                            })}
                           </ul>
                         </div>
                       ),

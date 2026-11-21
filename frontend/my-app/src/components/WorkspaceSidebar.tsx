@@ -80,7 +80,7 @@ export default function WorkspaceSidebar({
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               title={slim ? item.label : undefined}
-              className={`block rounded-md px-3 py-2 text-sm font-medium ${
+              className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out ${
                 active ? "bg-brand-soft font-semibold text-navy" : "hover:bg-brand-soft"
               } ${slim ? "text-center" : ""}`}
             >
@@ -100,14 +100,14 @@ export default function WorkspaceSidebar({
         aria-label={t.wsSidebarAria}
         className={`hidden shrink-0 flex-col gap-3 lg:flex ${collapsed ? "w-16" : "w-60"}`}
       >
-        <nav aria-label={t.wsSectionsAria} className="rounded-lg border border-edge bg-card p-2">
+        <nav aria-label={t.wsSectionsAria} className="rounded-lg border border-paper-edge bg-paper p-2 shadow-[0_2px_10px_var(--oc-paper-shadow)]">
           {list(undefined, collapsed)}
         </nav>
         <button
           type="button"
           onClick={onToggleCollapse}
           aria-expanded={!collapsed}
-          className="cursor-pointer rounded-md border border-edge bg-card px-3 py-2 text-sm font-medium hover:bg-brand-soft"
+          className="cursor-pointer rounded-md border border-edge bg-card px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out hover:bg-brand-soft"
         >
           {collapsed ? t.wsExpand : t.wsCollapse}
         </button>
@@ -122,14 +122,14 @@ export default function WorkspaceSidebar({
             onClick={onCloseDrawer}
             className="absolute inset-0 h-full w-full cursor-default bg-black/40"
           />
-          <div className="absolute left-0 top-0 flex h-full w-72 flex-col gap-3 overflow-y-auto bg-card p-4">
+          <div className="oc-animate-doc-arrive absolute left-0 top-0 flex h-full w-72 flex-col gap-3 overflow-y-auto border-r border-paper-edge bg-paper p-4">
             <div className="flex items-center justify-between">
               <p className="font-semibold">{t.wsSidebarAria}</p>
               <button
                 type="button"
                 onClick={onCloseDrawer}
                 autoFocus
-                className="cursor-pointer rounded-md border border-edge px-3 py-1.5 text-sm font-medium hover:bg-brand-soft"
+                className="cursor-pointer rounded-md border border-edge px-3 py-1.5 text-sm font-medium transition-colors duration-150 ease-out hover:bg-brand-soft"
               >
                 {t.commonClose}
               </button>

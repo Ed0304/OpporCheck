@@ -21,6 +21,10 @@
   --oc-evidence: #0b7a6e;
   --oc-evidence-soft: #e0f0ed;
   --oc-on-action: #ffffff;
+  --oc-paper: #faf6ec;
+  --oc-paper-edge: #e2d7bd;
+  --oc-page-edge: #ece2c9;
+  --oc-paper-shadow: rgba(74, 58, 28, 0.14);
   color-scheme: light;
 }
 
@@ -38,6 +42,10 @@
   --oc-evidence: #69d3c2;
   --oc-evidence-soft: #143b37;
   --oc-on-action: #0d1424;
+  --oc-paper: #23201a;
+  --oc-paper-edge: #4d4435;
+  --oc-page-edge: #2f2a22;
+  --oc-paper-shadow: rgba(0, 0, 0, 0.55);
   color-scheme: dark;
 }
 
@@ -54,6 +62,9 @@
   --color-evidence: var(--oc-evidence);
   --color-evidence-soft: var(--oc-evidence-soft);
   --color-on-action: var(--oc-on-action);
+  --color-paper: var(--oc-paper);
+  --color-paper-edge: var(--oc-paper-edge);
+  --color-page-edge: var(--oc-page-edge);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Arial, sans-serif;
 }
@@ -95,5 +106,90 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Document Atelier — restrained paper motion.
+   Durations: hover/focus 150-200ms, panels 200-300ms.
+   Truthfulness rule: never animate success ahead of confirmation. */
+@keyframes oc-doc-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes oc-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes oc-highlight-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(11, 122, 110, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(11, 122, 110, 0.25);
+  }
+}
+
+.oc-animate-doc-arrive {
+  animation: oc-doc-arrive 240ms ease-out both;
+}
+
+.oc-animate-drift {
+  animation: oc-drift 7s ease-in-out infinite;
+}
+
+.oc-animate-highlight {
+  animation: oc-highlight-pulse 1.6s ease-in-out 2;
+}
+
+/* Page-edge detail: stacked-sheet edge lines under a DocSheet. */
+.oc-page-edge {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--oc-page-edge) 0,
+    var(--oc-page-edge) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+
+/* DocStack layers: transform-only separation, no layout shift. */
+.oc-doc-stack-layer {
+  transition: transform 220ms ease;
+}
+
+.oc-doc-stack:hover .oc-doc-stack-layer[data-layer="1"],
+.oc-doc-stack:focus-within .oc-doc-stack-layer[data-layer="1"] {
+  transform: translate(-7px, -5px) rotate(-2deg);
+}
+
+.oc-doc-stack:hover .oc-doc-stack-layer[data-layer="2"],
+.oc-doc-stack:focus-within .oc-doc-stack-layer[data-layer="2"] {
+  transform: translate(7px, -3px) rotate(1.5deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oc-animate-doc-arrive,
+  .oc-animate-drift,
+  .oc-animate-highlight {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .oc-doc-stack-layer {
+    transform: none !important;
   }
 }

@@ -16,17 +16,19 @@ export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] })
   const t = getStrings(language);
   const list = entries ?? UK_GUIDANCE;
   return (
-    <ul className="grid gap-4 md:grid-cols-2">
+    <ul className="oc-animate-doc-arrive grid gap-4 md:grid-cols-2">
       {list.map((entry) => (
         <li
           key={entry.url}
-          className="rounded-lg border border-edge bg-card p-5 shadow-[0_1px_2px_rgba(23,59,112,0.06)]"
+          className="overflow-hidden rounded-lg border border-paper-edge bg-paper shadow-[0_2px_10px_var(--oc-paper-shadow)] transition-colors duration-150 ease-out hover:border-evidence/40"
         >
+          <div aria-hidden="true" className="oc-page-edge h-1.5 w-full" />
+          <div className="p-5">
           <a
             href={entry.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
+            className="font-semibold text-evidence underline decoration-evidence/40 underline-offset-2 transition-colors duration-150 ease-out hover:decoration-evidence"
           >
             {entry.title} <span aria-hidden>{t.commonOpenInNewTab}</span>
           </a>
@@ -35,6 +37,7 @@ export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] })
             {t.guidancePublisher} {entry.publisher} · {t.guidanceCountry} {entry.country} ·{" "}
             {t.guidanceReviewed} {entry.reviewed}
           </p>
+          </div>
         </li>
       ))}
     </ul>

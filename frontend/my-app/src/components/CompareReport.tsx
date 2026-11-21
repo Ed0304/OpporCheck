@@ -155,7 +155,7 @@ export default function CompareReport({
 
   return (
     <div className="flex flex-col gap-6">
-      <section aria-labelledby="oc-exec">
+      <section aria-labelledby="oc-exec" className="oc-animate-doc-arrive">
         <h3 id="oc-exec" className="font-semibold">
           {t.crExecSummary}
         </h3>
@@ -172,7 +172,7 @@ export default function CompareReport({
         <p className="mt-1 text-sm leading-6 text-muted">{t.crQuotesNote}</p>
       </section>
 
-      <section aria-labelledby="oc-docs">
+      <section aria-labelledby="oc-docs" className="oc-animate-doc-arrive">
         <h3 id="oc-docs" className="font-semibold">
           {t.crDocsIncluded}
         </h3>
@@ -193,14 +193,18 @@ export default function CompareReport({
       <ContextualNotice>{getComparisonContextNotice(language)}</ContextualNotice>
 
       {findings.length === 0 ? (
-        <p className="text-sm leading-6">
+        <p className="oc-animate-doc-arrive text-sm leading-6">
           {t.crNoTerms} {getUnverifiedPhrase(language)}
         </p>
       ) : (
         groups.map(
           (group) =>
             summary[group.key] > 0 && (
-              <section key={group.key} aria-labelledby={`oc-${group.key}`}>
+              <section
+                key={group.key}
+                aria-labelledby={`oc-${group.key}`}
+                className="oc-animate-doc-arrive"
+              >
                 <h3 id={`oc-${group.key}`} className="font-semibold">
                   {group.title} ({summary[group.key]})
                 </h3>
@@ -221,7 +225,7 @@ export default function CompareReport({
       )}
 
       {questions.length > 0 && (
-        <section aria-labelledby="oc-questions">
+        <section aria-labelledby="oc-questions" className="oc-animate-doc-arrive">
           <h3 id="oc-questions" className="font-semibold">
             {t.crQuestions}
           </h3>
@@ -233,7 +237,7 @@ export default function CompareReport({
         </section>
       )}
 
-      <section aria-labelledby="oc-limits">
+      <section aria-labelledby="oc-limits" className="oc-animate-doc-arrive">
         <h3 id="oc-limits" className="font-semibold">
           {t.crLimits}
         </h3>

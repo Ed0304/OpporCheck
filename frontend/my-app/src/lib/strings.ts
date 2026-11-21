@@ -150,6 +150,10 @@ const EN = {
     "Overtime hours shall be compensated at one hundred fifty percent of the basic hourly wage.",
   landingExampleSource: "Source: Example employment terms · p. 2",
   landingExampleCaption: "Illustrative example — not a real investigation.",
+  landingPreviewPromise: "Promise",
+  landingPreviewTerm: "Term",
+  landingPreviewClarification: "Clarification",
+  landingPreviewAnnotation: "Pinned to the exact term",
   landingWhatIs: "What is OpporCheck?",
   landingWhatIsText:
     "OpporCheck is an investigation workspace for overseas employment. Instead of reading a " +
@@ -931,6 +935,10 @@ const ID: UiStrings = {
     "Jam lembur akan diberi kompensasi sebesar seratus lima puluh persen dari upah dasar per jam.",
   landingExampleSource: "Sumber: Contoh ketentuan kerja · hlm. 2",
   landingExampleCaption: "Contoh ilustratif — bukan investigasi nyata.",
+  landingPreviewPromise: "Janji",
+  landingPreviewTerm: "Ketentuan",
+  landingPreviewClarification: "Klarifikasi",
+  landingPreviewAnnotation: "Disematkan pada ketentuan yang tepat",
   landingWhatIs: "Apa itu OpporCheck?",
   landingWhatIsText:
     "OpporCheck adalah ruang kerja investigasi untuk pekerjaan luar negeri. Daripada membaca " +

@@ -8,8 +8,9 @@
 
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GenerativeModel } from "firebase/ai";
+import { DocSheet, DocStack } from "@/components/atelier";
 import CompareReport, { type ReportDocument } from "@/components/CompareReport";
 import { ContextualNotice } from "@/components/Disclaimer";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
@@ -58,6 +59,7 @@ import { failedPageNumbers } from "@/lib/documents";
 import { describeActualSource, type PrivacyApproval } from "@/lib/privacyGate";
 import { useLang } from "@/lib/lang";
 import { format, getStrings, type UiLanguage } from "@/lib/strings";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import { mapServiceError } from "@/lib/aiErrors";
 import { apiBase, uploadPdf, validatePdfFile } from "@/lib/documents";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
@@ -139,6 +141,22 @@ export default function ComparePage() {
   const [droppedCount, setDroppedCount] = useState(0);
   const [privacyTarget, setPrivacyTarget] = useState<PrivacyTarget | null>(null);
   const [comparisonSource, setComparisonSource] = useState<string | null>(null);
+
+  const reducedMotion = useReducedMotion();
+  const reportRef = useRef<HTMLDivElement>(null);
+  const seenFindingsRef = useRef<PromiseToPaperFinding[] | null>(null);
+
+  // Results transition into view only after a comparison actually
+  // succeeds: findings is non-null solely on the success path.
+  useEffect(() => {
+    if (findings !== null && seenFindingsRef.current !== findings) {
+      reportRef.current?.scrollIntoView({
+        behavior: reducedMotion ? "auto" : "smooth",
+        block: "start",
+      });
+    }
+    seenFindingsRef.current = findings;
+  }, [findings, reducedMotion]);
 
   const idCounter = useRef(0);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -614,107 +632,120 @@ export default function ComparePage() {
           ) : (
             <ul className="mt-2 flex flex-col gap-2">
               {docs.map((doc) => (
-                <li
-                  key={doc.input.id}
-                  className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-edge p-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{doc.input.fileName}</p>
-                    <p className="text-xs text-muted">
-                      {doc.input.source === "pdf"
-                        ? `${doc.input.pages.length} ${doc.input.pages.length === 1 ? t.revOcrPageOne : t.revOcrPageMany}`
-                        : t.cmpPastedText}
-                      {" · "}
-                      <StatusLabel
-                        tone={
-                          doc.status === "extracted"
-                            ? "ok"
-                            : doc.status === "error"
-                              ? "bad"
-                              : doc.status === "extracting"
-                                ? "info"
-                                : "idle"
-                        }
-                      >
-                        {doc.status === "extracted"
-                          ? format(t.cmpTermsExtracted, { count: String(doc.terms.length) })
-                          : doc.status === "error"
-                            ? t.cmpExtractionFailed
-                            : doc.status === "extracting"
-                              ? t.cmpExtracting
-                              : t.cmpAwaitingExtraction}
-                      </StatusLabel>
-                    </p>
-                    <p className="mt-1 text-xs text-muted">
-                      {format(t.cmpPrivacyPages, {
-                        done: String(approvedPageCount(doc.privacy, doc.input.pages)),
-                        total: String(doc.input.pages.length),
-                      })}
-                    </p>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {doc.input.pages.map((_, index) => {
-                        const done = isPageApproved(doc.privacy, doc.input.pages, index);
-                        return (
-                          <Button
-                            key={index}
-                            variant="ghost"
-                            disabled={running}
-                            onClick={() =>
-                              setPrivacyTarget({
-                                docId: doc.input.id,
-                                pageIndex: index,
-                                nonce: Date.now(),
-                              })
+                <li key={doc.input.id}>
+                  {/* Entrance plays on mount, which happens only after the
+                      doc was actually added (pushDoc runs solely on the
+                      upload/paste success paths). */}
+                  <DocStack label={doc.input.fileName} className="oc-animate-doc-arrive">
+                    <DocSheet
+                      eyebrow={docTypeLabels[doc.input.documentType]}
+                      title={doc.input.fileName}
+                      meta={
+                        <>
+                          {doc.input.source === "pdf"
+                            ? `${doc.input.pages.length} ${doc.input.pages.length === 1 ? t.revOcrPageOne : t.revOcrPageMany}`
+                            : t.cmpPastedText}
+                          {" · "}
+                          <StatusLabel
+                            tone={
+                              doc.status === "extracted"
+                                ? "ok"
+                                : doc.status === "error"
+                                  ? "bad"
+                                  : doc.status === "extracting"
+                                    ? "info"
+                                    : "idle"
                             }
-                            aria-label={format(t.cmpPagePrivacyAria, {
-                              action: done ? t.cmpRecheck : t.cmpCheck,
-                              page: String(index + 1),
-                              name: doc.input.fileName,
-                            })}
                           >
-                            {`${format(t.revPageLabel, { n: String(index + 1) })}${done ? " ✓" : ""}`}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                    {(doc.input.failedPages?.length ?? 0) > 0 && (
-                      <p className="mt-1 text-sm" role="alert">
-                        {format(t.revPagesFailed, { pages: (doc.input.failedPages ?? []).join(", ") })}
-                      </p>
-                    )}
-                    {doc.error && (
-                      <p className="mt-1 text-sm" role="alert">
-                        {doc.error}
-                      </p>
-                    )}
-                  </div>
-                  <label className="text-sm">
-                    <span className="sr-only">
-                      {format(t.cmpDocTypeSr, { name: doc.input.fileName })}
-                    </span>
-                    <select
-                      value={doc.input.documentType}
-                      disabled={running}
-                      onChange={(event) =>
-                        changeDocType(doc.input.id, event.target.value as ContractDocumentType)
+                            {doc.status === "extracted"
+                              ? format(t.cmpTermsExtracted, { count: String(doc.terms.length) })
+                              : doc.status === "error"
+                                ? t.cmpExtractionFailed
+                                : doc.status === "extracting"
+                                  ? t.cmpExtracting
+                                  : t.cmpAwaitingExtraction}
+                          </StatusLabel>
+                        </>
                       }
-                      className="h-9 rounded-md border border-edge bg-card px-2 text-sm"
+                      actions={
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="text-sm">
+                            <span className="sr-only">
+                              {format(t.cmpDocTypeSr, { name: doc.input.fileName })}
+                            </span>
+                            <select
+                              value={doc.input.documentType}
+                              disabled={running}
+                              onChange={(event) =>
+                                changeDocType(doc.input.id, event.target.value as ContractDocumentType)
+                              }
+                              className="h-9 rounded-md border border-edge bg-card px-2 text-sm"
+                            >
+                              {DOC_TYPE_OPTIONS.map((option) => (
+                                <option key={option} value={option}>
+                                  {docTypeLabels[option]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <Button
+                            variant="ghost"
+                            onClick={() => removeDoc(doc.input.id)}
+                            disabled={running}
+                            aria-label={`${t.commonRemove} ${doc.input.fileName}`}
+                          >
+                            {t.commonRemove}
+                          </Button>
+                        </div>
+                      }
+                      className={
+                        privacyTarget?.docId === doc.input.id ? "oc-animate-highlight" : ""
+                      }
                     >
-                      {DOC_TYPE_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {docTypeLabels[option]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <Button
-                    variant="ghost"
-                    onClick={() => removeDoc(doc.input.id)}
-                    disabled={running}
-                    aria-label={`${t.commonRemove} ${doc.input.fileName}`}
-                  >
-                    {t.commonRemove}
-                  </Button>
+                      <p className="mt-1 text-xs text-muted">
+                        {format(t.cmpPrivacyPages, {
+                          done: String(approvedPageCount(doc.privacy, doc.input.pages)),
+                          total: String(doc.input.pages.length),
+                        })}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {doc.input.pages.map((_, index) => {
+                          const done = isPageApproved(doc.privacy, doc.input.pages, index);
+                          return (
+                            <Button
+                              key={index}
+                              variant="ghost"
+                              disabled={running}
+                              onClick={() =>
+                                setPrivacyTarget({
+                                  docId: doc.input.id,
+                                  pageIndex: index,
+                                  nonce: Date.now(),
+                                })
+                              }
+                              aria-label={format(t.cmpPagePrivacyAria, {
+                                action: done ? t.cmpRecheck : t.cmpCheck,
+                                page: String(index + 1),
+                                name: doc.input.fileName,
+                              })}
+                            >
+                              {`${format(t.revPageLabel, { n: String(index + 1) })}${done ? " ✓" : ""}`}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      {(doc.input.failedPages?.length ?? 0) > 0 && (
+                        <p className="mt-1 text-sm" role="alert">
+                          {format(t.revPagesFailed, { pages: (doc.input.failedPages ?? []).join(", ") })}
+                        </p>
+                      )}
+                      {doc.error && (
+                        <p className="mt-1 text-sm" role="alert">
+                          {doc.error}
+                        </p>
+                      )}
+                    </DocSheet>
+                  </DocStack>
                 </li>
               ))}
             </ul>
@@ -913,6 +944,7 @@ export default function ComparePage() {
         )}
       </Card>
 
+      <div ref={reportRef} className="scroll-mt-4">
       <Card title={t.cmpReportTitle} description={t.cmpReportDesc}>
         <p aria-live="polite" className="text-sm text-muted">
           {running ? statusMsg : ""}
@@ -976,6 +1008,7 @@ export default function ComparePage() {
           </>
         )}
       </Card>
+      </div>
     </div>
   );
 }

@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { DocStack } from "@/components/atelier";
 import { Card, EmptyState, Spinner, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { localeForCountryName } from "@/lib/corridors";
@@ -78,7 +79,7 @@ export default function WorkspaceOverviewPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
+      <div className="oc-animate-doc-arrive">
         <h1 className="text-2xl font-bold tracking-tight">{t.ovWelcome}{displayName ? `, ${displayName}` : ""}</h1>
         <p className="mt-1 max-w-2xl leading-6 text-muted">
           {t.ovIntro}
@@ -86,17 +87,18 @@ export default function WorkspaceOverviewPage() {
         <div className="mt-4">
           <Link
             href="/workspace/review"
-            className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action hover:bg-brand-strong"
+            className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong"
           >
             {t.ovReviewCta}
           </Link>
         </div>
       </div>
 
+      <DocStack label={t.ovRecent} layers={1}>
       <Card
         title={t.ovRecent}
         actions={
-          <Link href="/workspace/investigations" className="text-sm font-medium text-brand underline">
+          <Link href="/workspace/investigations" className="text-sm font-medium text-brand underline transition-colors duration-150 ease-out hover:text-brand-strong">
             {t.ovViewAll}
           </Link>
         }
@@ -121,7 +123,7 @@ export default function WorkspaceOverviewPage() {
             action={
               <Link
                 href="/workspace/review"
-                className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
+                className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong"
               >
                 {t.ovReviewCta}
               </Link>
@@ -134,7 +136,7 @@ export default function WorkspaceOverviewPage() {
               <li key={item.id}>
                 <Link
                   href={`/workspace/investigations/${item.id}`}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5"
+                  className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md py-2.5 transition-colors duration-150 ease-out hover:bg-brand-soft"
                 >
                   <span className="min-w-44 flex-1 font-medium">{item.title}</span>
                   <span className="text-sm text-muted">{item.report?.destination_country ?? t.commonUnknownCountry}</span>
@@ -148,6 +150,7 @@ export default function WorkspaceOverviewPage() {
           </ul>
         )}
       </Card>
+      </DocStack>
     </div>
   );
 }

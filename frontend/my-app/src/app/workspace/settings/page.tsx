@@ -55,7 +55,7 @@ export default function SettingsPage() {
           {themeOptions.map((option) => (
             <label
               key={option.value}
-              className="flex cursor-pointer items-start gap-3 rounded-md border border-edge p-3 hover:bg-brand-soft"
+              className="flex cursor-pointer items-start gap-3 rounded-md border border-edge p-3 transition-colors duration-150 ease-out hover:bg-brand-soft"
             >
               <input
                 type="radio"
