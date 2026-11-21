@@ -1,5 +1,6 @@
-// Language toggle for the corridor surfaces: English / Bahasa Indonesia.
-// Compact radio buttons; the choice persists via LangProvider.
+// Language toggle for the evidence investigation panel: English / Bahasa
+// Indonesia. Compact radio buttons; the choice persists via LangProvider.
+// (The resources section uses its own local ResourceLanguageFilter.)
 
 "use client";
 
