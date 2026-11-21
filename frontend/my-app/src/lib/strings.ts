@@ -192,6 +192,18 @@ const EN = {
   landingLimit2: "Missing information means unverified, not false.",
   landingLimit3:
     "Always confirm visa, pay, and contract details with official sources and, where needed, qualified advisers.",
+  landingSamplesTitle: "Bring any of these to the desk",
+  landingSamplesNote:
+    "Illustrative examples only. They are not user submissions, and OpporCheck has not verified them.",
+  landingSampleBadge: "Sample",
+  landingSampleReceipt: "Receipt",
+  landingSampleReceiptFocus: "Totals, dates, and seller details",
+  landingSampleInvoice: "Invoice",
+  landingSampleInvoiceFocus: "Line items, due dates, and terms",
+  landingSampleContract: "Contract",
+  landingSampleContractFocus: "Pay, hours, and key clauses",
+  landingSampleListing: "Opportunity listing",
+  landingSampleListingFocus: "Promises to check against paperwork",
   // ---- About page ----
   aboutTitle: "About OpporCheck",
   aboutP1:
@@ -982,6 +994,18 @@ const ID: UiStrings = {
   landingLimit2: "Informasi yang hilang berarti belum terverifikasi, bukan salah.",
   landingLimit3:
     "Selalu konfirmasi detail visa, gaji, dan kontrak dengan sumber resmi dan, bila perlu, penasihat yang berkualifikasi.",
+  landingSamplesTitle: "Bawa salah satu dokumen ini ke meja",
+  landingSamplesNote:
+    "Hanya contoh ilustratif. Ini bukan kiriman pengguna, dan OpporCheck belum memverifikasinya.",
+  landingSampleBadge: "Contoh",
+  landingSampleReceipt: "Kuitansi",
+  landingSampleReceiptFocus: "Total, tanggal, dan detail penjual",
+  landingSampleInvoice: "Faktur",
+  landingSampleInvoiceFocus: "Rincian item, jatuh tempo, dan ketentuan",
+  landingSampleContract: "Kontrak",
+  landingSampleContractFocus: "Gaji, jam kerja, dan klausul utama",
+  landingSampleListing: "Lowongan peluang",
+  landingSampleListingFocus: "Janji yang perlu dicocokkan dengan dokumen",
   aboutTitle: "Tentang OpporCheck",
   aboutP1:
     "OpporCheck adalah ruang kerja investigasi pekerjaan luar negeri bertenaga AI. OpporCheck membantu " +
