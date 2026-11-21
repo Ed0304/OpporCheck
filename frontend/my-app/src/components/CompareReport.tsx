@@ -10,6 +10,7 @@
 "use client";
 
 import Disclaimer, { ContextualNotice } from "@/components/Disclaimer";
+import { Reveal } from "@/components/motion";
 import { EvidenceQuote, StatusLabel } from "@/components/ui";
 import { getComparisonContextNotice } from "@/lib/disclaimer";
 import { useLang } from "@/lib/lang";
@@ -155,7 +156,8 @@ export default function CompareReport({
 
   return (
     <div className="flex flex-col gap-6">
-      <section aria-labelledby="oc-exec" className="oc-animate-doc-arrive">
+      <Reveal>
+      <section aria-labelledby="oc-exec">
         <h3 id="oc-exec" className="font-semibold">
           {t.crExecSummary}
         </h3>
@@ -171,8 +173,10 @@ export default function CompareReport({
         </p>
         <p className="mt-1 text-sm leading-6 text-muted">{t.crQuotesNote}</p>
       </section>
+      </Reveal>
 
-      <section aria-labelledby="oc-docs" className="oc-animate-doc-arrive">
+      <Reveal delay={0.05}>
+      <section aria-labelledby="oc-docs">
         <h3 id="oc-docs" className="font-semibold">
           {t.crDocsIncluded}
         </h3>
@@ -189,43 +193,47 @@ export default function CompareReport({
           ))}
         </ul>
       </section>
+      </Reveal>
 
-      <ContextualNotice>{getComparisonContextNotice(language)}</ContextualNotice>
+      <Reveal delay={0.1}>
+        <ContextualNotice>{getComparisonContextNotice(language)}</ContextualNotice>
+      </Reveal>
 
       {findings.length === 0 ? (
-        <p className="oc-animate-doc-arrive text-sm leading-6">
-          {t.crNoTerms} {getUnverifiedPhrase(language)}
-        </p>
+        <Reveal delay={0.1}>
+          <p className="text-sm leading-6">
+            {t.crNoTerms} {getUnverifiedPhrase(language)}
+          </p>
+        </Reveal>
       ) : (
         groups.map(
-          (group) =>
+          (group, groupIndex) =>
             summary[group.key] > 0 && (
-              <section
-                key={group.key}
-                aria-labelledby={`oc-${group.key}`}
-                className="oc-animate-doc-arrive"
-              >
-                <h3 id={`oc-${group.key}`} className="font-semibold">
-                  {group.title} ({summary[group.key]})
-                </h3>
-                <ul className="mt-2 flex flex-col gap-6">
-                  {findings
-                    .filter((finding) => finding.status === group.key)
-                    .map((finding, index) => (
-                      <FindingCard
-                        key={`${finding.category}-${index}`}
-                        finding={finding}
-                        sourceById={sourceById}
-                      />
-                    ))}
-                </ul>
-              </section>
+              <Reveal key={group.key} delay={Math.min(groupIndex * 0.05, 0.15)}>
+                <section aria-labelledby={`oc-${group.key}`}>
+                  <h3 id={`oc-${group.key}`} className="font-semibold">
+                    {group.title} ({summary[group.key]})
+                  </h3>
+                  <ul className="mt-2 flex flex-col gap-6">
+                    {findings
+                      .filter((finding) => finding.status === group.key)
+                      .map((finding, index) => (
+                        <FindingCard
+                          key={`${finding.category}-${index}`}
+                          finding={finding}
+                          sourceById={sourceById}
+                        />
+                      ))}
+                  </ul>
+                </section>
+              </Reveal>
             ),
         )
       )}
 
       {questions.length > 0 && (
-        <section aria-labelledby="oc-questions" className="oc-animate-doc-arrive">
+        <Reveal delay={0.05}>
+        <section aria-labelledby="oc-questions">
           <h3 id="oc-questions" className="font-semibold">
             {t.crQuestions}
           </h3>
@@ -235,9 +243,11 @@ export default function CompareReport({
             ))}
           </ul>
         </section>
+        </Reveal>
       )}
 
-      <section aria-labelledby="oc-limits" className="oc-animate-doc-arrive">
+      <Reveal delay={0.05}>
+      <section aria-labelledby="oc-limits">
         <h3 id="oc-limits" className="font-semibold">
           {t.crLimits}
         </h3>
@@ -261,6 +271,7 @@ export default function CompareReport({
           <li>{t.crMissingMeans}</li>
         </ul>
       </section>
+      </Reveal>
 
       <Disclaimer />
     </div>

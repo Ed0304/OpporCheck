@@ -5,8 +5,10 @@
 "use client";
 
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import { motion } from "motion/react";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
+import { OC_DURATION, OC_EASE } from "@/components/motion";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -19,13 +21,21 @@ const BUTTON_STYLES: Record<ButtonVariant, string> = {
     "dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/50",
 };
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// Motion redefines these gesture/animation handlers with its own
+// signatures; omit the DOM versions so the props stay assignable.
+// No caller passes drag or CSS-animation handlers to Button.
+interface ButtonProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "onAnimationStart" | "onDrag" | "onDragStart" | "onDragEnd"
+> {
   variant?: ButtonVariant;
 }
 
 export function Button({ variant = "primary", className = "", ...props }: ButtonProps) {
   return (
-    <button
+    <motion.button
+      whileTap={props.disabled ? undefined : { scale: 0.97 }}
+      transition={{ duration: OC_DURATION.fast, ease: OC_EASE }}
       className={`inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${BUTTON_STYLES[variant]} ${className}`}
       {...props}
     />
@@ -46,8 +56,11 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section
+    <motion.section
       aria-label={title}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: OC_DURATION.panel, ease: OC_EASE }}
       className={`rounded-lg border border-edge bg-card p-5 shadow-[0_1px_2px_rgba(23,59,112,0.06)] ${className}`}
     >
       {(title || actions) && (
@@ -60,7 +73,7 @@ export function Card({
         </div>
       )}
       {children}
-    </section>
+    </motion.section>
   );
 }
 

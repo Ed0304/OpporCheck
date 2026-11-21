@@ -4,6 +4,7 @@
 "use client";
 
 import Disclaimer from "@/components/Disclaimer";
+import { Enter } from "@/components/motion";
 import { DocSheet } from "@/components/atelier";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
@@ -12,7 +13,7 @@ export default function AboutContent() {
   const { language } = useLang();
   const t = getStrings(language);
   return (
-    <div className="oc-animate-doc-arrive max-w-3xl">
+    <Enter className="max-w-3xl">
       <h1 className="text-3xl font-bold tracking-tight text-navy">{t.aboutTitle}</h1>
       <div className="mt-4 flex flex-col gap-4 leading-7 text-muted">
         <p>{t.aboutP1}</p>
@@ -30,6 +31,6 @@ export default function AboutContent() {
           <Disclaimer />
         </DocSheet>
       </div>
-    </div>
+    </Enter>
   );
 }

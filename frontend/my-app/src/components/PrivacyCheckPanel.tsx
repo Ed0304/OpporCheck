@@ -13,6 +13,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "motion/react";
+import { OC_DURATION, OC_EASE } from "@/components/motion";
 import { Button, StatusLabel } from "@/components/ui";
 import { useLang } from "@/lib/lang";
 import { format, getStrings } from "@/lib/strings";
@@ -77,7 +79,12 @@ function DetectionRow({
   const [replaceText, setReplaceText] = useState("");
   const detection = item.detection;
   return (
-    <li className="rounded-md border border-edge p-3">
+    <motion.li
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: OC_DURATION.base, ease: OC_EASE }}
+      className="rounded-md border border-edge p-3"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">
           {detection.label} · {t.pvLineWord} {lineNumberOf(sourceText, detection.start)}
@@ -138,7 +145,7 @@ function DetectionRow({
           className="mt-2 h-9 w-full rounded-md border border-edge bg-card px-3 text-sm"
         />
       )}
-    </li>
+    </motion.li>
   );
 }
 

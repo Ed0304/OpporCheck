@@ -7,6 +7,8 @@
 
 "use client";
 
+import { motion } from "motion/react";
+import { OC_DURATION, OC_EASE } from "@/components/motion";
 import { UK_GUIDANCE, type GuidanceEntry } from "@/lib/guidance";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
@@ -16,10 +18,19 @@ export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] })
   const t = getStrings(language);
   const list = entries ?? UK_GUIDANCE;
   return (
-    <ul className="oc-animate-doc-arrive grid gap-4 md:grid-cols-2">
-      {list.map((entry) => (
-        <li
+    <ul className="grid gap-4 md:grid-cols-2">
+      {list.map((entry, index) => (
+        <motion.li
           key={entry.url}
+          initial={{ opacity: 0, y: 8 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-32px" }}
+          transition={{
+            duration: OC_DURATION.base,
+            ease: OC_EASE,
+            delay: Math.min((index % 4) * 0.05, 0.15),
+          }}
+          whileHover={{ y: -2 }}
           className="overflow-hidden rounded-lg border border-paper-edge bg-paper shadow-[0_2px_10px_var(--oc-paper-shadow)] transition-colors duration-150 ease-out hover:border-evidence/40"
         >
           <div aria-hidden="true" className="oc-page-edge h-1.5 w-full" />
@@ -38,7 +49,7 @@ export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] })
             {t.guidanceReviewed} {entry.reviewed}
           </p>
           </div>
-        </li>
+        </motion.li>
       ))}
     </ul>
   );

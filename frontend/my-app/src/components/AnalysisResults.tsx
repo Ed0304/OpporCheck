@@ -10,6 +10,7 @@
 "use client";
 
 import { ContextualNotice } from "@/components/Disclaimer";
+import { Reveal } from "@/components/motion";
 import { EvidenceQuote } from "@/components/ui";
 import {
   DEFAULT_CORRIDOR_CODE,
@@ -135,13 +136,16 @@ export default function AnalysisResults({
       : resolveCorridorCode(report.destination_country)) ?? DEFAULT_CORRIDOR_CODE;
   return (
     <div className="flex flex-col gap-6">
-      <section aria-labelledby="oc-summary">
-        <h3 id="oc-summary" className="font-semibold">
-          {t.anSummary}
-        </h3>
-        <p className="mt-1 leading-7">{buildSummary(t, report)}</p>
-      </section>
+      <Reveal>
+        <section aria-labelledby="oc-summary">
+          <h3 id="oc-summary" className="font-semibold">
+            {t.anSummary}
+          </h3>
+          <p className="mt-1 leading-7">{buildSummary(t, report)}</p>
+        </section>
+      </Reveal>
 
+      <Reveal delay={0.05}>
       <section aria-labelledby="oc-details">
         <h3 id="oc-details" className="font-semibold">
           {t.anDetails}
@@ -161,7 +165,9 @@ export default function AnalysisResults({
           ))}
         </dl>
       </section>
+      </Reveal>
 
+      <Reveal delay={0.1}>
       <section aria-labelledby="oc-concerns">
         <h3 id="oc-concerns" className="font-semibold">
           {t.anConcerns}
@@ -185,7 +191,9 @@ export default function AnalysisResults({
           <p className="mt-1 text-sm text-muted">{t.anNoConcerns}</p>
         )}
       </section>
+      </Reveal>
 
+      <Reveal delay={0.15}>
       <section aria-labelledby="oc-missing">
         <h3 id="oc-missing" className="font-semibold">
           {getMissingInfoLabel(language)}
@@ -201,15 +209,20 @@ export default function AnalysisResults({
         )}
         <p className="mt-1 text-sm text-muted">{t.commonMissingMeansUnverified}</p>
       </section>
+      </Reveal>
 
-      <section aria-labelledby="oc-next" className="rounded-md bg-brand-soft p-4">
-        <h3 id="oc-next" className="font-semibold">
-          {t.anNext}
-        </h3>
-        <p className="mt-1 text-sm leading-6">{nextAction(t, report)}</p>
-      </section>
+      <Reveal delay={0.2}>
+        <section aria-labelledby="oc-next" className="rounded-md bg-brand-soft p-4">
+          <h3 id="oc-next" className="font-semibold">
+            {t.anNext}
+          </h3>
+          <p className="mt-1 text-sm leading-6">{nextAction(t, report)}</p>
+        </section>
+      </Reveal>
 
-      <ContextualNotice>{getAnalysisContextNotice(language)}</ContextualNotice>
+      <Reveal delay={0.25}>
+        <ContextualNotice>{getAnalysisContextNotice(language)}</ContextualNotice>
+      </Reveal>
     </div>
   );
 }

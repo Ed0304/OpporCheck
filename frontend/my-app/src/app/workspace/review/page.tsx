@@ -14,6 +14,7 @@ import {
 } from "firebase/ai";
 import AnalysisResults from "@/components/AnalysisResults";
 import { ContextualNotice } from "@/components/Disclaimer";
+import { ActivePill, Crossfade, Enter, ProgressBar } from "@/components/motion";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import { Button, Card, EmptyState, Field, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
@@ -499,19 +500,7 @@ export default function ReviewPage() {
           )}
         </div>
         {device.progress !== null && device.state === "initializing" && (
-          <div
-            className="mt-2 h-1.5 w-full rounded-full bg-brand-soft"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(device.progress * 100)}
-            aria-label={t.revDeviceProgressAria}
-          >
-            <div
-              className="h-1.5 rounded-full bg-brand"
-              style={{ width: `${Math.round(device.progress * 100)}%` }}
-            />
-          </div>
+          <ProgressBar value={device.progress} label={t.revDeviceProgressAria} />
         )}
 
         <div role="tablist" aria-label={t.revInputMethodAria} className="mt-4 flex gap-2">
@@ -520,36 +509,40 @@ export default function ReviewPage() {
             role="tab"
             aria-selected={tab === "paste"}
             onClick={() => setTab("paste")}
-            className={`h-9 cursor-pointer rounded-md px-4 text-sm font-medium ${
-              tab === "paste" ? "bg-brand-soft text-navy" : "hover:bg-brand-soft"
+            className={`relative h-9 cursor-pointer rounded-md px-4 text-sm font-medium ${
+              tab === "paste" ? "text-navy" : "hover:bg-brand-soft"
             }`}
           >
-            {t.revTabPaste}
+            {tab === "paste" && <ActivePill pillId="oc-review-tabs" />}
+            <span className="relative">{t.revTabPaste}</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={tab === "pdf"}
             onClick={() => setTab("pdf")}
-            className={`h-9 cursor-pointer rounded-md px-4 text-sm font-medium ${
-              tab === "pdf" ? "bg-brand-soft text-navy" : "hover:bg-brand-soft"
+            className={`relative h-9 cursor-pointer rounded-md px-4 text-sm font-medium ${
+              tab === "pdf" ? "text-navy" : "hover:bg-brand-soft"
             }`}
           >
-            {t.revTabPdf}
+            {tab === "pdf" && <ActivePill pillId="oc-review-tabs" />}
+            <span className="relative">{t.revTabPdf}</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={tab === "image"}
             onClick={() => setTab("image")}
-            className={`h-9 cursor-pointer rounded-md px-4 text-sm font-medium ${
-              tab === "image" ? "bg-brand-soft text-navy" : "hover:bg-brand-soft"
+            className={`relative h-9 cursor-pointer rounded-md px-4 text-sm font-medium ${
+              tab === "image" ? "text-navy" : "hover:bg-brand-soft"
             }`}
           >
-            {t.revTabImage}
+            {tab === "image" && <ActivePill pillId="oc-review-tabs" />}
+            <span className="relative">{t.revTabImage}</span>
           </button>
         </div>
 
+        <Crossfade panelKey={tab}>
         {tab === "paste" && (
           <div role="tabpanel" className="mt-3">
             <label htmlFor="posting-text" className="block text-sm font-medium">
@@ -614,19 +607,7 @@ export default function ReviewPage() {
               </Field>
             </div>
             {pdf.phase === "uploading" && (
-              <div
-                className="mt-2 h-1.5 w-full rounded-full bg-brand-soft"
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={pdf.progress === null ? undefined : Math.round(pdf.progress * 100)}
-                aria-label={t.revPdfProgressAria}
-              >
-                <div
-                  className="h-1.5 rounded-full bg-brand"
-                  style={{ width: `${pdf.progress === null ? 100 : Math.round(pdf.progress * 100)}%` }}
-                />
-              </div>
+              <ProgressBar value={pdf.progress} label={t.revPdfProgressAria} />
             )}
             {pdf.message !== "" && pdf.phase !== "error" && (
               <p className="mt-2 text-sm" role="status">
@@ -773,23 +754,7 @@ export default function ReviewPage() {
               </Field>
             </div>
             {ocr.phase === "uploading" && (
-              <div
-                className="mt-2 h-1.5 w-full rounded-full bg-brand-soft"
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={
-                  ocr.progress === null ? undefined : Math.round(ocr.progress * 100)
-                }
-                aria-label={t.revImageProgressAria}
-              >
-                <div
-                  className="h-1.5 rounded-full bg-brand"
-                  style={{
-                    width: `${ocr.progress === null ? 100 : Math.round(ocr.progress * 100)}%`,
-                  }}
-                />
-              </div>
+              <ProgressBar value={ocr.progress} label={t.revImageProgressAria} />
             )}
             {ocr.message !== "" && ocr.phase === "ready" && (
               <p className="mt-2 text-sm" role="status">
@@ -841,6 +806,7 @@ export default function ReviewPage() {
             )}
           </div>
         )}
+        </Crossfade>
 
         <div className="mt-4">
           <Button
@@ -874,47 +840,51 @@ export default function ReviewPage() {
       </Card>
 
       <Card title={t.revPrivacyTitle} description={t.revPrivacyDesc}>
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusLabel tone={gateLabels[gateState].tone}>
-            {gateLabels[gateState].label}
-          </StatusLabel>
-          {gateState === "APPROVED" && approval && (
-            <span className="text-sm text-muted">
-              {approval.redactedCount} {t.revCountRedacted} · {approval.replacedCount}{" "}
-              {t.revCountReplaced} · {approval.retainedCount} {t.revCountKept}
-            </span>
-          )}
-        </div>
+        <Crossfade panelKey={gateState}>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusLabel tone={gateLabels[gateState].tone}>
+              {gateLabels[gateState].label}
+            </StatusLabel>
+            {gateState === "APPROVED" && approval && (
+              <span className="text-sm text-muted">
+                {approval.redactedCount} {t.revCountRedacted} · {approval.replacedCount}{" "}
+                {t.revCountReplaced} · {approval.retainedCount} {t.revCountKept}
+              </span>
+            )}
+          </div>
+        </Crossfade>
         {privacyError && (
           <p role="alert" className="mt-2 text-sm leading-6">
             {privacyError}
           </p>
         )}
-        {!privacyOpen ? (
-          <div className="mt-3">
-            <Button
-              variant="secondary"
-              onClick={openPrivacyCheck}
-              disabled={running || postingText.trim().length === 0}
-            >
-              {approval ? t.revCheckAgain : t.commonCheckPrivacy}
-            </Button>
-            {postingText.trim().length === 0 && (
-              <p className="mt-2 text-sm text-muted">{t.revAddTextFirst}</p>
-            )}
-          </div>
-        ) : (
-          <div className="mt-3">
-            <PrivacyCheckPanel
-              key={privacyNonce}
-              sourceText={privacySource}
-              disclosureMode="prefer-on-device"
-              onApproved={handlePrivacyApproved}
-              onCancel={() => setPrivacyOpen(false)}
-              onProgress={handlePrivacyProgress}
-            />
-          </div>
-        )}
+        <Crossfade panelKey={privacyOpen ? `open-${privacyNonce}` : "closed"}>
+          {!privacyOpen ? (
+            <div className="mt-3">
+              <Button
+                variant="secondary"
+                onClick={openPrivacyCheck}
+                disabled={running || postingText.trim().length === 0}
+              >
+                {approval ? t.revCheckAgain : t.commonCheckPrivacy}
+              </Button>
+              {postingText.trim().length === 0 && (
+                <p className="mt-2 text-sm text-muted">{t.revAddTextFirst}</p>
+              )}
+            </div>
+          ) : (
+            <div className="mt-3">
+              <PrivacyCheckPanel
+                key={privacyNonce}
+                sourceText={privacySource}
+                disclosureMode="prefer-on-device"
+                onApproved={handlePrivacyApproved}
+                onCancel={() => setPrivacyOpen(false)}
+                onProgress={handlePrivacyProgress}
+              />
+            </div>
+          )}
+        </Crossfade>
       </Card>
 
       <Card title={t.revReviewTitle}>
@@ -926,7 +896,11 @@ export default function ReviewPage() {
             {t.revUnexpectedFormat}
           </p>
         )}
-        {result?.data && <AnalysisResults report={result.data} />}
+        {result?.data && (
+          <Enter>
+            <AnalysisResults report={result.data} />
+          </Enter>
+        )}
         {result?.data && (
           <p className="mt-2 text-sm text-muted" role="status">
             {describeActualSource(result.inferenceSource, language).label}

@@ -10,9 +10,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { GenerativeModel } from "firebase/ai";
+import { AnimatePresence, motion } from "motion/react";
 import { DocSheet, DocStack } from "@/components/atelier";
 import CompareReport, { type ReportDocument } from "@/components/CompareReport";
 import { ContextualNotice } from "@/components/Disclaimer";
+import { Crossfade, Enter, ProgressBar } from "@/components/motion";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import { Button, Card, EmptyState, EvidenceQuote, Field, Spinner, StatusLabel } from "@/components/ui";
 import { getUploadSensitivityNotice } from "@/lib/disclaimer";
@@ -627,16 +629,24 @@ export default function ComparePage() {
           <h3 className="font-semibold">
             {format(t.cmpAddedDocs, { count: String(docs.length) })}
           </h3>
-          {docs.length === 0 ? (
-            <EmptyState title={t.cmpNoDocsTitle} description={t.cmpNoDocsDesc} />
-          ) : (
-            <ul className="mt-2 flex flex-col gap-2">
-              {docs.map((doc) => (
-                <li key={doc.input.id}>
-                  {/* Entrance plays on mount, which happens only after the
-                      doc was actually added (pushDoc runs solely on the
-                      upload/paste success paths). */}
-                  <DocStack label={doc.input.fileName} className="oc-animate-doc-arrive">
+          <Crossfade panelKey={docs.length === 0 ? "empty" : "docs"}>
+            {docs.length === 0 ? (
+              <EmptyState title={t.cmpNoDocsTitle} description={t.cmpNoDocsDesc} />
+            ) : (
+              <ul className="mt-2 flex flex-col gap-2">
+                <AnimatePresence initial={false}>
+                {docs.map((doc) => (
+                  <motion.li
+                    key={doc.input.id}
+                    layout
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                  >
+                    {/* Entrance plays on mount, which happens only after the
+                        doc was actually added (pushDoc runs solely on the
+                        upload/paste success paths). */}
+                    <DocStack label={doc.input.fileName}>
                     <DocSheet
                       eyebrow={docTypeLabels[doc.input.documentType]}
                       title={doc.input.fileName}
@@ -698,9 +708,7 @@ export default function ComparePage() {
                           </Button>
                         </div>
                       }
-                      className={
-                        privacyTarget?.docId === doc.input.id ? "oc-animate-highlight" : ""
-                      }
+                      selected={privacyTarget?.docId === doc.input.id}
                     >
                       <p className="mt-1 text-xs text-muted">
                         {format(t.cmpPrivacyPages, {
@@ -745,31 +753,39 @@ export default function ComparePage() {
                         </p>
                       )}
                     </DocSheet>
-                  </DocStack>
-                </li>
-              ))}
-            </ul>
-          )}
+                    </DocStack>
+                  </motion.li>
+                ))}
+                </AnimatePresence>
+              </ul>
+            )}
+          </Crossfade>
         </div>
       </Card>
 
-      {privacyTarget && privacyTargetDoc && (
-        <Card
-          title={format(t.cmpPrivacyTitle, {
-            name: privacyTargetDoc.input.fileName,
-            n: String(privacyTarget.pageIndex + 1),
-          })}
-          description={t.cmpPrivacyDesc}
-        >
-          <PrivacyCheckPanel
+      <AnimatePresence initial={false}>
+        {privacyTarget && privacyTargetDoc && (
+          <Enter
             key={`${privacyTarget.docId}:${privacyTarget.pageIndex}:${privacyTarget.nonce}`}
-            sourceText={privacyTargetDoc.input.pages[privacyTarget.pageIndex] ?? ""}
-            disclosureMode={mode}
-            onApproved={handlePageApproved}
-            onCancel={() => setPrivacyTarget(null)}
-          />
-        </Card>
-      )}
+          >
+            <Card
+              title={format(t.cmpPrivacyTitle, {
+                name: privacyTargetDoc.input.fileName,
+                n: String(privacyTarget.pageIndex + 1),
+              })}
+              description={t.cmpPrivacyDesc}
+            >
+              <PrivacyCheckPanel
+                key={`${privacyTarget.docId}:${privacyTarget.pageIndex}:${privacyTarget.nonce}`}
+                sourceText={privacyTargetDoc.input.pages[privacyTarget.pageIndex] ?? ""}
+                disclosureMode={mode}
+                onApproved={handlePageApproved}
+                onCancel={() => setPrivacyTarget(null)}
+              />
+            </Card>
+          </Enter>
+        )}
+      </AnimatePresence>
 
       <Card title={t.cmpSettingsTitle} description={t.cmpSettingsDesc}>
         <div role="radiogroup" aria-label={t.cmpInferenceAria} className="flex flex-col gap-2">
@@ -795,21 +811,28 @@ export default function ComparePage() {
           ))}
         </div>
 
-        {mode === "prefer-on-device" && (
-          <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-md border border-edge p-3">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(event) => setConsent(event.target.checked)}
-              disabled={running}
-              className="mt-1"
-            />
-            <span className="text-sm leading-6">
-              <span className="font-medium">{t.cmpConsentTitle} </span>
-              {t.cmpConsentBody}
-            </span>
-          </label>
-        )}
+        <AnimatePresence initial={false}>
+          {mode === "prefer-on-device" && (
+            <motion.label
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="mt-3 flex cursor-pointer items-start gap-3 rounded-md border border-edge p-3"
+            >
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(event) => setConsent(event.target.checked)}
+                disabled={running}
+                className="mt-1"
+              />
+              <span className="text-sm leading-6">
+                <span className="font-medium">{t.cmpConsentTitle} </span>
+                {t.cmpConsentBody}
+              </span>
+            </motion.label>
+          )}
+        </AnimatePresence>
 
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
           <StatusLabel
@@ -832,19 +855,7 @@ export default function ComparePage() {
           )}
         </div>
         {device.progress !== null && device.state === "initializing" && (
-          <div
-            className="mt-2 h-1.5 w-full rounded-full bg-brand-soft"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(device.progress * 100)}
-            aria-label={t.revDeviceProgressAria}
-          >
-            <div
-              className="h-1.5 rounded-full bg-brand"
-              style={{ width: `${Math.round(device.progress * 100)}%` }}
-            />
-          </div>
+          <ProgressBar value={device.progress} label={t.revDeviceProgressAria} />
         )}
       </Card>
 
@@ -954,8 +965,9 @@ export default function ComparePage() {
             <Spinner label={statusMsg || t.commonWorking} />
           </p>
         )}
+        <Crossfade panelKey={findings === null ? "empty" : "report"}>
         {findings === null ? (
-          <>
+          <div>
             <div className="mt-2">
               <EmptyState
                 title={t.cmpNoComparisonTitle}
@@ -981,9 +993,9 @@ export default function ComparePage() {
                 {gate.reason}
               </p>
             )}
-          </>
+          </div>
         ) : (
-          <>
+          <div>
             {comparisonSource !== null && (
               <p className="mb-2 text-sm text-muted" role="status">
                 {t.evComparisonPrefix}{" "}
@@ -1005,8 +1017,9 @@ export default function ComparePage() {
                 {comparing ? t.cmpComparing : t.cmpRegenerate}
               </Button>
             </div>
-          </>
+          </div>
         )}
+        </Crossfade>
       </Card>
       </div>
     </div>

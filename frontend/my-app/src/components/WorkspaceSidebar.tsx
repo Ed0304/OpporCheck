@@ -9,6 +9,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { ActivePill, OC_DURATION, OC_EASE } from "@/components/motion";
 import { useLang } from "@/lib/lang";
 import { getStrings, type UiLanguage } from "@/lib/strings";
 
@@ -69,7 +71,7 @@ export default function WorkspaceSidebar({
     return () => document.removeEventListener("keydown", onKey);
   }, [drawerOpen, onCloseDrawer]);
 
-  const list = (onNavigate?: () => void, slim = false) => (
+  const list = (onNavigate?: () => void, slim = false, pillId = "oc-ws-nav") => (
     <ul className="flex flex-col gap-1">
       {nav.map((item) => {
         const active = isActive(pathname, item.href);
@@ -80,11 +82,14 @@ export default function WorkspaceSidebar({
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               title={slim ? item.label : undefined}
-              className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out ${
-                active ? "bg-brand-soft font-semibold text-navy" : "hover:bg-brand-soft"
+              className={`relative block rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out ${
+                active ? "font-semibold text-navy" : "hover:bg-brand-soft"
               } ${slim ? "text-center" : ""}`}
             >
-              {slim ? <span aria-hidden>{item.short}</span> : item.label}
+              {active && <ActivePill pillId={pillId} />}
+              <span className="relative">
+                {slim ? <span aria-hidden>{item.short}</span> : item.label}
+              </span>
               {slim && <span className="sr-only">{item.label}</span>}
             </Link>
           </li>
@@ -96,9 +101,12 @@ export default function WorkspaceSidebar({
   return (
     <>
       {/* Desktop: collapsible rail */}
-      <aside
+      <motion.aside
         aria-label={t.wsSidebarAria}
-        className={`hidden shrink-0 flex-col gap-3 lg:flex ${collapsed ? "w-16" : "w-60"}`}
+        initial={false}
+        animate={{ width: collapsed ? "4rem" : "15rem" }}
+        transition={{ duration: OC_DURATION.base, ease: OC_EASE }}
+        className="hidden shrink-0 flex-col gap-3 overflow-hidden lg:flex"
       >
         <nav aria-label={t.wsSectionsAria} className="rounded-lg border border-paper-edge bg-paper p-2 shadow-[0_2px_10px_var(--oc-paper-shadow)]">
           {list(undefined, collapsed)}
@@ -111,33 +119,45 @@ export default function WorkspaceSidebar({
         >
           {collapsed ? t.wsExpand : t.wsCollapse}
         </button>
-      </aside>
+      </motion.aside>
 
       {/* Mobile: drawer */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label={t.wsMenuButton}>
-          <button
-            type="button"
-            aria-label={t.wsCloseMenuAria}
-            onClick={onCloseDrawer}
-            className="absolute inset-0 h-full w-full cursor-default bg-black/40"
-          />
-          <div className="oc-animate-doc-arrive absolute left-0 top-0 flex h-full w-72 flex-col gap-3 overflow-y-auto border-r border-paper-edge bg-paper p-4">
-            <div className="flex items-center justify-between">
-              <p className="font-semibold">{t.wsSidebarAria}</p>
-              <button
-                type="button"
-                onClick={onCloseDrawer}
-                autoFocus
-                className="cursor-pointer rounded-md border border-edge px-3 py-1.5 text-sm font-medium transition-colors duration-150 ease-out hover:bg-brand-soft"
-              >
-                {t.commonClose}
-              </button>
-            </div>
-            <nav aria-label={t.wsSectionsAria}>{list(onCloseDrawer)}</nav>
+      <AnimatePresence initial={false}>
+        {drawerOpen && (
+          <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label={t.wsMenuButton}>
+            <motion.button
+              type="button"
+              aria-label={t.wsCloseMenuAria}
+              onClick={onCloseDrawer}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: OC_DURATION.fast, ease: OC_EASE }}
+              className="absolute inset-0 h-full w-full cursor-default bg-black/40"
+            />
+            <motion.div
+              initial={{ opacity: 0, x: -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: OC_DURATION.panel, ease: OC_EASE }}
+              className="absolute left-0 top-0 flex h-full w-72 flex-col gap-3 overflow-y-auto border-r border-paper-edge bg-paper p-4"
+            >
+              <div className="flex items-center justify-between">
+                <p className="font-semibold">{t.wsSidebarAria}</p>
+                <button
+                  type="button"
+                  onClick={onCloseDrawer}
+                  autoFocus
+                  className="cursor-pointer rounded-md border border-edge px-3 py-1.5 text-sm font-medium transition-colors duration-150 ease-out hover:bg-brand-soft"
+                >
+                  {t.commonClose}
+                </button>
+              </div>
+              <nav aria-label={t.wsSectionsAria}>{list(onCloseDrawer, false, "oc-ws-drawer")}</nav>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </>
   );
 }

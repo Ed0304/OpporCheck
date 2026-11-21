@@ -5,6 +5,7 @@
 "use client";
 
 import Link from "next/link";
+import { Enter, Reveal } from "@/components/motion";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
 
@@ -19,11 +20,12 @@ export default function HowItWorksContent() {
   ];
   return (
     <>
-      <div className="oc-animate-doc-arrive max-w-3xl">
+      <Enter className="max-w-3xl">
         <h1 className="text-3xl font-bold tracking-tight text-navy">{t.howTitle}</h1>
         <p className="mt-3 leading-7 text-muted">{t.howSubtitle}</p>
-      </div>
-      <ol className="mt-8 flex max-w-3xl flex-col">
+      </Enter>
+      <Reveal className="mt-8 max-w-3xl" delay={0.05}>
+      <ol className="flex flex-col">
         {steps.map((step, index) => (
           <li key={step.title} className="relative flex gap-4 pb-8 last:pb-0">
             {index < steps.length - 1 && (
@@ -45,6 +47,7 @@ export default function HowItWorksContent() {
           </li>
         ))}
       </ol>
+      </Reveal>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href="/register"

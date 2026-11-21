@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import DocumentLang from "@/components/DocumentLang";
+import { MotionProvider } from "@/components/motion";
 import { ThemeProvider } from "@/lib/theme";
 import { LangProvider } from "@/lib/lang";
 import { AuthProvider } from "@/lib/auth";
@@ -34,7 +35,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           <LangProvider>
             <DocumentLang />
-            <AuthProvider>{children}</AuthProvider>
+            <MotionProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </MotionProvider>
           </LangProvider>
         </ThemeProvider>
       </body>

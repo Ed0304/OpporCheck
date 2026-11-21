@@ -12,8 +12,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { motion } from "motion/react";
 import { Button, Card, EmptyState, EvidenceQuote, Spinner, StatusLabel } from "@/components/ui";
 import Disclaimer, { ContextualNotice } from "@/components/Disclaimer";
+import { Crossfade, Enter, OC_DURATION, OC_EASE } from "@/components/motion";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import {
   approvalCovers,
@@ -114,18 +116,23 @@ function TransientFindingCard({
   finding,
   linkedSourceId,
   selected,
+  revealDelay,
   onSelect,
 }: {
   finding: InvestigationFinding;
   linkedSourceId: string | null;
   selected: boolean;
+  revealDelay: number;
   onSelect: () => void;
 }) {
   const { language } = useLang();
   const t = getStrings(language);
   return (
-    <li
+    <motion.li
       aria-current={selected ? "true" : undefined}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: OC_DURATION.base, ease: OC_EASE, delay: revealDelay }}
       className={`rounded-md border border-transparent px-3 py-4 transition-[border-color,background-color] duration-200 ease-out hover:bg-paper ${
         selected ? "border-paper-edge bg-paper" : ""
       }`}
@@ -165,7 +172,7 @@ function TransientFindingCard({
         <span className="font-semibold">{t.commonFollowUpLabel} </span>
         {finding.follow_up_question}
       </p>
-    </li>
+    </motion.li>
   );
 }
 
@@ -496,32 +503,34 @@ export default function EvidenceInvestigation({
                 {effectiveSanitized !== null ? t.evPrivacyApproved : t.evPrivacyRequired}
               </StatusLabel>
             </div>
-            {!privacyOpen ? (
-              <div className="mt-2">
-                <Button
-                  variant="secondary"
-                  disabled={running}
-                  onClick={() => {
-                    setPrivacySource(postingText);
-                    setPrivacyNonce((nonce) => nonce + 1);
-                    setPrivacyOpen(true);
-                  }}
-                >
-                  {t.commonCheckPrivacy}
-                </Button>
-                <p className="mt-2 text-sm text-muted">{t.evPrivacyExplainer}</p>
-              </div>
-            ) : (
-              <div className="mt-2">
-                <PrivacyCheckPanel
-                  key={privacyNonce}
-                  sourceText={privacySource}
-                  disclosureMode="prefer-on-device"
-                  onApproved={handlePrivacyApproved}
-                  onCancel={() => setPrivacyOpen(false)}
-                />
-              </div>
-            )}
+            <Crossfade panelKey={privacyOpen ? `open-${privacyNonce}` : "closed"}>
+              {!privacyOpen ? (
+                <div className="mt-2">
+                  <Button
+                    variant="secondary"
+                    disabled={running}
+                    onClick={() => {
+                      setPrivacySource(postingText);
+                      setPrivacyNonce((nonce) => nonce + 1);
+                      setPrivacyOpen(true);
+                    }}
+                  >
+                    {t.commonCheckPrivacy}
+                  </Button>
+                  <p className="mt-2 text-sm text-muted">{t.evPrivacyExplainer}</p>
+                </div>
+              ) : (
+                <div className="mt-2">
+                  <PrivacyCheckPanel
+                    key={privacyNonce}
+                    sourceText={privacySource}
+                    disclosureMode="prefer-on-device"
+                    onApproved={handlePrivacyApproved}
+                    onCancel={() => setPrivacyOpen(false)}
+                  />
+                </div>
+              )}
+            </Crossfade>
           </div>
           <div className="mt-4">
             <Button
@@ -549,7 +558,7 @@ export default function EvidenceInvestigation({
       )}
 
       {showResults && (
-        <div className="oc-animate-doc-arrive mt-6 flex flex-col gap-6">
+        <Enter className="mt-6 flex flex-col gap-6">
           <section aria-labelledby="oc-sources">
             <h3 id="oc-sources" className="font-semibold">
               {format(t.evSourcesTitle, { count: String(retrievedSources.length) })}
@@ -644,7 +653,7 @@ export default function EvidenceInvestigation({
               ) : (
                 <div className="mt-3 flex flex-col gap-4">
                   {groupLabels.map(
-                    ([key, label]) =>
+                    ([key, label], groupIndex) =>
                       grouped[key]!.length > 0 && (
                         <div key={key}>
                           <h4 className="text-sm font-semibold">
@@ -663,6 +672,7 @@ export default function EvidenceInvestigation({
                                     selectedFindingKey === cardKey ||
                                     (linked !== null && linked.source_id === selectedSourceId)
                                   }
+                                  revealDelay={Math.min(groupIndex * 0.1 + index * 0.05, 0.3)}
                                   onSelect={() => selectFinding(finding, cardKey)}
                                 />
                               );
@@ -718,7 +728,7 @@ export default function EvidenceInvestigation({
           )}
 
           <Disclaimer />
-        </div>
+        </Enter>
       )}
     </Card>
   );

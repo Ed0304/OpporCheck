@@ -2,13 +2,15 @@
 // with page-edge detail and metadata slots) and DocStack (layered
 // sheets that gently separate on hover/focus). Decorative rotation
 // applies only to non-reading back layers; the front reading surface
-// is never rotated or distorted. Motion is pure CSS and disabled
-// under prefers-reduced-motion (see globals.css); no fake counts,
+// is never rotated or distorted. Transform motion is disabled under
+// prefers-reduced-motion via MotionProvider; no fake counts,
 // no state claims — visual treatment only.
 
 "use client";
 
 import type { ReactNode } from "react";
+import { motion } from "motion/react";
+import { OC_DURATION, OC_EASE } from "@/components/motion";
 
 export function DocSheet({
   eyebrow,
@@ -16,6 +18,7 @@ export function DocSheet({
   meta,
   actions,
   children,
+  selected = false,
   className = "",
 }: {
   eyebrow?: ReactNode;
@@ -23,12 +26,23 @@ export function DocSheet({
   meta?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
+  selected?: boolean;
   className?: string;
 }) {
   return (
-    <article
+    <motion.article
       aria-label={title}
-      className={`overflow-hidden rounded-lg border border-paper-edge bg-paper shadow-[0_2px_10px_var(--oc-paper-shadow)] ${className}`}
+      aria-current={selected ? "true" : undefined}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -3 }}
+      whileFocus={{ y: -2 }}
+      transition={{ duration: OC_DURATION.base, ease: OC_EASE }}
+      className={`overflow-hidden rounded-lg border bg-paper ${
+        selected
+          ? "border-evidence shadow-[0_4px_16px_var(--oc-paper-shadow)] ring-1 ring-evidence/40"
+          : "border-paper-edge shadow-[0_2px_10px_var(--oc-paper-shadow)]"
+      } ${className}`}
     >
       <div aria-hidden className="oc-page-edge h-1.5 w-full" />
       <div className="p-5">
@@ -48,7 +62,7 @@ export function DocSheet({
         )}
         {children}
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -64,11 +78,14 @@ export function DocStack({
   className?: string;
 }) {
   return (
-    <div
+    <motion.div
       role="group"
       aria-label={label}
       tabIndex={0}
-      className={`oc-doc-stack relative p-2.5 ${className}`}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: OC_DURATION.panel, ease: OC_EASE }}
+      className={`oc-doc-stack relative rounded-lg p-2.5 ${className}`}
     >
       {Array.from({ length: layers }, (_, i) => (
         <div
@@ -79,6 +96,6 @@ export function DocStack({
         />
       ))}
       <div className="relative">{children}</div>
-    </div>
+    </motion.div>
   );
 }

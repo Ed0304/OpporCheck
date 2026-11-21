@@ -10,7 +10,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useId, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { ActivePill, OC_DURATION, OC_EASE } from "@/components/motion";
 import { useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
 import { UI_LANGUAGES, format, getStrings } from "@/lib/strings";
@@ -27,30 +29,36 @@ const THEME_ORDER: ThemeChoice[] = ["light", "dark", "system"];
 function LanguageSelector() {
   const { language, setLanguage } = useLang();
   const t = getStrings(language);
+  // Scoped per instance: desktop and mobile selectors can coexist.
+  const pillId = `oc-lang-pill-${useId()}`;
   return (
     <div
       role="radiogroup"
       aria-label={t.languageLabel}
       className="inline-flex h-9 items-center rounded-md border border-edge p-0.5"
     >
-      {UI_LANGUAGES.map((entry) => (
-        <button
-          key={entry.code}
-          type="button"
-          role="radio"
-          aria-checked={language === entry.code}
-          title={entry.label}
-          aria-label={entry.label}
-          onClick={() => setLanguage(entry.code)}
-          className={`h-7 cursor-pointer rounded px-2 text-xs font-medium ${
-            language === entry.code
-              ? "bg-brand-soft font-semibold text-navy"
-              : "text-muted hover:bg-brand-soft hover:text-ink"
-          }`}
-        >
-          {entry.code.toUpperCase()}
-        </button>
-      ))}
+      {UI_LANGUAGES.map((entry) => {
+        const selected = language === entry.code;
+        return (
+          <button
+            key={entry.code}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            title={entry.label}
+            aria-label={entry.label}
+            onClick={() => setLanguage(entry.code)}
+            className={`relative h-7 cursor-pointer rounded px-2 text-xs font-medium ${
+              selected
+                ? "font-semibold text-navy"
+                : "text-muted hover:bg-brand-soft hover:text-ink"
+            }`}
+          >
+            {selected && <ActivePill pillId={pillId} />}
+            <span className="relative">{entry.code.toUpperCase()}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -82,6 +90,7 @@ function AccountMenu() {
   const { user, signOutUser } = useAuth();
   const { language } = useLang();
   const t = getStrings(language);
+  const [open, setOpen] = useState(false);
   if (!user) {
     return (
       <Link
@@ -94,11 +103,17 @@ function AccountMenu() {
   }
   const label = user.displayName || user.email || t.headerAccountFallback;
   return (
-    <details className="relative">
+    <details className="relative" onToggle={(event) => setOpen(event.currentTarget.open)}>
       <summary className="inline-flex h-9 cursor-pointer list-none items-center rounded-md border border-edge px-3 text-sm font-medium hover:bg-brand-soft [&::-webkit-details-marker]:hidden">
         {label.length > 24 ? `${label.slice(0, 24)}…` : label}
       </summary>
-      <div className="absolute right-0 z-40 mt-2 w-52 rounded-md border border-edge bg-card p-1 shadow-[0_4px_12px_rgba(23,59,112,0.12)]">
+      {open && (
+      <motion.div
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: OC_DURATION.fast, ease: OC_EASE }}
+        className="absolute right-0 z-40 mt-2 w-52 rounded-md border border-edge bg-card p-1 shadow-[0_4px_12px_rgba(23,59,112,0.12)]"
+      >
         <p className="truncate px-3 py-2 text-xs text-muted">{user.email}</p>
         <Link
           href="/workspace"
@@ -119,7 +134,8 @@ function AccountMenu() {
         >
           {t.headerSignOut}
         </button>
-      </div>
+      </motion.div>
+      )}
     </details>
   );
 }
@@ -138,11 +154,12 @@ function DesktopLinks({ links, pathname }: { links: NavLink[]; pathname: string 
             key={link.href}
             href={link.href}
             aria-current={active ? "page" : undefined}
-            className={`rounded-md px-3 py-2 text-sm font-medium ${
-              active ? "bg-brand-soft font-semibold text-navy" : "hover:bg-brand-soft"
+            className={`relative rounded-md px-3 py-2 text-sm font-medium ${
+              active ? "font-semibold text-navy" : "hover:bg-brand-soft"
             }`}
           >
-            {link.label}
+            {active && <ActivePill pillId="oc-header-nav" />}
+            <span className="relative">{link.label}</span>
           </Link>
         );
       })}
@@ -242,22 +259,30 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
           </button>
         )}
       </div>
-      {menuOpen && (
-        <nav
-          id="mobile-nav"
-          aria-label={t.headerMobileAria}
-          className="border-t border-edge bg-card px-4 py-3 md:hidden"
-        >
-          <Suspense fallback={<MobileLinks links={links} pathname={null} onNavigate={closeMenu} />}>
-            <MobileNav links={links} onNavigate={closeMenu} />
-          </Suspense>
-          <div className="mt-2 flex items-center gap-2 border-t border-edge pt-3">
-            <LanguageSelector />
-            <ThemeSwitcher />
-            <AccountMenu />
-          </div>
-        </nav>
-      )}
+      <AnimatePresence initial={false}>
+        {menuOpen && (
+          <motion.nav
+            id="mobile-nav"
+            aria-label={t.headerMobileAria}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: OC_DURATION.base, ease: OC_EASE }}
+            className="overflow-hidden border-t border-edge bg-card md:hidden"
+          >
+            <div className="px-4 py-3">
+              <Suspense fallback={<MobileLinks links={links} pathname={null} onNavigate={closeMenu} />}>
+                <MobileNav links={links} onNavigate={closeMenu} />
+              </Suspense>
+              <div className="mt-2 flex items-center gap-2 border-t border-edge pt-3">
+                <LanguageSelector />
+                <ThemeSwitcher />
+                <AccountMenu />
+              </div>
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

@@ -110,29 +110,11 @@ body {
 }
 
 /* Document Atelier — restrained paper motion.
-   Durations: hover/focus 150-200ms, panels 200-300ms.
+   Entrances, panel transitions, and press feedback live in Motion for
+   React primitives (see src/components/motion.tsx) under a global
+   reduced-motion provider. What remains here is transform-only CSS:
+   the DocStack layer separation and a finite selection pulse.
    Truthfulness rule: never animate success ahead of confirmation. */
-@keyframes oc-doc-arrive {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes oc-drift {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
 @keyframes oc-highlight-pulse {
   0%,
   100% {
@@ -141,14 +123,6 @@ body {
   50% {
     box-shadow: 0 0 0 3px rgba(11, 122, 110, 0.25);
   }
-}
-
-.oc-animate-doc-arrive {
-  animation: oc-doc-arrive 240ms ease-out both;
-}
-
-.oc-animate-drift {
-  animation: oc-drift 7s ease-in-out infinite;
 }
 
 .oc-animate-highlight {
@@ -182,12 +156,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .oc-animate-doc-arrive,
-  .oc-animate-drift,
   .oc-animate-highlight {
     animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
   }
   .oc-doc-stack-layer {
     transform: none !important;

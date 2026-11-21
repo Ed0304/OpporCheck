@@ -6,7 +6,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { DocStack } from "@/components/atelier";
+import { Enter, OC_DURATION, OC_EASE } from "@/components/motion";
 import { Card, EmptyState, Spinner, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { localeForCountryName } from "@/lib/corridors";
@@ -79,7 +81,7 @@ export default function WorkspaceOverviewPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="oc-animate-doc-arrive">
+      <Enter>
         <h1 className="text-2xl font-bold tracking-tight">{t.ovWelcome}{displayName ? `, ${displayName}` : ""}</h1>
         <p className="mt-1 max-w-2xl leading-6 text-muted">
           {t.ovIntro}
@@ -92,7 +94,7 @@ export default function WorkspaceOverviewPage() {
             {t.ovReviewCta}
           </Link>
         </div>
-      </div>
+      </Enter>
 
       <DocStack label={t.ovRecent} layers={1}>
       <Card
@@ -132,8 +134,17 @@ export default function WorkspaceOverviewPage() {
         )}
         {recent.items.length > 0 && (
           <ul className="divide-y divide-edge">
-            {recent.items.map((item) => (
-              <li key={item.id}>
+            {recent.items.map((item, index) => (
+              <motion.li
+                key={item.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: OC_DURATION.base,
+                  ease: OC_EASE,
+                  delay: Math.min(index * 0.05, 0.2),
+                }}
+              >
                 <Link
                   href={`/workspace/investigations/${item.id}`}
                   className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md py-2.5 transition-colors duration-150 ease-out hover:bg-brand-soft"
@@ -145,7 +156,7 @@ export default function WorkspaceOverviewPage() {
                   </StatusLabel>
                   <span className="text-sm text-muted">{formatDate(t, item.createdAt, item.report?.destination_country)}</span>
                 </Link>
-              </li>
+              </motion.li>
             ))}
           </ul>
         )}

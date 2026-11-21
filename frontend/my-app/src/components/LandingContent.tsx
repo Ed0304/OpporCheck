@@ -5,6 +5,7 @@
 
 import Link from "next/link";
 import { DocSheet, DocStack } from "@/components/atelier";
+import { Enter, Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { EvidenceQuote, StatusLabel } from "@/components/ui";
 import { getConciseNotice } from "@/lib/disclaimer";
 import { useLang } from "@/lib/lang";
@@ -27,32 +28,41 @@ export default function LandingContent() {
   return (
     <>
       <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="max-w-2xl">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-navy">
-            {t.landingTitle}
-          </h1>
-          <p className="mt-3 text-lg leading-8 text-muted">{t.landingSubtitle}</p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link
-              href="/register"
-              className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action hover:bg-brand-strong"
-            >
-              {t.landingGetStarted}
-            </Link>
-            <Link
-              href="/how-it-works"
-              className="inline-flex h-11 items-center rounded-md border border-edge bg-card px-6 text-base font-medium hover:bg-brand-soft"
-            >
-              {t.landingHowItWorks}
-            </Link>
-          </div>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted" role="note">
-            {getConciseNotice(language)}
-          </p>
-        </div>
+        <Stagger className="max-w-2xl">
+          <StaggerItem>
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-navy">
+              {t.landingTitle}
+            </h1>
+          </StaggerItem>
+          <StaggerItem>
+            <p className="mt-3 text-lg leading-8 text-muted">{t.landingSubtitle}</p>
+          </StaggerItem>
+          <StaggerItem>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href="/register"
+                className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors hover:bg-brand-strong"
+              >
+                {t.landingGetStarted}
+              </Link>
+              <Link
+                href="/how-it-works"
+                className="inline-flex h-11 items-center rounded-md border border-edge bg-card px-6 text-base font-medium transition-colors hover:bg-brand-soft"
+              >
+                {t.landingHowItWorks}
+              </Link>
+            </div>
+          </StaggerItem>
+          <StaggerItem>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted" role="note">
+              {getConciseNotice(language)}
+            </p>
+          </StaggerItem>
+        </Stagger>
 
-        <figure aria-label={t.landingExampleAria} className="oc-animate-doc-arrive">
-          <DocStack label={t.landingExampleBadge} className="oc-animate-drift">
+        <Enter delay={0.15}>
+        <figure aria-label={t.landingExampleAria}>
+          <DocStack label={t.landingExampleBadge}>
             <DocSheet
               eyebrow={t.landingExampleBadge}
               title={t.landingExampleClaim}
@@ -96,16 +106,20 @@ export default function LandingContent() {
             {t.landingExampleCaption}
           </figcaption>
         </figure>
+        </Enter>
       </div>
 
-      <section aria-labelledby="what-is" className="mt-12">
-        <h2 id="what-is" className="text-2xl font-semibold">
-          {t.landingWhatIs}
-        </h2>
-        <p className="mt-2 max-w-3xl leading-7 text-muted">{t.landingWhatIsText}</p>
-      </section>
+      <Reveal className="mt-12">
+        <section aria-labelledby="what-is">
+          <h2 id="what-is" className="text-2xl font-semibold">
+            {t.landingWhatIs}
+          </h2>
+          <p className="mt-2 max-w-3xl leading-7 text-muted">{t.landingWhatIsText}</p>
+        </section>
+      </Reveal>
 
-      <section aria-labelledby="workflow" className="mt-10">
+      <Reveal className="mt-10">
+      <section aria-labelledby="workflow">
         <h2 id="workflow" className="text-2xl font-semibold">
           {t.landingWorkflow}
         </h2>
@@ -121,34 +135,39 @@ export default function LandingContent() {
           ))}
         </ol>
       </section>
+      </Reveal>
 
-      <section aria-labelledby="capabilities" className="mt-10">
-        <h2 id="capabilities" className="text-2xl font-semibold">
-          {t.landingCapabilities}
-        </h2>
-        <dl className="mt-4 grid gap-x-10 md:grid-cols-2">
-          {capabilities.map((item) => (
-            <div key={item.title} className="border-t border-edge py-4">
-              <dt className="font-semibold">{item.title}</dt>
-              <dd className="mt-1 text-sm leading-6 text-muted">{item.text}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <Reveal className="mt-10">
+        <section aria-labelledby="capabilities">
+          <h2 id="capabilities" className="text-2xl font-semibold">
+            {t.landingCapabilities}
+          </h2>
+          <dl className="mt-4 grid gap-x-10 md:grid-cols-2">
+            {capabilities.map((item) => (
+              <div key={item.title} className="border-t border-edge py-4">
+                <dt className="font-semibold">{item.title}</dt>
+                <dd className="mt-1 text-sm leading-6 text-muted">{item.text}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      </Reveal>
 
-      <section aria-labelledby="transparency" className="mt-10">
-        <h2 id="transparency" className="text-2xl font-semibold">
-          {t.landingTransparency}
-        </h2>
-        <div className="mt-4 max-w-3xl leading-7 text-muted">
-          <p>{t.landingTransparencyText}</p>
-          <ul className="mt-2 list-disc pl-5">
-            <li>{t.landingLimit1}</li>
-            <li>{t.landingLimit2}</li>
-            <li>{t.landingLimit3}</li>
-          </ul>
-        </div>
-      </section>
+      <Reveal className="mt-10">
+        <section aria-labelledby="transparency">
+          <h2 id="transparency" className="text-2xl font-semibold">
+            {t.landingTransparency}
+          </h2>
+          <div className="mt-4 max-w-3xl leading-7 text-muted">
+            <p>{t.landingTransparencyText}</p>
+            <ul className="mt-2 list-disc pl-5">
+              <li>{t.landingLimit1}</li>
+              <li>{t.landingLimit2}</li>
+              <li>{t.landingLimit3}</li>
+            </ul>
+          </div>
+        </section>
+      </Reveal>
     </>
   );
 }
