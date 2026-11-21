@@ -25,6 +25,12 @@
   --oc-paper-edge: #e2d7bd;
   --oc-page-edge: #ece2c9;
   --oc-paper-shadow: rgba(74, 58, 28, 0.14);
+  /* Desk shell: the navigation rail sits a notch dimmer than the canvas
+     so the working area takes precedence (structure felt, not seen). */
+  --oc-rail: #e9edf4;
+  --oc-rail-edge: #d3dae6;
+  --oc-shadow-card: 0 1px 2px rgba(23, 59, 112, 0.06), 0 1px 3px rgba(23, 59, 112, 0.05);
+  --oc-shadow-pop: 0 12px 32px rgba(23, 59, 112, 0.14);
   color-scheme: light;
 }
 
@@ -46,6 +52,10 @@
   --oc-paper-edge: #4d4435;
   --oc-page-edge: #2f2a22;
   --oc-paper-shadow: rgba(0, 0, 0, 0.55);
+  --oc-rail: #101828;
+  --oc-rail-edge: #232f49;
+  --oc-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --oc-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
@@ -65,6 +75,8 @@
   --color-paper: var(--oc-paper);
   --color-paper-edge: var(--oc-paper-edge);
   --color-page-edge: var(--oc-page-edge);
+  --color-rail: var(--oc-rail);
+  --color-rail-edge: var(--oc-rail-edge);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Arial, sans-serif;
 }
@@ -138,6 +150,19 @@ body {
     transparent 1px,
     transparent 4px
   );
+}
+
+/* Desk utilities: card/pop shadows and tabular numerals for data. */
+.oc-shadow-card {
+  box-shadow: var(--oc-shadow-card);
+}
+
+.oc-shadow-pop {
+  box-shadow: var(--oc-shadow-pop);
+}
+
+.oc-tnum {
+  font-variant-numeric: tabular-nums;
 }
 
 /* DocStack layers: transform-only separation, no layout shift. */

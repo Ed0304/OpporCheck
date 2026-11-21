@@ -16,7 +16,7 @@ import CompareReport, { type ReportDocument } from "@/components/CompareReport";
 import { ContextualNotice } from "@/components/Disclaimer";
 import { Crossfade, Enter, ProgressBar } from "@/components/motion";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
-import { Button, Card, EmptyState, EvidenceQuote, Field, Spinner, StatusLabel } from "@/components/ui";
+import { Button, Card, EmptyState, EvidenceQuote, Field, PageHeader, Spinner, StatusLabel, Stepper } from "@/components/ui";
 import { getUploadSensitivityNotice } from "@/lib/disclaimer";
 import {
   createExtractionModel,
@@ -532,14 +532,47 @@ export default function ComparePage() {
     );
   }
 
+  // Stepper reflects real session state: documents added and
+  // privacy-approved, terms extracted, report generated. No mock progress.
+  const allDocsApproved =
+    docs.length > 0 &&
+    docs.every((doc) => isDocPrivacyApproved(doc.privacy, doc.input.pages));
+  const extractionDone = extractedDocs.length > 0 && pendingDocs.length === 0;
+  const compareSteps = [
+    {
+      label: t.cmpDocsTitle,
+      state: (docs.length === 0
+        ? "current"
+        : allDocsApproved
+          ? "done"
+          : "current") as "done" | "current" | "todo",
+    },
+    {
+      label: t.cmpExtractTitle,
+      state: (docs.length === 0 || !allDocsApproved
+        ? "todo"
+        : extractionDone
+          ? "done"
+          : "current") as "done" | "current" | "todo",
+    },
+    {
+      label: t.cmpReportTitle,
+      state: (findings
+        ? "done"
+        : extractedDocs.length >= 2
+          ? "current"
+          : "todo") as "done" | "current" | "todo",
+    },
+  ];
+
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t.cmpTitle}</h1>
-        <p className="mt-1 max-w-2xl leading-6 text-muted">
-          {t.cmpSubtitle}
-        </p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        eyebrow={t.wsSidebarAria}
+        title={t.cmpTitle}
+        description={t.cmpSubtitle}
+      />
+      <Stepper steps={compareSteps} label={t.stepsAria} />
 
       {(!configOk || runError) && (
         <Card title={runError ? t.cmpErrorTitle : t.commonSetupRequired}>
@@ -552,6 +585,7 @@ export default function ComparePage() {
 
       <Card
         title={t.cmpDocsTitle}
+        eyebrow="01"
         description={format(t.cmpDocsDesc, { max: String(MAX_DOCS) })}
       >
         <div className="mb-3">
@@ -633,7 +667,7 @@ export default function ComparePage() {
             {docs.length === 0 ? (
               <EmptyState title={t.cmpNoDocsTitle} description={t.cmpNoDocsDesc} />
             ) : (
-              <ul className="mt-2 flex flex-col gap-2">
+              <ul className="mt-2 grid gap-4 xl:grid-cols-2">
                 <AnimatePresence initial={false}>
                 {docs.map((doc) => (
                   <motion.li
@@ -773,6 +807,7 @@ export default function ComparePage() {
                 name: privacyTargetDoc.input.fileName,
                 n: String(privacyTarget.pageIndex + 1),
               })}
+              eyebrow={t.revPrivacyTitle}
               description={t.cmpPrivacyDesc}
             >
               <PrivacyCheckPanel
@@ -787,7 +822,7 @@ export default function ComparePage() {
         )}
       </AnimatePresence>
 
-      <Card title={t.cmpSettingsTitle} description={t.cmpSettingsDesc}>
+      <Card title={t.cmpSettingsTitle} eyebrow="02" description={t.cmpSettingsDesc}>
         <div role="radiogroup" aria-label={t.cmpInferenceAria} className="flex flex-col gap-2">
           {(["on-device-only", "prefer-on-device"] as const).map((option) => (
             <label
@@ -859,7 +894,7 @@ export default function ComparePage() {
         )}
       </Card>
 
-      <Card title={t.cmpExtractTitle} description={t.cmpExtractDesc}>
+      <Card title={t.cmpExtractTitle} eyebrow="03" description={t.cmpExtractDesc}>
         {extractedDocs.length === 0 && pendingDocs.length === 0 ? (
           <EmptyState title={t.cmpNothingTitle} description={t.cmpNothingDesc} />
         ) : (
@@ -956,7 +991,7 @@ export default function ComparePage() {
       </Card>
 
       <div ref={reportRef} className="scroll-mt-4">
-      <Card title={t.cmpReportTitle} description={t.cmpReportDesc}>
+      <Card title={t.cmpReportTitle} eyebrow="04" description={t.cmpReportDesc}>
         <p aria-live="polite" className="text-sm text-muted">
           {running ? statusMsg : ""}
         </p>
@@ -978,8 +1013,9 @@ export default function ComparePage() {
                 }
               />
             </div>
-            <div className="mt-4">
+            <div className="mt-5 border-t border-edge pt-5">
               <Button
+                size="lg"
                 onClick={() => void handleCompare()}
                 disabled={
                   !configOk || running || !gate.allowed || extractedDocs.length < 2

@@ -221,18 +221,26 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
   const t = getStrings(language);
   const closeMenu = () => setMenuOpen(false);
   return (
-    <header className="sticky top-0 z-30 border-b border-edge bg-card">
+    <header className="sticky top-0 z-30 border-b border-edge bg-card/95 backdrop-blur">
       <a href="#main-content" className="skip-link">
         {t.headerSkipLink}
       </a>
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Link
-          href="/"
-          className="text-xl font-bold tracking-tight text-navy"
-          aria-label={t.headerHomeAria}
-        >
-          OpporCheck
-        </Link>
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="text-xl font-bold tracking-tight text-navy"
+            aria-label={t.headerHomeAria}
+          >
+            OpporCheck
+          </Link>
+          <span
+            aria-hidden
+            className="hidden rounded-full border border-edge bg-canvas px-2 py-0.5 text-[11px] font-semibold tracking-wider text-muted uppercase lg:inline-block"
+          >
+            Evidence Desk
+          </span>
+        </div>
         <Suspense
           fallback={
             <nav aria-label={t.headerPrimaryAria} className="hidden items-center gap-1 md:flex">

@@ -42,7 +42,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
           <LoginRedirect user={user} loading={loading} />
         </Suspense>
         <AppHeader links={[]} />
-        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-16 sm:px-6">
+        <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-16 sm:px-6">
           <Spinner label={loading ? t.wsCheckingSignIn : t.wsRedirecting} />
         </div>
       </div>
@@ -55,7 +55,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         <LoginRedirect user={user} loading={loading} />
       </Suspense>
       <AppHeader links={[]} />
-      <div className="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 sm:px-6 lg:hidden">
+      <div className="mx-auto w-full max-w-7xl flex-1 px-4 pt-4 sm:px-6 lg:hidden">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
@@ -65,7 +65,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
           {t.wsMenuButton}
         </button>
       </div>
-      <div className="mx-auto flex w-full max-w-6xl flex-1 gap-5 px-4 py-4 sm:px-6 lg:py-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 items-start gap-6 px-4 py-6 sm:px-6 lg:py-8">
         <WorkspaceSidebar
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed((value) => !value)}

@@ -16,7 +16,7 @@ import AnalysisResults from "@/components/AnalysisResults";
 import { ContextualNotice } from "@/components/Disclaimer";
 import { ActivePill, Crossfade, Enter, ProgressBar } from "@/components/motion";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
-import { Button, Card, EmptyState, Field, StatusLabel } from "@/components/ui";
+import { Button, Card, EmptyState, Field, PageHeader, StatusLabel, Stepper } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { getReviewProcessingNotice, getUploadSensitivityNotice } from "@/lib/disclaimer";
 import {
@@ -457,15 +457,40 @@ export default function ReviewPage() {
   };
 
   const gateLabels = gateStatus(t);
+  const hasInput = postingText.trim().length > 0;
+  // Stepper reflects real gate state: input present, approval covering the
+  // current text, and a generated report. No fabricated progress.
+  const steps = [
+    {
+      label: t.revInputTitle,
+      state: hasInput ? ("done" as const) : ("current" as const),
+    },
+    {
+      label: t.revPrivacyTitle,
+      state: !hasInput
+        ? ("todo" as const)
+        : analysisAllowed
+          ? ("done" as const)
+          : ("current" as const),
+    },
+    {
+      label: t.revReviewTitle,
+      state: result
+        ? ("done" as const)
+        : analysisAllowed
+          ? ("current" as const)
+          : ("todo" as const),
+    },
+  ];
 
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t.revTitle}</h1>
-        <p className="mt-1 max-w-2xl leading-6 text-muted">
-          {t.revSubtitle}
-        </p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        eyebrow={t.wsSidebarAria}
+        title={t.revTitle}
+        description={t.revSubtitle}
+      />
+      <Stepper steps={steps} label={t.stepsAria} />
 
       {(!configOk || modelError) && (
         <Card title={t.commonSetupRequired}>
@@ -478,7 +503,7 @@ export default function ReviewPage() {
         </Card>
       )}
 
-      <Card title={t.revInputTitle}>
+      <Card title={t.revInputTitle} eyebrow="01">
         <div className="flex items-center gap-2 text-sm">
           <StatusLabel
             tone={
@@ -808,8 +833,9 @@ export default function ReviewPage() {
         )}
         </Crossfade>
 
-        <div className="mt-4">
+        <div className="mt-5 border-t border-edge pt-5">
           <Button
+            size="lg"
             onClick={() => void handleAnalyze()}
             disabled={
               !configOk ||
@@ -839,7 +865,18 @@ export default function ReviewPage() {
         )}
       </Card>
 
-      <Card title={t.revPrivacyTitle} description={t.revPrivacyDesc}>
+      <Card
+        title={t.revPrivacyTitle}
+        eyebrow="02"
+        description={t.revPrivacyDesc}
+        className={
+          gateState === "INVALIDATED"
+            ? "border-red-300 dark:border-red-900"
+            : gateState === "REVIEW_REQUIRED" || gateState === "READY_FOR_APPROVAL"
+              ? "border-brand/50"
+              : ""
+        }
+      >
         <Crossfade panelKey={gateState}>
           <div className="flex flex-wrap items-center gap-2">
             <StatusLabel tone={gateLabels[gateState].tone}>
@@ -887,7 +924,7 @@ export default function ReviewPage() {
         </Crossfade>
       </Card>
 
-      <Card title={t.revReviewTitle}>
+      <Card title={t.revReviewTitle} eyebrow="03">
         {!result && (
           <EmptyState title={t.revNoReviewTitle} description={t.revNoReviewDesc} />
         )}

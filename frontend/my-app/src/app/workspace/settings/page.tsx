@@ -3,7 +3,7 @@
 // Account settings: account information, theme preference, sign out.
 
 import { useRouter } from "next/navigation";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, PageHeader } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
@@ -28,8 +28,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex max-w-2xl flex-col gap-5">
-      <h1 className="text-2xl font-bold tracking-tight">{t.stTitle}</h1>
+    <div className="flex max-w-2xl flex-col gap-6">
+      <PageHeader eyebrow={t.wsSidebarAria} title={t.stTitle} />
 
       <Card title={t.stAccount}>
         <dl className="divide-y divide-edge text-sm">
@@ -55,7 +55,7 @@ export default function SettingsPage() {
           {themeOptions.map((option) => (
             <label
               key={option.value}
-              className="flex cursor-pointer items-start gap-3 rounded-md border border-edge p-3 transition-colors duration-150 ease-out hover:bg-brand-soft"
+              className="flex cursor-pointer items-start gap-3 rounded-xl border border-edge p-4 transition-colors duration-150 ease-out hover:bg-brand-soft"
             >
               <input
                 type="radio"

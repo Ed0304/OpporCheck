@@ -10,7 +10,7 @@ import { getStrings } from "@/lib/strings";
 
 export function ContextualNotice({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-md bg-brand-soft p-4 text-sm leading-6" role="note">
+    <p className="rounded-xl border border-edge bg-brand-soft/70 p-4 text-sm leading-6" role="note">
       {children}
     </p>
   );
@@ -21,8 +21,8 @@ export default function Disclaimer() {
   const t = getStrings(language);
   const paragraphs = getFullDisclaimerParagraphs(language);
   return (
-    <section aria-label={t.disclaimerSectionAria} className="rounded-md bg-brand-soft p-4">
-      <h3 className="font-semibold">{t.disclaimerHeading}</h3>
+    <section aria-label={t.disclaimerSectionAria} className="rounded-xl border border-edge bg-brand-soft/70 p-5">
+      <h3 className="text-[15px] font-semibold tracking-tight">{t.disclaimerHeading}</h3>
       {paragraphs.map((paragraph) => (
         <p key={paragraph.slice(0, 32)} className="mt-1 text-sm leading-6">
           {paragraph}

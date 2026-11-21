@@ -30,24 +30,24 @@ export default function LandingContent() {
       <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
         <Stagger className="max-w-2xl">
           <StaggerItem>
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-navy">
+            <h1 className="max-w-xl text-4xl leading-[1.1] font-semibold tracking-tight text-balance text-navy lg:text-[44px]">
               {t.landingTitle}
             </h1>
           </StaggerItem>
           <StaggerItem>
-            <p className="mt-3 text-lg leading-8 text-muted">{t.landingSubtitle}</p>
+            <p className="mt-4 max-w-xl text-lg leading-8 text-muted">{t.landingSubtitle}</p>
           </StaggerItem>
           <StaggerItem>
-            <div className="mt-5 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/register"
-                className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors hover:bg-brand-strong"
+                className="inline-flex min-h-12 items-center rounded-lg bg-brand px-6 text-base font-medium text-on-action shadow-sm transition-colors hover:bg-brand-strong"
               >
                 {t.landingGetStarted}
               </Link>
               <Link
                 href="/how-it-works"
-                className="inline-flex h-11 items-center rounded-md border border-edge bg-card px-6 text-base font-medium transition-colors hover:bg-brand-soft"
+                className="inline-flex min-h-12 items-center rounded-lg border border-edge bg-card px-6 text-base font-medium shadow-sm transition-colors hover:bg-brand-soft"
               >
                 {t.landingHowItWorks}
               </Link>
@@ -109,27 +109,32 @@ export default function LandingContent() {
         </Enter>
       </div>
 
-      <Reveal className="mt-12">
+      <Reveal className="mt-16">
         <section aria-labelledby="what-is">
-          <h2 id="what-is" className="text-2xl font-semibold">
+          <p id="what-is" className="text-xs font-semibold tracking-wider text-muted uppercase">
             {t.landingWhatIs}
-          </h2>
-          <p className="mt-2 max-w-3xl leading-7 text-muted">{t.landingWhatIsText}</p>
+          </p>
+          <p className="mt-2 max-w-3xl text-xl leading-8 font-medium tracking-tight text-balance">
+            {t.landingWhatIsText}
+          </p>
         </section>
       </Reveal>
 
-      <Reveal className="mt-10">
+      <Reveal className="mt-14">
       <section aria-labelledby="workflow">
-        <h2 id="workflow" className="text-2xl font-semibold">
+        <h2 id="workflow" className="text-2xl font-semibold tracking-tight">
           {t.landingWorkflow}
         </h2>
-        <ol className="mt-4 grid gap-6 md:grid-cols-3">
+        <ol className="mt-5 grid gap-4 md:grid-cols-3">
           {workflow.map((item) => (
-            <li key={item.title} className="border-t-2 border-edge pt-4">
-              <p aria-hidden="true" className="text-2xl font-bold text-brand">
+            <li
+              key={item.title}
+              className="oc-shadow-card rounded-xl border border-edge bg-card p-5"
+            >
+              <p aria-hidden="true" className="oc-tnum text-sm font-bold text-brand">
                 {item.n}
               </p>
-              <h3 className="mt-1 font-semibold">{item.title}</h3>
+              <h3 className="mt-2 font-semibold tracking-tight">{item.title}</h3>
               <p className="mt-1 text-sm leading-6 text-muted">{item.text}</p>
             </li>
           ))}
@@ -137,9 +142,9 @@ export default function LandingContent() {
       </section>
       </Reveal>
 
-      <Reveal className="mt-10">
+      <Reveal className="mt-14">
         <section aria-labelledby="capabilities">
-          <h2 id="capabilities" className="text-2xl font-semibold">
+          <h2 id="capabilities" className="text-2xl font-semibold tracking-tight">
             {t.landingCapabilities}
           </h2>
           <dl className="mt-4 grid gap-x-10 md:grid-cols-2">

@@ -38,7 +38,7 @@ export function DocSheet({
       whileHover={{ y: -3 }}
       whileFocus={{ y: -2 }}
       transition={{ duration: OC_DURATION.base, ease: OC_EASE }}
-      className={`overflow-hidden rounded-lg border bg-paper ${
+      className={`overflow-hidden rounded-xl border bg-paper ${
         selected
           ? "border-evidence shadow-[0_4px_16px_var(--oc-paper-shadow)] ring-1 ring-evidence/40"
           : "border-paper-edge shadow-[0_2px_10px_var(--oc-paper-shadow)]"
@@ -92,7 +92,7 @@ export function DocStack({
           key={i}
           aria-hidden
           data-layer={i + 1}
-          className="oc-doc-stack-layer pointer-events-none absolute inset-2.5 rounded-lg border border-paper-edge bg-paper"
+          className="oc-doc-stack-layer pointer-events-none absolute inset-2.5 rounded-xl border border-paper-edge bg-paper"
         />
       ))}
       <div className="relative">{children}</div>

@@ -31,7 +31,7 @@ export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] })
             delay: Math.min((index % 4) * 0.05, 0.15),
           }}
           whileHover={{ y: -2 }}
-          className="overflow-hidden rounded-lg border border-paper-edge bg-paper shadow-[0_2px_10px_var(--oc-paper-shadow)] transition-colors duration-150 ease-out hover:border-evidence/40"
+          className="overflow-hidden rounded-xl border border-paper-edge bg-paper shadow-[0_2px_10px_var(--oc-paper-shadow)] transition-colors duration-150 ease-out hover:border-evidence/40"
         >
           <div aria-hidden="true" className="oc-page-edge h-1.5 w-full" />
           <div className="p-5">

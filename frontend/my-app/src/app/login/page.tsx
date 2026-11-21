@@ -58,7 +58,7 @@ function LoginForm() {
 
   return (
     <div className="mx-auto w-full max-w-md">
-      <h1 className="text-3xl font-bold tracking-tight text-navy">{t.authSignInTitle}</h1>
+      <h1 className="text-3xl font-semibold tracking-tight text-navy">{t.authSignInTitle}</h1>
       <div className="mt-5">
         <Card>
           {setupError && (

@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Button, Card, EmptyState, Spinner, StatusLabel } from "@/components/ui";
+import { Button, Card, EmptyState, PageHeader, Spinner, StatusLabel, Table, TBody, TD, TH, THead, TR } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { localeForCountryName } from "@/lib/corridors";
 import { getFirebaseClient } from "@/lib/firebaseClient";
@@ -142,21 +142,22 @@ export default function InvestigationsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t.invTitle}</h1>
-          <p className="mt-1 text-muted">{t.invSubtitle}</p>
-        </div>
-        <Link
-          href="/workspace/review"
-          className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
-        >
-          {t.invReviewNew}
-        </Link>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        eyebrow={t.wsSidebarAria}
+        title={t.invTitle}
+        description={t.invSubtitle}
+        actions={
+          <Link
+            href="/workspace/review"
+            className="inline-flex min-h-11 items-center rounded-lg bg-brand px-5 text-sm font-medium text-on-action shadow-sm transition-colors hover:bg-brand-strong"
+          >
+            {t.invReviewNew}
+          </Link>
+        }
+      />
 
-      <Card>
+      <Card flush={items.length > 0}>
         {phase === "loading" && <Spinner label={t.ovLoading} />}
         {phase === "error" && (
           <p className="text-sm leading-6" role="alert">
@@ -170,7 +171,7 @@ export default function InvestigationsPage() {
             action={
               <Link
                 href="/workspace/review"
-                className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
+                className="inline-flex h-10 items-center rounded-lg bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
               >
                 {t.ovReviewCta}
               </Link>
@@ -183,102 +184,122 @@ export default function InvestigationsPage() {
           </p>
         )}
         {items.length > 0 && (
-          <ul className="divide-y divide-edge">
-            {items.map((item) => (
-              <li key={item.id} className="py-3">
-                {renamingId === item.id ? (
-                  <form
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      void handleRename(item.id);
-                    }}
-                    className="flex flex-wrap items-center gap-2"
-                  >
-                    <label htmlFor={`rename-${item.id}`} className="sr-only">
-                      {t.invNewTitleAria}
-                    </label>
-                    <input
-                      id={`rename-${item.id}`}
-                      value={renameValue}
-                      onChange={(event) => setRenameValue(event.target.value)}
-                      maxLength={120}
-                      className="h-9 min-w-52 flex-1 rounded-md border border-edge bg-card px-3 text-sm"
-                      autoFocus
-                    />
-                    <Button type="submit" disabled={busyId === item.id}>
-                      {t.commonSave}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setRenamingId(null)}
-                    >
-                      {t.commonCancel}
-                    </Button>
-                  </form>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                    <Link
-                      href={`/workspace/investigations/${item.id}`}
-                      className="min-w-44 flex-1 font-medium hover:underline"
-                    >
-                      {item.title}
-                    </Link>
-                    <span className="text-sm text-muted">{item.report?.destination_country ?? t.commonUnknownCountry}</span>
-                    <StatusLabel tone={item.status === "complete" ? "ok" : "info"}>
-                      {item.status === "complete" ? t.commonStatusComplete : t.commonStatusReviewed}
-                    </StatusLabel>
-                    <span className="text-sm text-muted" title={t.invLastUpdatedTitle}>
-                      {formatDate(t, item.updatedAt ?? item.createdAt, item.report?.destination_country)}
-                    </span>
-                    <span className="flex gap-1 text-sm">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRenamingId(item.id);
-                          setRenameValue(item.title);
-                          setConfirmingDeleteId(null);
+          <Table label={t.invTitle}>
+            <THead>
+              <TH>{t.tblInvestigation}</TH>
+              <TH>{t.anCountry}</TH>
+              <TH>{t.tblStatus}</TH>
+              <TH>{t.invLastUpdatedTitle}</TH>
+              <TH>{t.tblActions}</TH>
+            </THead>
+            <TBody>
+              {items.map((item) => (
+                renamingId === item.id ? (
+                  <tr key={item.id}>
+                    <td colSpan={5} className="px-6 py-3.5">
+                      <form
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void handleRename(item.id);
                         }}
-                        className="cursor-pointer rounded px-2 py-1 font-medium text-brand hover:underline"
+                        className="flex flex-wrap items-center gap-2"
                       >
-                        {t.invRename}
-                      </button>
-                      {confirmingDeleteId === item.id ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(item.id)}
-                            disabled={busyId === item.id}
-                            className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline disabled:opacity-50 dark:text-red-300"
-                          >
-                            {t.invConfirmDelete}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmingDeleteId(null)}
-                            className="cursor-pointer rounded px-2 py-1 text-muted hover:underline"
-                          >
-                            {t.commonCancel}
-                          </button>
-                        </>
-                      ) : (
+                        <label htmlFor={`rename-${item.id}`} className="sr-only">
+                          {t.invNewTitleAria}
+                        </label>
+                        <input
+                          id={`rename-${item.id}`}
+                          value={renameValue}
+                          onChange={(event) => setRenameValue(event.target.value)}
+                          maxLength={120}
+                          className="h-9 min-w-52 flex-1 rounded-md border border-edge bg-card px-3 text-sm"
+                          autoFocus
+                        />
+                        <Button type="submit" size="sm" disabled={busyId === item.id}>
+                          {t.commonSave}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setRenamingId(null)}
+                        >
+                          {t.commonCancel}
+                        </Button>
+                      </form>
+                    </td>
+                  </tr>
+                ) : (
+                  <TR key={item.id}>
+                    <TD className="font-medium">
+                      <Link
+                        href={`/workspace/investigations/${item.id}`}
+                        className="text-ink underline decoration-edge underline-offset-2 hover:decoration-brand"
+                      >
+                        {item.title}
+                      </Link>
+                    </TD>
+                    <TD className="whitespace-nowrap text-muted">
+                      {item.report?.destination_country ?? t.commonUnknownCountry}
+                    </TD>
+                    <TD>
+                      <StatusLabel tone={item.status === "complete" ? "ok" : "info"}>
+                        {item.status === "complete" ? t.commonStatusComplete : t.commonStatusReviewed}
+                      </StatusLabel>
+                    </TD>
+                    <TD className="oc-tnum whitespace-nowrap text-muted">
+                      {formatDate(t, item.updatedAt ?? item.createdAt, item.report?.destination_country)}
+                    </TD>
+                    <TD>
+                      <span className="flex gap-1 text-sm whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => {
-                            setConfirmingDeleteId(item.id);
-                            setRenamingId(null);
+                            setRenamingId(item.id);
+                            setRenameValue(item.title);
+                            setConfirmingDeleteId(null);
                           }}
-                          className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline dark:text-red-300"
+                          className="cursor-pointer rounded px-2 py-1 font-medium text-brand hover:underline"
                         >
-                          {t.invDelete}
+                          {t.invRename}
                         </button>
-                      )}
-                    </span>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+                        {confirmingDeleteId === item.id ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => void handleDelete(item.id)}
+                              disabled={busyId === item.id}
+                              className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline disabled:opacity-50 dark:text-red-300"
+                            >
+                              {t.invConfirmDelete}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmingDeleteId(null)}
+                              className="cursor-pointer rounded px-2 py-1 text-muted hover:underline"
+                            >
+                              {t.commonCancel}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setConfirmingDeleteId(item.id);
+                              setRenamingId(null);
+                            }}
+                            className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline dark:text-red-300"
+                          >
+                            {t.invDelete}
+                          </button>
+                        )}
+                      </span>
+                    </TD>
+                  </TR>
+                )
+              ))}
+            </TBody>
+          </Table>
         )}
       </Card>
     </div>

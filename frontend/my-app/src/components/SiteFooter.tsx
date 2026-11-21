@@ -40,7 +40,7 @@ export default function SiteFooter() {
   ];
   return (
     <footer className="border-t border-edge bg-card">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
+      <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
         {columns.map((column) => (
           <nav
             key={column.heading}
@@ -60,7 +60,7 @@ export default function SiteFooter() {
         ))}
       </div>
       <div className="border-t border-edge">
-        <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6">
+        <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6">
           <p className="text-sm font-semibold">{t.footerNoticeHeading}</p>
           {paragraphs.map((paragraph) => (
             <p key={paragraph.slice(0, 32)} className="mt-1 text-sm leading-6 text-muted">

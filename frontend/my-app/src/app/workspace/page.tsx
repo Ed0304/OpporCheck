@@ -6,10 +6,19 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
-import { DocStack } from "@/components/atelier";
-import { Enter, OC_DURATION, OC_EASE } from "@/components/motion";
-import { Card, EmptyState, Spinner, StatusLabel } from "@/components/ui";
+import {
+  Card,
+  EmptyState,
+  PageHeader,
+  Spinner,
+  StatusLabel,
+  Table,
+  TBody,
+  TD,
+  TH,
+  THead,
+  TR,
+} from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { localeForCountryName } from "@/lib/corridors";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
@@ -79,26 +88,53 @@ export default function WorkspaceOverviewPage() {
 
   const displayName = user?.displayName || user?.email || null;
 
+  const quickActions = [
+    { href: "/workspace/review", title: t.wsNavReview, text: t.revSubtitle },
+    { href: "/workspace/compare", title: t.wsNavCompare, text: t.cmpSubtitle },
+    { href: "/workspace/resources", title: t.wsNavResources, text: t.wsResourcesSubtitle },
+  ];
+
   return (
-    <div className="flex flex-col gap-5">
-      <Enter>
-        <h1 className="text-2xl font-bold tracking-tight">{t.ovWelcome}{displayName ? `, ${displayName}` : ""}</h1>
-        <p className="mt-1 max-w-2xl leading-6 text-muted">
-          {t.ovIntro}
-        </p>
-        <div className="mt-4">
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        eyebrow={t.wsSidebarAria}
+        title={`${t.ovWelcome}${displayName ? `, ${displayName}` : ""}`}
+        description={t.ovIntro}
+        actions={
           <Link
             href="/workspace/review"
-            className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong"
+            className="inline-flex min-h-12 items-center rounded-lg bg-brand px-6 text-base font-medium text-on-action shadow-sm transition-colors duration-200 ease-out hover:bg-brand-strong"
           >
             {t.ovReviewCta}
           </Link>
-        </div>
-      </Enter>
+        }
+      />
 
-      <DocStack label={t.ovRecent} layers={1}>
+      <div className="grid gap-4 md:grid-cols-3">
+        {quickActions.map((action) => (
+          <Link
+            key={action.href}
+            href={action.href}
+            className="oc-shadow-card group rounded-xl border border-edge bg-card p-5 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:border-brand/40"
+          >
+            <p className="font-semibold tracking-tight">
+              {action.title}{" "}
+              <span
+                aria-hidden
+                className="inline-block text-muted transition-transform duration-150 ease-out group-hover:translate-x-0.5"
+              >
+                →
+              </span>
+            </p>
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted">{action.text}</p>
+          </Link>
+        ))}
+      </div>
+
       <Card
+        eyebrow={t.wsNavInvestigations}
         title={t.ovRecent}
+        flush={recent.items.length > 0}
         actions={
           <Link href="/workspace/investigations" className="text-sm font-medium text-brand underline transition-colors duration-150 ease-out hover:text-brand-strong">
             {t.ovViewAll}
@@ -125,7 +161,7 @@ export default function WorkspaceOverviewPage() {
             action={
               <Link
                 href="/workspace/review"
-                className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong"
+                className="inline-flex h-10 items-center rounded-lg bg-brand px-4 text-sm font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong"
               >
                 {t.ovReviewCta}
               </Link>
@@ -133,35 +169,41 @@ export default function WorkspaceOverviewPage() {
           />
         )}
         {recent.items.length > 0 && (
-          <ul className="divide-y divide-edge">
-            {recent.items.map((item, index) => (
-              <motion.li
-                key={item.id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: OC_DURATION.base,
-                  ease: OC_EASE,
-                  delay: Math.min(index * 0.05, 0.2),
-                }}
-              >
-                <Link
-                  href={`/workspace/investigations/${item.id}`}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md py-2.5 transition-colors duration-150 ease-out hover:bg-brand-soft"
-                >
-                  <span className="min-w-44 flex-1 font-medium">{item.title}</span>
-                  <span className="text-sm text-muted">{item.report?.destination_country ?? t.commonUnknownCountry}</span>
-                  <StatusLabel tone={item.status === "complete" ? "ok" : "info"}>
-                    {item.status === "complete" ? t.commonStatusComplete : t.commonStatusReviewed}
-                  </StatusLabel>
-                  <span className="text-sm text-muted">{formatDate(t, item.createdAt, item.report?.destination_country)}</span>
-                </Link>
-              </motion.li>
-            ))}
-          </ul>
+          <Table label={t.ovRecent}>
+            <THead>
+              <TH>{t.tblInvestigation}</TH>
+              <TH>{t.anCountry}</TH>
+              <TH>{t.tblStatus}</TH>
+              <TH>{t.invLastUpdatedTitle}</TH>
+            </THead>
+            <TBody>
+              {recent.items.map((item) => (
+                <TR key={item.id}>
+                  <TD className="font-medium">
+                    <Link
+                      href={`/workspace/investigations/${item.id}`}
+                      className="text-ink underline decoration-edge underline-offset-2 hover:decoration-brand"
+                    >
+                      {item.title}
+                    </Link>
+                  </TD>
+                  <TD className="text-muted">
+                    {item.report?.destination_country ?? t.commonUnknownCountry}
+                  </TD>
+                  <TD>
+                    <StatusLabel tone={item.status === "complete" ? "ok" : "info"}>
+                      {item.status === "complete" ? t.commonStatusComplete : t.commonStatusReviewed}
+                    </StatusLabel>
+                  </TD>
+                  <TD className="oc-tnum text-muted">
+                    {formatDate(t, item.createdAt, item.report?.destination_country)}
+                  </TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
         )}
       </Card>
-      </DocStack>
     </div>
   );
 }
