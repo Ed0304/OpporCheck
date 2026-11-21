@@ -3,11 +3,16 @@
 //
 // Status tones deliberately avoid red: ordinary discrepancies use amber,
 // informational outcomes use blue/gray. All counts are computed locally,
-// never generated.
+// never generated. Report chrome follows the global website language
+// preference; extracted claims and excerpts are the user's own documents
+// and stay as written.
+
+"use client";
 
 import Disclaimer, { ContextualNotice } from "@/components/Disclaimer";
 import { EvidenceQuote, StatusLabel } from "@/components/ui";
-import { COMPARISON_CONTEXT_NOTICE } from "@/lib/disclaimer";
+import { getComparisonContextNotice } from "@/lib/disclaimer";
+import { useLang } from "@/lib/lang";
 import type {
   ContractDocumentType,
   EmploymentClaim,
@@ -16,15 +21,16 @@ import type {
 import {
   collectQuestions,
   summarizeFindings,
-  COMPARE_CATEGORY_LABELS,
-  COMPARE_DOC_TYPE_LABELS,
+  getCompareCategoryLabels,
+  getCompareDocTypeLabels,
   type CompareDocSource,
 } from "@/lib/compareSession";
 import {
-  COMPARISON_STATUS_LABELS,
   COMPARISON_STATUS_TONES,
-  UNVERIFIED_PHRASE,
+  getComparisonStatusLabels,
+  getUnverifiedPhrase,
 } from "@/lib/reportLanguage";
+import { format, getStrings } from "@/lib/strings";
 
 export interface ReportDocument {
   id: string;
@@ -49,11 +55,14 @@ function ClaimBlock({
   claim: EmploymentClaim;
   source: CompareDocSource;
 }) {
+  const { language } = useLang();
+  const t = getStrings(language);
+  const docTypeLabels = getCompareDocTypeLabels(language);
   const ref = claim.documentReference;
   const location =
     source === "pdf" && ref.pageNumber !== undefined
-      ? `p. ${ref.pageNumber}`
-      : "pasted text";
+      ? format(t.cmpPageRef, { n: String(ref.pageNumber) })
+      : t.cmpPastedText;
   // Written employment terms read as document excerpts; spoken or
   // advertised promises stay neutral so the two are easy to tell apart.
   const isWrittenTerms =
@@ -68,7 +77,7 @@ function ClaimBlock({
       </p>
       <EvidenceQuote>&ldquo;{claim.sourceExcerpt}&rdquo;</EvidenceQuote>
       <p className="mt-1 text-xs text-muted">
-        {COMPARE_DOC_TYPE_LABELS[ref.documentType]} · {ref.fileName} · {location}
+        {docTypeLabels[ref.documentType]} · {ref.fileName} · {location}
       </p>
     </div>
   );
@@ -81,17 +90,21 @@ function FindingCard({
   finding: PromiseToPaperFinding;
   sourceById: Map<string, CompareDocSource>;
 }) {
+  const { language } = useLang();
+  const t = getStrings(language);
+  const statusLabels = getComparisonStatusLabels(language);
+  const categoryLabels = getCompareCategoryLabels(language);
   const slots: Array<{ label: string; claim: EmploymentClaim | undefined }> = [
-    { label: "Recruiter statement", claim: finding.recruiterStatement },
-    { label: "Advertisement", claim: finding.advertisementClaim },
-    { label: "Written clause", claim: finding.contractClause },
+    { label: t.crSlotRecruiter, claim: finding.recruiterStatement },
+    { label: t.crSlotAdvertisement, claim: finding.advertisementClaim },
+    { label: t.crSlotContract, claim: finding.contractClause },
   ];
   return (
     <li className="border-t border-edge pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-semibold">{COMPARE_CATEGORY_LABELS[finding.category]}</p>
+        <p className="font-semibold">{categoryLabels[finding.category]}</p>
         <StatusLabel tone={toneForStatus(finding.status)}>
-          {COMPARISON_STATUS_LABELS[finding.status]}
+          {statusLabels[finding.status]}
         </StatusLabel>
       </div>
       <div className="mt-2 flex flex-col gap-2">
@@ -109,7 +122,7 @@ function FindingCard({
       </div>
       <p className="mt-2 text-sm leading-6">{finding.explanation}</p>
       <p className="mt-2 text-sm leading-6">
-        <span className="font-semibold">Follow-up question: </span>
+        <span className="font-semibold">{t.commonFollowUpLabel} </span>
         {finding.followUpQuestion}
       </p>
     </li>
@@ -127,58 +140,61 @@ export default function CompareReport({
   droppedCount: number;
   limitations: string[];
 }) {
+  const { language } = useLang();
+  const t = getStrings(language);
+  const docTypeLabels = getCompareDocTypeLabels(language);
   const summary = summarizeFindings(findings);
   const questions = collectQuestions(findings);
   const sourceById = new Map(documents.map((doc) => [doc.id, doc.source]));
   const groups = [
-    { key: "consistent", title: "Consistent terms" },
-    { key: "discrepancy", title: "Discrepancies" },
-    { key: "not_addressed", title: "Promises not addressed" },
-    { key: "needs_clarification", title: "Terms requiring clarification" },
+    { key: "consistent", title: t.crGroupConsistent },
+    { key: "discrepancy", title: t.crGroupDiscrepancy },
+    { key: "not_addressed", title: t.crGroupNotAddressed },
+    { key: "needs_clarification", title: t.crGroupClarification },
   ] as const;
 
   return (
     <div className="flex flex-col gap-6">
       <section aria-labelledby="oc-exec">
         <h3 id="oc-exec" className="font-semibold">
-          Executive summary
+          {t.crExecSummary}
         </h3>
         <p className="mt-1 leading-7">
-          Compared {documents.length} document{documents.length === 1 ? "" : "s"}:{" "}
-          {summary.consistent} consistent term{summary.consistent === 1 ? "" : "s"},{" "}
-          {summary.discrepancy} {summary.discrepancy === 1 ? "discrepancy" : "discrepancies"},{" "}
-          {summary.not_addressed} {summary.not_addressed === 1 ? "promise" : "promises"} not
-          addressed, {summary.needs_clarification} needing clarification.
+          {t.crComparedBefore} {documents.length}{" "}
+          {documents.length === 1 ? t.crDocumentOne : t.crDocumentMany}: {summary.consistent}{" "}
+          {summary.consistent === 1 ? t.crConsistentOne : t.crConsistentMany},{" "}
+          {summary.discrepancy}{" "}
+          {summary.discrepancy === 1 ? t.crDiscrepancyOne : t.crDiscrepancyMany},{" "}
+          {summary.not_addressed}{" "}
+          {summary.not_addressed === 1 ? t.crPromiseOne : t.crPromiseMany}{" "}
+          {t.crNotAddressedTail} {summary.needs_clarification} {t.crNeedingTail}
         </p>
-        <p className="mt-1 text-sm leading-6 text-muted">
-          Quotes are copied from your documents; each status is an AI-generated
-          interpretation of those quotes, not a verdict on any employer or offer.
-        </p>
+        <p className="mt-1 text-sm leading-6 text-muted">{t.crQuotesNote}</p>
       </section>
 
       <section aria-labelledby="oc-docs">
         <h3 id="oc-docs" className="font-semibold">
-          Documents included
+          {t.crDocsIncluded}
         </h3>
         <ul className="mt-1 list-disc pl-5 text-sm leading-7">
           {documents.map((doc) => (
             <li key={doc.id}>
-              {COMPARE_DOC_TYPE_LABELS[doc.documentType]} — {doc.fileName} (
-              {doc.source === "pdf" ? `${doc.pageCount} page${doc.pageCount === 1 ? "" : "s"}` : "pasted text"}
-              {doc.wasTrimmed ? ", trimmed to fit" : ""} · {doc.termCount} term
-              {doc.termCount === 1 ? "" : "s"} extracted)
+              {docTypeLabels[doc.documentType]} — {doc.fileName} (
+              {doc.source === "pdf"
+                ? `${doc.pageCount} ${doc.pageCount === 1 ? t.revOcrPageOne : t.revOcrPageMany}`
+                : t.cmpPastedText}
+              {doc.wasTrimmed ? t.crTrimmedSuffix : ""} · {doc.termCount}{" "}
+              {doc.termCount === 1 ? t.cmpTermOne : t.cmpTermMany} {t.crExtractedTail}
             </li>
           ))}
         </ul>
       </section>
 
-      <ContextualNotice>{COMPARISON_CONTEXT_NOTICE}</ContextualNotice>
+      <ContextualNotice>{getComparisonContextNotice(language)}</ContextualNotice>
 
       {findings.length === 0 ? (
         <p className="text-sm leading-6">
-          No terms could be compared across these documents — the extracted terms did not
-          overlap, or every comparison result failed validation and was dropped.{" "}
-          {UNVERIFIED_PHRASE}
+          {t.crNoTerms} {getUnverifiedPhrase(language)}
         </p>
       ) : (
         groups.map(
@@ -207,7 +223,7 @@ export default function CompareReport({
       {questions.length > 0 && (
         <section aria-labelledby="oc-questions">
           <h3 id="oc-questions" className="font-semibold">
-            Questions to ask before signing
+            {t.crQuestions}
           </h3>
           <ul className="mt-1 list-disc pl-5 text-sm leading-7">
             {questions.map((question) => (
@@ -219,7 +235,7 @@ export default function CompareReport({
 
       <section aria-labelledby="oc-limits">
         <h3 id="oc-limits" className="font-semibold">
-          Limitations
+          {t.crLimits}
         </h3>
         <ul className="mt-1 list-disc pl-5 text-sm leading-7">
           {limitations.map((item) => (
@@ -227,18 +243,18 @@ export default function CompareReport({
           ))}
           {droppedCount > 0 && (
             <li>
-              {droppedCount} comparison result{droppedCount === 1 ? " was" : "s were"}{" "}
-              dropped because {droppedCount === 1 ? "it" : "they"} failed validation
-              (unverifiable quote or document) and {droppedCount === 1 ? "is" : "are"} not
-              shown.
+              {format(t.crDropped, {
+                count: String(droppedCount),
+                resultWord: droppedCount === 1 ? t.evDroppedResultOne : t.evDroppedResultMany,
+                verb: droppedCount === 1 ? t.evDroppedVerbOne : t.evDroppedVerbMany,
+                pronoun: droppedCount === 1 ? t.evDroppedPronounOne : t.evDroppedPronounMany,
+                verb2: droppedCount === 1 ? t.crIs : t.crAre,
+              })}
             </li>
           )}
-          <li>Only the analyzed excerpts were compared, not entire documents.</li>
-          <li>
-            Ambiguous wording needs a human reviewer — statuses reflect the model&apos;s
-            reading of short quotes, not legal analysis.
-          </li>
-          <li>Missing information means unverified — not false, and not proof of fraud.</li>
+          <li>{t.crOnlyExcerpts}</li>
+          <li>{t.crAmbiguous}</li>
+          <li>{t.crMissingMeans}</li>
         </ul>
       </section>
 

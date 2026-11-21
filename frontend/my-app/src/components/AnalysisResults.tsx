@@ -2,6 +2,12 @@
 // extracted details, potential concerns, missing information, recommended
 // next action. Concerns pair the model's quoted evidence with short static
 // guidance; confidence is shown as information, never as proof of fraud.
+//
+// Report chrome follows the global website language preference. Model
+// output data (occupation, concerns, evidence quotes) is the user's own
+// data and stays as returned; only the surrounding glue is localized.
+
+"use client";
 
 import { ContextualNotice } from "@/components/Disclaimer";
 import { EvidenceQuote } from "@/components/ui";
@@ -10,9 +16,11 @@ import {
   resolveCorridorCode,
   type CorridorCode,
 } from "@/lib/corridors";
-import { ANALYSIS_CONTEXT_NOTICE } from "@/lib/disclaimer";
+import { getAnalysisContextNotice } from "@/lib/disclaimer";
+import { useLang } from "@/lib/lang";
 import type { AnalysisConcern, OpportunityReport } from "@/lib/opportunityAnalyzer";
-import { MISSING_INFO_LABEL } from "@/lib/reportLanguage";
+import { getMissingInfoLabel } from "@/lib/reportLanguage";
+import { getStrings, type UiStrings } from "@/lib/strings";
 
 function isSpecified(value: string): boolean {
   const normalized = value.trim().toLowerCase();
@@ -20,96 +28,67 @@ function isSpecified(value: string): boolean {
 }
 
 // Static plain-language guidance matched by concern keywords. This is
-// general guidance text, not a finding about any specific employer.
-const CONCERN_GUIDANCE: Array<{ match: RegExp; guidance: string }> = [
-  {
-    match: /fee|payment|pay.*upfront|deposit|transfer/i,
-    guidance:
-      "Legitimate UK employers and agencies do not ask workers to pay for the job itself. Any requested payment deserves written justification before you send anything.",
-  },
-  {
-    match: /cash in hand|no payslip|without.*contract/i,
-    guidance:
-      "Pay without payslips or a written contract makes it hard to prove your hours, rate, or employment rights later.",
-  },
-  {
-    match: /whatsapp|telegram|social media|personal.*(email|phone)/i,
-    guidance:
-      "Recruitment through personal messaging alone is common in scams. Check whether the same employer can be reached through verifiable official channels.",
-  },
-  {
-    match: /passport|document.*(keep|hold|retain)|visa.*(keep|hold)/i,
-    guidance:
-      "No employer should keep your passport or identity documents. You have the right to hold your own documents at all times.",
-  },
-  {
-    match: /urgent|immediately|act (now|fast)|limited.*(slot|place)/i,
-    guidance:
-      "Pressure to decide fast is a classic persuasion tactic. Genuine offers allow time to read terms and ask questions.",
-  },
+// general guidance text, not a finding about any specific employer. The
+// regexes stay English (they match model output); the guidance strings
+// come from the dictionary in the UI language.
+const CONCERN_GUIDANCE: Array<{ match: RegExp; key: keyof UiStrings }> = [
+  { match: /fee|payment|pay.*upfront|deposit|transfer/i, key: "anGuideFee" },
+  { match: /cash in hand|no payslip|without.*contract/i, key: "anGuideCash" },
+  { match: /whatsapp|telegram|social media|personal.*(email|phone)/i, key: "anGuideMessaging" },
+  { match: /passport|document.*(keep|hold|retain)|visa.*(keep|hold)/i, key: "anGuidePassport" },
+  { match: /urgent|immediately|act (now|fast)|limited.*(slot|place)/i, key: "anGuideUrgency" },
   {
     match: /guarantee|sure.*visa|visa.*guarantee|no.*(experience|interview)/i,
-    guidance:
-      "Guaranteed visas or jobs with no checks at all are unrealistic. Official routes always involve eligibility checks.",
+    key: "anGuideGuarantee",
   },
 ];
 
-const GENERIC_GUIDANCE =
-  "This detail is unusual enough to question. Ask for it in writing and compare the answer against official guidance.";
-
-function guidanceFor(concern: AnalysisConcern, corridorCode: CorridorCode): string {
+function guidanceFor(
+  t: UiStrings,
+  concern: AnalysisConcern,
+  corridorCode: CorridorCode,
+): string {
   const haystack = `${concern.concern} ${concern.evidence}`;
   const hit = CONCERN_GUIDANCE.find((entry) => entry.match.test(haystack));
   if (!hit) {
-    return GENERIC_GUIDANCE;
+    return t.anGuideGeneric;
   }
   // The fee-ban sentence states United Kingdom rules; other destinations
   // get the generic wording so no country's rules are misattributed.
-  if (hit === CONCERN_GUIDANCE[0] && corridorCode !== "GB") {
-    return (
-      "Any requested payment deserves written justification before you send " +
-      "anything. Check the destination's official fee rules first."
-    );
+  if (hit.key === "anGuideFee" && corridorCode !== "GB") {
+    return t.anGuideFeeGeneric;
   }
-  return hit.guidance;
+  return t[hit.key];
 }
 
-function buildSummary(report: OpportunityReport): string {
-  const role = isSpecified(report.occupation) ? report.occupation : "An opportunity";
-  const employer = isSpecified(report.employer) ? ` with ${report.employer}` : "";
+function buildSummary(t: UiStrings, report: OpportunityReport): string {
+  const role = isSpecified(report.occupation) ? report.occupation : t.anSumFallbackRole;
+  const employer = isSpecified(report.employer) ? ` ${t.anSumWith} ${report.employer}` : "";
   const country = isSpecified(report.destination_country)
-    ? ` in ${report.destination_country}`
+    ? ` ${t.anSumIn} ${report.destination_country}`
     : "";
-  const pay = isSpecified(report.salary) ? ` Pay stated: ${report.salary}.` : " No pay stated.";
+  const pay = isSpecified(report.salary) ? ` ${t.anSumPayStated} ${report.salary}.` : ` ${t.anSumNoPay}`;
   const type = isSpecified(report.employment_type)
-    ? ` Employment type: ${report.employment_type}.`
+    ? ` ${t.anSumEmpType} ${report.employment_type}.`
     : "";
   return `${role}${employer}${country}.${pay}${type}`;
 }
 
-function nextAction(report: OpportunityReport): string {
+function nextAction(t: UiStrings, report: OpportunityReport): string {
   const concerns = report.concerns ?? [];
   const missing = report.missing_information ?? [];
   if (concerns.length > 0) {
-    return (
-      "Ask the employer for written answers about each concern above — especially any " +
-      "fees, documents, or pressure to decide quickly — and check the answers against " +
-      "official guidance before paying anything or signing."
-    );
+    return t.anNextConcerns;
   }
   if (missing.length > 0) {
-    return (
-      "Request the missing details in writing before proceeding. A genuine employer " +
-      "can name itself, describe the contract, and explain any visa route clearly."
-    );
+    return t.anNextMissing;
   }
-  return (
-    "No warning signs found in the text itself. Still verify pay, hours, visa route, " +
-    "and contract terms against official sources before committing."
-  );
+  return t.anNextClear;
 }
 
 function ConfidenceNote({ value }: { value: string }) {
+  const { language } = useLang();
+  const t = getStrings(language);
   const normalized = value.trim().toLowerCase();
   const label =
     normalized === "high" || normalized === "medium" || normalized === "low"
@@ -117,15 +96,23 @@ function ConfidenceNote({ value }: { value: string }) {
       : "unspecified";
   const hint =
     label === "high"
-      ? " — the wording clearly shows this"
+      ? t.anConfHighHint
       : label === "medium"
-        ? " — likely, but wording is ambiguous"
+        ? t.anConfMediumHint
         : label === "low"
-          ? " — only a weak signal, treat as a question"
+          ? t.anConfLowHint
           : "";
+  const labelText =
+    label === "high"
+      ? t.anConfHigh
+      : label === "medium"
+        ? t.anConfMedium
+        : label === "low"
+          ? t.anConfLow
+          : t.anConfUnspecified;
   return (
     <span className="text-sm text-muted">
-      Confidence: <strong className="font-semibold text-ink">{label}</strong>
+      {t.anConfidence} <strong className="font-semibold text-ink">{labelText}</strong>
       {hint}
     </span>
   );
@@ -138,6 +125,8 @@ export default function AnalysisResults({
   report: OpportunityReport;
   destinationCode?: string | null;
 }) {
+  const { language } = useLang();
+  const t = getStrings(language);
   const missing = report.missing_information ?? [];
   const concerns = report.concerns ?? [];
   const corridorCode =
@@ -148,22 +137,22 @@ export default function AnalysisResults({
     <div className="flex flex-col gap-6">
       <section aria-labelledby="oc-summary">
         <h3 id="oc-summary" className="font-semibold">
-          Opportunity summary
+          {t.anSummary}
         </h3>
-        <p className="mt-1 leading-7">{buildSummary(report)}</p>
+        <p className="mt-1 leading-7">{buildSummary(t, report)}</p>
       </section>
 
       <section aria-labelledby="oc-details">
         <h3 id="oc-details" className="font-semibold">
-          Employment details
+          {t.anDetails}
         </h3>
         <dl className="mt-1 divide-y divide-edge text-sm">
           {[
-            ["Occupation", report.occupation],
-            ["Employer", report.employer],
-            ["Salary", report.salary],
-            ["Destination country", report.destination_country],
-            ["Employment type", report.employment_type],
+            [t.anOccupation, report.occupation],
+            [t.anEmployer, report.employer],
+            [t.anSalary, report.salary],
+            [t.anCountry, report.destination_country],
+            [t.anEmpType, report.employment_type],
           ].map(([label, value]) => (
             <div key={label} className="flex items-start justify-between gap-4 py-1.5">
               <dt className="text-muted">{label}</dt>
@@ -175,14 +164,16 @@ export default function AnalysisResults({
 
       <section aria-labelledby="oc-concerns">
         <h3 id="oc-concerns" className="font-semibold">
-          Potential concerns
+          {t.anConcerns}
         </h3>
         {concerns.length > 0 ? (
           <ul className="mt-2 divide-y divide-edge">
             {concerns.map((item, index) => (
               <li key={`${item.concern}-${index}`} className="py-4">
                 <p className="font-semibold">{item.concern}</p>
-                <p className="mt-1 text-sm leading-6 text-muted">{guidanceFor(item, corridorCode)}</p>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  {guidanceFor(t, item, corridorCode)}
+                </p>
                 <EvidenceQuote>&ldquo;{item.evidence}&rdquo;</EvidenceQuote>
                 <p className="mt-2">
                   <ConfidenceNote value={item.confidence} />
@@ -191,16 +182,13 @@ export default function AnalysisResults({
             ))}
           </ul>
         ) : (
-          <p className="mt-1 text-sm text-muted">
-            No concerns flagged in this posting. That means nothing suspicious was found in
-            the text — not that the offer is verified.
-          </p>
+          <p className="mt-1 text-sm text-muted">{t.anNoConcerns}</p>
         )}
       </section>
 
       <section aria-labelledby="oc-missing">
         <h3 id="oc-missing" className="font-semibold">
-          {MISSING_INFO_LABEL}
+          {getMissingInfoLabel(language)}
         </h3>
         {missing.length > 0 ? (
           <ul className="mt-1 list-disc pl-5 text-sm leading-7">
@@ -209,21 +197,19 @@ export default function AnalysisResults({
             ))}
           </ul>
         ) : (
-          <p className="mt-1 text-sm text-muted">None reported.</p>
+          <p className="mt-1 text-sm text-muted">{t.anNoneReported}</p>
         )}
-        <p className="mt-1 text-sm text-muted">
-          Missing information means unverified — not false.
-        </p>
+        <p className="mt-1 text-sm text-muted">{t.commonMissingMeansUnverified}</p>
       </section>
 
       <section aria-labelledby="oc-next" className="rounded-md bg-brand-soft p-4">
         <h3 id="oc-next" className="font-semibold">
-          Recommended next action
+          {t.anNext}
         </h3>
-        <p className="mt-1 text-sm leading-6">{nextAction(report)}</p>
+        <p className="mt-1 text-sm leading-6">{nextAction(t, report)}</p>
       </section>
 
-      <ContextualNotice>{ANALYSIS_CONTEXT_NOTICE}</ContextualNotice>
+      <ContextualNotice>{getAnalysisContextNotice(language)}</ContextualNotice>
     </div>
   );
 }

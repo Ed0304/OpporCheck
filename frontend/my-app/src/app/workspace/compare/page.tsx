@@ -14,11 +14,11 @@ import CompareReport, { type ReportDocument } from "@/components/CompareReport";
 import { ContextualNotice } from "@/components/Disclaimer";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import { Button, Card, EmptyState, EvidenceQuote, Field, Spinner, StatusLabel } from "@/components/ui";
-import { UPLOAD_SENSITIVITY_NOTICE } from "@/lib/disclaimer";
+import { getUploadSensitivityNotice } from "@/lib/disclaimer";
 import {
   createExtractionModel,
   createPromiseComparisonModel,
-  INFERENCE_MODE_INFO,
+  getInferenceModeInfo,
   parseExtraction,
   parsePromiseComparisonFindings,
   type CompareInferenceMode,
@@ -41,11 +41,12 @@ import {
   approvedPageCount,
   approvedPagesOrThrow,
   beginExtractionRun,
-  COMPARE_DOC_TYPE_LABELS,
   completeExtractionRun,
   emptyDocPrivacy,
   failedPagesLimitation,
   failExtractionRun,
+  getCompareCategoryLabels,
+  getCompareDocTypeLabels,
   isDocPrivacyApproved,
   isPageApproved,
   recordPageApproval,
@@ -55,6 +56,8 @@ import {
 } from "@/lib/compareSession";
 import { failedPageNumbers } from "@/lib/documents";
 import { describeActualSource, type PrivacyApproval } from "@/lib/privacyGate";
+import { useLang } from "@/lib/lang";
+import { format, getStrings, type UiLanguage } from "@/lib/strings";
 import { mapServiceError } from "@/lib/aiErrors";
 import { apiBase, uploadPdf, validatePdfFile } from "@/lib/documents";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
@@ -95,25 +98,25 @@ interface DeviceStatus {
   message: string;
 }
 
-function friendlyError(err: unknown, mode: CompareInferenceMode): string {
+function friendlyError(err: unknown, mode: CompareInferenceMode, language: UiLanguage): string {
+  const t = getStrings(language);
   const message = err instanceof Error ? err.message : String(err);
   if (/403|App Check|app-check/i.test(message)) {
-    return (
-      "The request was blocked by App Check. Register a localhost debug token " +
-      "(see the model playground guide) and try again."
-    );
+    return t.commonAppCheckRequest;
   }
   if (mode === "on-device-only" && /not (available|supported)|download|device/i.test(message)) {
-    return (
-      "On-device analysis isn't available in this browser. Prepare on-device analysis, " +
-      "or switch to cloud fallback with consent. Nothing was sent anywhere."
-    );
+    return t.cmpOnDeviceUnavailable;
   }
-  return mapServiceError(message) ?? message;
+  return mapServiceError(message, language) ?? message;
 }
 
 export default function ComparePage() {
   const [envProbe] = useState(() => probeFirebaseConfig());
+  const { language } = useLang();
+  const t = getStrings(language);
+  const docTypeLabels = getCompareDocTypeLabels(language);
+  const categoryLabels = getCompareCategoryLabels(language);
+  const modeInfo = getInferenceModeInfo(language);
   const configOk = envProbe.missingConfigKeys.length === 0;
   const [docs, setDocs] = useState<SessionDoc[]>([]);
   const [nextType, setNextType] = useState<ContractDocumentType>("employment_contract");
@@ -126,7 +129,7 @@ export default function ComparePage() {
   const [device, setDevice] = useState<DeviceStatus>({
     state: "idle",
     progress: null,
-    message: "On-device analysis is not prepared yet.",
+    message: t.cmpDeviceIdle,
   });
   const [extracting, setExtracting] = useState(false);
   const [comparing, setComparing] = useState(false);
@@ -143,6 +146,7 @@ export default function ComparePage() {
 
   const makeDocId = (): string => {
     idCounter.current += 1;
+    // eslint-disable-next-line react-hooks/purity -- runs only in event handlers, never during render
     return `doc-${Date.now().toString(36)}-${idCounter.current}`;
   };
 
@@ -186,18 +190,18 @@ export default function ComparePage() {
       return;
     }
     if (docs.length >= MAX_DOCS) {
-      setUploadMessage(`This comparison already has ${MAX_DOCS} documents. Remove one first.`);
+      setUploadMessage(format(t.cmpMaxDocs, { max: String(MAX_DOCS) }));
       return;
     }
-    const invalid = validatePdfFile(file);
+    const invalid = validatePdfFile(file, language);
     if (invalid) {
       setUploadMessage(invalid);
       return;
     }
     setUploading(true);
-    setUploadMessage(`Uploading ${file.name}…`);
+    setUploadMessage(format(t.cmpUploadingFile, { name: file.name }));
     try {
-      const extracted = await uploadPdf(file, () => {});
+      const extracted = await uploadPdf(file, () => {}, undefined, undefined, language);
       const pages =
         extracted.page_texts.length > 0 ? extracted.page_texts : [extracted.text];
       const id = makeDocId();
@@ -219,8 +223,9 @@ export default function ComparePage() {
       };
       pushDoc(record, extracted.page_texts.length === 0);
       setUploadMessage(
-        `Added ${extracted.filename} (${extracted.pages} page${extracted.pages === 1 ? "" : "s"}` +
-          `${failedPages.length > 0 ? `, pages ${failedPages.join(", ")} failed` : ""}).`,
+        `${t.cmpAddedBefore} ${extracted.filename} (${extracted.pages} ` +
+          `${extracted.pages === 1 ? t.revOcrPageOne : t.revOcrPageMany}` +
+          `${failedPages.length > 0 ? format(t.cmpFailedSuffix, { pages: failedPages.join(", ") }) : ""}).`,
       );
     } catch (err) {
       setUploadMessage(err instanceof Error ? err.message : String(err));
@@ -234,15 +239,15 @@ export default function ComparePage() {
 
   const handlePasteAdd = () => {
     if (docs.length >= MAX_DOCS) {
-      setUploadMessage(`This comparison already has ${MAX_DOCS} documents. Remove one first.`);
+      setUploadMessage(format(t.cmpMaxDocs, { max: String(MAX_DOCS) }));
       return;
     }
     const text = pasteText.trim();
     if (text.length === 0) {
-      setUploadMessage("Paste some document text first.");
+      setUploadMessage(t.cmpPasteEmpty);
       return;
     }
-    const name = pasteName.trim() === "" ? "Pasted text" : pasteName.trim().slice(0, 120);
+    const name = pasteName.trim() === "" ? t.cmpPastedDefaultName : pasteName.trim().slice(0, 120);
     const pages = [text];
     pushDoc(
       {
@@ -264,7 +269,7 @@ export default function ComparePage() {
     );
     setPasteText("");
     setPasteName("");
-    setUploadMessage(`Added ${name}.`);
+    setUploadMessage(format(t.cmpAddedName, { name }));
   };
 
   const removeDoc = (id: string) => {
@@ -292,6 +297,7 @@ export default function ComparePage() {
                   approval,
                   sanitized,
                   doc.input.pages[target.pageIndex] ?? "",
+                  language,
                 ),
               },
         ),
@@ -323,23 +329,25 @@ export default function ComparePage() {
   };
 
   const handlePrepareDevice = async () => {
-    setDevice({ state: "initializing", progress: 0, message: "Preparing on-device analysis…" });
+    setDevice({ state: "initializing", progress: 0, message: t.revDevicePreparing });
     try {
       const model = ensureModel("extract");
       await model.initializeDeviceModel((progressValue) => {
         setDevice((prev) => ({
           ...prev,
           progress: progressValue,
-          message: `Downloading on-device model: ${Math.round(progressValue * 10000) / 100}%`,
+          message: format(t.revDeviceDownloading, {
+            percent: String(Math.round(progressValue * 10000) / 100),
+          }),
         }));
       });
-      setDevice({ state: "ready", progress: 1, message: "On-device analysis is ready." });
+      setDevice({ state: "ready", progress: 1, message: t.revDeviceReady });
     } catch (err) {
-      setDevice({ state: "error", progress: null, message: friendlyError(err, mode) });
+      setDevice({ state: "error", progress: null, message: friendlyError(err, mode, language) });
     }
   };
 
-  const gate = analysisGate(mode, { consent, deviceReady: device.state === "ready" });
+  const gate = analysisGate(mode, { consent, deviceReady: device.state === "ready" }, language);
   const pendingDocs = docs.filter((doc) => doc.status === "ready" || doc.status === "error");
   const extractedDocs = docs.filter((doc) => doc.status === "extracted");
   const pendingPrivacyReady =
@@ -358,7 +366,7 @@ export default function ComparePage() {
     setExtracting(true);
     try {
       for (const doc of pendingDocs) {
-        setStatusMsg(`Extracting terms from ${doc.input.fileName}…`);
+        setStatusMsg(format(t.cmpExtractingStatus, { name: doc.input.fileName }));
         setDocs((prev) =>
           prev.map((entry) =>
             entry.input.id === doc.input.id ? beginExtractionRun(entry) : entry,
@@ -370,9 +378,10 @@ export default function ComparePage() {
             doc.privacy,
             doc.input.pages,
             doc.input.fileName,
+            language,
           );
           const text = toContractText({ ...doc.input, pages });
-          const response = await model.generateContent(buildExtractionPrompt(text));
+          const response = await model.generateContent(buildExtractionPrompt(text, language));
           const source = String(response.response.inferenceSource ?? "unknown");
           const parsed = parseExtraction(response.response.text(), text);
           setDocs((prev) =>
@@ -398,7 +407,7 @@ export default function ComparePage() {
             );
           }
         } catch (err) {
-          const message = friendlyError(err, mode);
+          const message = friendlyError(err, mode, language);
           setDocs((prev) =>
             prev.map((entry) =>
               entry.input.id === doc.input.id
@@ -407,7 +416,7 @@ export default function ComparePage() {
             ),
           );
           if (mode === "on-device-only") {
-            setRunError(`${message} Nothing was sent anywhere.`);
+            setRunError(`${message} ${t.cmpNothingSent}`);
             break;
           }
         }
@@ -424,7 +433,7 @@ export default function ComparePage() {
     }
     try {
       for (const doc of extractedDocs) {
-        approvedPagesOrThrow(doc.privacy, doc.input.pages, doc.input.fileName);
+        approvedPagesOrThrow(doc.privacy, doc.input.pages, doc.input.fileName, language);
       }
     } catch (err) {
       setRunError(err instanceof Error ? err.message : String(err));
@@ -435,7 +444,7 @@ export default function ComparePage() {
     setDroppedCount(0);
     setComparisonSource(null);
     setComparing(true);
-    setStatusMsg("Comparing terms across documents…");
+    setStatusMsg(t.cmpComparingStatus);
     try {
       const model = ensureModel("compare");
       const inputs: ComparisonInput[] = extractedDocs.map((doc) => ({
@@ -445,7 +454,9 @@ export default function ComparePage() {
         terms: doc.terms,
       }));
       const texts = extractedDocs.map((doc) => toContractText(doc.input));
-      const response = await model.generateContent(buildPromiseComparisonPrompt(inputs));
+      const response = await model.generateContent(
+        buildPromiseComparisonPrompt(inputs, language),
+      );
       setComparisonSource(String(response.response.inferenceSource ?? "unknown"));
       const parsed = parsePromiseComparisonFindings(response.response.text(), texts);
       if (parsed.parseError) {
@@ -455,7 +466,7 @@ export default function ComparePage() {
       setFindings(parsed.findings);
       setDroppedCount(parsed.issues.length);
     } catch (err) {
-      setRunError(friendlyError(err, mode));
+      setRunError(friendlyError(err, mode, language));
     } finally {
       setComparing(false);
       setStatusMsg("");
@@ -475,14 +486,14 @@ export default function ComparePage() {
   const limitations: string[] = [];
   if (extractedDocs.some((doc) => doc.input.wasTrimmed)) {
     limitations.push(
-      `Documents longer than about ${EXTRACTION_MAX_CHARS.toLocaleString()} characters were trimmed; later clauses were not analyzed.`,
+      format(t.cmpTrimmedLimitation, { chars: EXTRACTION_MAX_CHARS.toLocaleString() }),
     );
   }
   if (extractedDocs.some((doc) => doc.pagesEstimated)) {
-    limitations.push("Some page numbers are estimated because the extraction service returned no page breakdown.");
+    limitations.push(t.cmpEstimatedLimitation);
   }
   for (const doc of extractedDocs) {
-    const note = failedPagesLimitation(doc.input.fileName, doc.input.failedPages);
+    const note = failedPagesLimitation(doc.input.fileName, doc.input.failedPages, language);
     if (note) {
       limitations.push(note);
     }
@@ -493,39 +504,41 @@ export default function ComparePage() {
   );
   if (extractionIssueCount > 0) {
     limitations.push(
-      `${extractionIssueCount} extracted term${extractionIssueCount === 1 ? " was" : "s were"} dropped during validation and ${extractionIssueCount === 1 ? "was" : "were"} not compared.`,
+      format(t.cmpDroppedValidation, {
+        count: String(extractionIssueCount),
+        termWord: extractionIssueCount === 1 ? t.cmpExtractedTermOne : t.cmpExtractedTermMany,
+        verb: extractionIssueCount === 1 ? t.cmpWas : t.cmpWere,
+      }),
     );
   }
 
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Promise-to-Paper</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t.cmpTitle}</h1>
         <p className="mt-1 max-w-2xl leading-6 text-muted">
-          Compare what was promised with what the written agreement says. Upload a
-          contract, an offer letter, a job ad, or recruiter messages — any combination
-          works. Documents stay in your browser session and are never saved.
+          {t.cmpSubtitle}
         </p>
       </div>
 
       {(!configOk || runError) && (
-        <Card title={runError ? "Something went wrong" : "Setup required"}>
+        <Card title={runError ? t.cmpErrorTitle : t.commonSetupRequired}>
           <p className="text-sm leading-6" role={runError ? "alert" : undefined}>
             {runError ??
-              `Firebase isn't configured (missing: ${envProbe.missingConfigKeys.join(", ")}). Check .env.local and restart the dev server.`}
+              `${format(t.commonSetupMissing, { keys: envProbe.missingConfigKeys.join(", ") })} ${t.commonSetupCheckEnv}`}
           </p>
         </Card>
       )}
 
       <Card
-        title="1. Documents"
-        description={`Add up to ${MAX_DOCS} PDFs or pasted texts, and label each one. Comparison needs at least two documents with extracted terms. Each page needs a Privacy Check before extraction.`}
+        title={t.cmpDocsTitle}
+        description={format(t.cmpDocsDesc, { max: String(MAX_DOCS) })}
       >
         <div className="mb-3">
-          <ContextualNotice>{UPLOAD_SENSITIVITY_NOTICE}</ContextualNotice>
+          <ContextualNotice>{getUploadSensitivityNotice(language)}</ContextualNotice>
         </div>
         <div className="flex flex-wrap items-end gap-3">
-          <Field label="Next document is a" htmlFor="next-doc-type">
+          <Field label={t.cmpNextDocLabel} htmlFor="next-doc-type">
             <select
               id="next-doc-type"
               value={nextType}
@@ -534,15 +547,15 @@ export default function ComparePage() {
             >
               {DOC_TYPE_OPTIONS.map((option) => (
                 <option key={option} value={option}>
-                  {COMPARE_DOC_TYPE_LABELS[option]}
+                  {docTypeLabels[option]}
                 </option>
               ))}
             </select>
           </Field>
           <Field
-            label="Upload PDF"
+            label={t.cmpUploadPdf}
             htmlFor="compare-pdf"
-            hint={`PDF up to 10 MB and 30 pages via ${apiBase()}. Text pages extract directly; scanned pages are OCRed.`}
+            hint={format(t.cmpUploadPdfHint, { base: apiBase() })}
           >
             <input
               ref={fileRef}
@@ -557,31 +570,31 @@ export default function ComparePage() {
         </div>
 
         <div className="mt-4 grid gap-3">
-          <Field label="Or paste document text" htmlFor="compare-paste">
+          <Field label={t.cmpPasteLabel} htmlFor="compare-paste">
             <textarea
               id="compare-paste"
               value={pasteText}
               onChange={(event) => setPasteText(event.target.value)}
               rows={5}
               maxLength={PASTE_MAX_CHARS}
-              placeholder="Paste a recruiter message, ad, offer, or contract clause…"
+              placeholder={t.cmpPastePlaceholder}
               className="w-full rounded-md border border-edge bg-card p-3 text-sm leading-7"
             />
           </Field>
           <div className="flex flex-wrap items-end gap-3">
-            <Field label="Pasted document name" htmlFor="paste-name">
+            <Field label={t.cmpPasteNameLabel} htmlFor="paste-name">
               <input
                 id="paste-name"
                 type="text"
                 value={pasteName}
                 onChange={(event) => setPasteName(event.target.value)}
-                placeholder="e.g. WhatsApp message from recruiter"
+                placeholder={t.cmpPasteNamePlaceholder}
                 maxLength={120}
                 className="h-10 w-72 rounded-md border border-edge bg-card px-3 text-sm"
               />
             </Field>
             <Button variant="secondary" onClick={handlePasteAdd} disabled={uploading || running}>
-              Add pasted text
+              {t.cmpAddPasted}
             </Button>
           </div>
         </div>
@@ -593,12 +606,11 @@ export default function ComparePage() {
         )}
 
         <div className="mt-4">
-          <h3 className="font-semibold">Added documents ({docs.length})</h3>
+          <h3 className="font-semibold">
+            {format(t.cmpAddedDocs, { count: String(docs.length) })}
+          </h3>
           {docs.length === 0 ? (
-            <EmptyState
-              title="No documents yet"
-              description="Upload a PDF or paste text above. You can start with just a contract, or any two document types."
-            />
+            <EmptyState title={t.cmpNoDocsTitle} description={t.cmpNoDocsDesc} />
           ) : (
             <ul className="mt-2 flex flex-col gap-2">
               {docs.map((doc) => (
@@ -610,8 +622,8 @@ export default function ComparePage() {
                     <p className="truncate text-sm font-medium">{doc.input.fileName}</p>
                     <p className="text-xs text-muted">
                       {doc.input.source === "pdf"
-                        ? `${doc.input.pages.length} page${doc.input.pages.length === 1 ? "" : "s"}`
-                        : "pasted text"}
+                        ? `${doc.input.pages.length} ${doc.input.pages.length === 1 ? t.revOcrPageOne : t.revOcrPageMany}`
+                        : t.cmpPastedText}
                       {" · "}
                       <StatusLabel
                         tone={
@@ -625,17 +637,19 @@ export default function ComparePage() {
                         }
                       >
                         {doc.status === "extracted"
-                          ? `${doc.terms.length} terms extracted`
+                          ? format(t.cmpTermsExtracted, { count: String(doc.terms.length) })
                           : doc.status === "error"
-                            ? "extraction failed"
+                            ? t.cmpExtractionFailed
                             : doc.status === "extracting"
-                              ? "extracting…"
-                              : "awaiting extraction"}
+                              ? t.cmpExtracting
+                              : t.cmpAwaitingExtraction}
                       </StatusLabel>
                     </p>
                     <p className="mt-1 text-xs text-muted">
-                      Privacy: {approvedPageCount(doc.privacy, doc.input.pages)}/
-                      {doc.input.pages.length} pages approved
+                      {format(t.cmpPrivacyPages, {
+                        done: String(approvedPageCount(doc.privacy, doc.input.pages)),
+                        total: String(doc.input.pages.length),
+                      })}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {doc.input.pages.map((_, index) => {
@@ -652,17 +666,20 @@ export default function ComparePage() {
                                 nonce: Date.now(),
                               })
                             }
-                            aria-label={`${done ? "Re-check" : "Check"} privacy for page ${index + 1} of ${doc.input.fileName}`}
+                            aria-label={format(t.cmpPagePrivacyAria, {
+                              action: done ? t.cmpRecheck : t.cmpCheck,
+                              page: String(index + 1),
+                              name: doc.input.fileName,
+                            })}
                           >
-                            {`Page ${index + 1}${done ? " ✓" : ""}`}
+                            {`${format(t.revPageLabel, { n: String(index + 1) })}${done ? " ✓" : ""}`}
                           </Button>
                         );
                       })}
                     </div>
                     {(doc.input.failedPages?.length ?? 0) > 0 && (
                       <p className="mt-1 text-sm" role="alert">
-                        Pages {(doc.input.failedPages ?? []).join(", ")} failed extraction
-                        and were excluded.
+                        {format(t.revPagesFailed, { pages: (doc.input.failedPages ?? []).join(", ") })}
                       </p>
                     )}
                     {doc.error && (
@@ -672,7 +689,9 @@ export default function ComparePage() {
                     )}
                   </div>
                   <label className="text-sm">
-                    <span className="sr-only">Document type for {doc.input.fileName}</span>
+                    <span className="sr-only">
+                      {format(t.cmpDocTypeSr, { name: doc.input.fileName })}
+                    </span>
                     <select
                       value={doc.input.documentType}
                       disabled={running}
@@ -683,7 +702,7 @@ export default function ComparePage() {
                     >
                       {DOC_TYPE_OPTIONS.map((option) => (
                         <option key={option} value={option}>
-                          {COMPARE_DOC_TYPE_LABELS[option]}
+                          {docTypeLabels[option]}
                         </option>
                       ))}
                     </select>
@@ -692,9 +711,9 @@ export default function ComparePage() {
                     variant="ghost"
                     onClick={() => removeDoc(doc.input.id)}
                     disabled={running}
-                    aria-label={`Remove ${doc.input.fileName}`}
+                    aria-label={`${t.commonRemove} ${doc.input.fileName}`}
                   >
-                    Remove
+                    {t.commonRemove}
                   </Button>
                 </li>
               ))}
@@ -705,8 +724,11 @@ export default function ComparePage() {
 
       {privacyTarget && privacyTargetDoc && (
         <Card
-          title={`Privacy Check — ${privacyTargetDoc.input.fileName}, page ${privacyTarget.pageIndex + 1}`}
-          description="Required before extraction: review what looks personal, clean the page, and approve exactly what may be analyzed."
+          title={format(t.cmpPrivacyTitle, {
+            name: privacyTargetDoc.input.fileName,
+            n: String(privacyTarget.pageIndex + 1),
+          })}
+          description={t.cmpPrivacyDesc}
         >
           <PrivacyCheckPanel
             key={`${privacyTarget.docId}:${privacyTarget.pageIndex}:${privacyTarget.nonce}`}
@@ -718,11 +740,8 @@ export default function ComparePage() {
         </Card>
       )}
 
-      <Card
-        title="2. Analysis settings"
-        description="Contracts can contain sensitive information. Choose where analysis runs."
-      >
-        <div role="radiogroup" aria-label="Inference mode" className="flex flex-col gap-2">
+      <Card title={t.cmpSettingsTitle} description={t.cmpSettingsDesc}>
+        <div role="radiogroup" aria-label={t.cmpInferenceAria} className="flex flex-col gap-2">
           {(["on-device-only", "prefer-on-device"] as const).map((option) => (
             <label
               key={option}
@@ -738,8 +757,8 @@ export default function ComparePage() {
                 className="mt-1"
               />
               <span>
-                <span className="block text-sm font-medium">{INFERENCE_MODE_INFO[option].label}</span>
-                <span className="block text-sm text-muted">{INFERENCE_MODE_INFO[option].dataNote}</span>
+                <span className="block text-sm font-medium">{modeInfo[option].label}</span>
+                <span className="block text-sm text-muted">{modeInfo[option].dataNote}</span>
               </span>
             </label>
           ))}
@@ -755,9 +774,8 @@ export default function ComparePage() {
               className="mt-1"
             />
             <span className="text-sm leading-6">
-              <span className="font-medium">I consent to cloud processing. </span>
-              My document text may be sent to the configured cloud model when on-device
-              analysis is unavailable. I understand I can choose on-device-only instead.
+              <span className="font-medium">{t.cmpConsentTitle} </span>
+              {t.cmpConsentBody}
             </span>
           </label>
         )}
@@ -774,11 +792,11 @@ export default function ComparePage() {
                     : "idle"
             }
           >
-            {device.message}
+            {device.state === "idle" ? t.cmpDeviceIdle : device.message}
           </StatusLabel>
           {device.state !== "ready" && device.state !== "initializing" && (
             <Button variant="secondary" onClick={() => void handlePrepareDevice()} disabled={!configOk || running}>
-              Prepare on-device analysis
+              {t.cmpPrepareDevice}
             </Button>
           )}
         </div>
@@ -789,7 +807,7 @@ export default function ComparePage() {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(device.progress * 100)}
-            aria-label="On-device model download progress"
+            aria-label={t.revDeviceProgressAria}
           >
             <div
               className="h-1.5 rounded-full bg-brand"
@@ -799,42 +817,38 @@ export default function ComparePage() {
         )}
       </Card>
 
-      <Card
-        title="3. Extracted terms"
-        description="Each document's employment terms, with the exact supporting excerpt for every term."
-      >
+      <Card title={t.cmpExtractTitle} description={t.cmpExtractDesc}>
         {extractedDocs.length === 0 && pendingDocs.length === 0 ? (
-          <EmptyState
-            title="Nothing to extract"
-            description="Add documents above first. Extraction reads each document's employment terms into reviewable claims."
-          />
+          <EmptyState title={t.cmpNothingTitle} description={t.cmpNothingDesc} />
         ) : (
           <>
             <ul className="flex flex-col gap-4">
               {docs.map((doc) => (
                 <li key={doc.input.id}>
                   <h3 className="font-semibold">
-                    {COMPARE_DOC_TYPE_LABELS[doc.input.documentType]} — {doc.input.fileName}
+                    {docTypeLabels[doc.input.documentType]} — {doc.input.fileName}
                   </h3>
                   {doc.status === "extracted" ? (
                     <>
                       {doc.terms.length === 0 ? (
                         <p className="mt-1 text-sm text-muted">
-                          No employment terms were found in this document.
+                          {t.cmpNoTerms}
                         </p>
                       ) : (
                         <ul className="mt-2 divide-y divide-edge">
                           {doc.terms.map((term, index) => (
                             <li key={`${term.category}-${index}`} className="py-3">
                               <p className="text-sm">
-                                <span className="font-semibold">{term.category}: </span>
+                                <span className="font-semibold">{categoryLabels[term.category]}: </span>
                                 {term.claim}
                               </p>
                               <EvidenceQuote>&ldquo;{term.sourceExcerpt}&rdquo;</EvidenceQuote>
                               <p className="mt-1 text-xs text-muted">
                                 {doc.input.source === "pdf"
-                                  ? `p. ${term.documentReference.pageNumber}`
-                                  : "pasted text"}
+                                  ? format(t.cmpPageRef, {
+                                      n: String(term.documentReference.pageNumber),
+                                    })
+                                  : t.cmpPastedText}
                               </p>
                             </li>
                           ))}
@@ -842,26 +856,30 @@ export default function ComparePage() {
                       )}
                       {doc.missingCategories.length > 0 && (
                         <p className="mt-2 text-sm text-muted">
-                          Not stated in this document: {doc.missingCategories.join(", ")}. Missing
-                          means unverified — not false.
+                          {format(t.cmpNotStated, {
+                            cats: doc.missingCategories
+                              .map((category) => categoryLabels[category])
+                              .join(", "),
+                          })}
                         </p>
                       )}
                       {doc.extractionIssues.length > 0 && (
                         <p className="mt-1 text-sm text-muted">
-                          {doc.extractionIssues.length} term
-                          {doc.extractionIssues.length === 1 ? " was" : "s were"} dropped during
-                          validation.
+                          {doc.extractionIssues.length}{" "}
+                          {doc.extractionIssues.length === 1 ? t.cmpTermOne : t.cmpTermMany}{" "}
+                          {doc.extractionIssues.length === 1 ? t.cmpWas : t.cmpWere}{" "}
+                          {t.cmpDroppedDuring}
                         </p>
                       )}
                       <p className="mt-1 text-xs text-muted" role="status">
-                        {describeActualSource(doc.inferenceSource).label}
+                        {describeActualSource(doc.inferenceSource, language).label}
                       </p>
                     </>
                   ) : (
                     <p className="mt-1 text-sm text-muted">
                       {doc.status === "error"
-                        ? `Extraction failed: ${doc.error ?? "unknown error"}`
-                        : "Awaiting extraction."}
+                        ? format(t.cmpExtractionFailedLine, { error: doc.error ?? t.cmpUnknownError })
+                        : t.cmpAwaitingLine}
                     </p>
                   )}
                 </li>
@@ -878,7 +896,7 @@ export default function ComparePage() {
                   !pendingPrivacyReady
                 }
               >
-                {extracting ? "Extracting…" : "Extract employment terms"}
+                {extracting ? t.cmpExtractingButton : t.cmpExtractButton}
               </Button>
             </div>
             {!gate.allowed && (
@@ -888,34 +906,31 @@ export default function ComparePage() {
             )}
             {gate.allowed && pendingDocs.length > 0 && !pendingPrivacyReady && (
               <p className="mt-2 text-sm text-muted" role="note">
-                Approve every page&apos;s Privacy Check above before extraction.
+                {t.cmpPrivacyNeeded}
               </p>
             )}
           </>
         )}
       </Card>
 
-      <Card
-        title="4. Comparison report"
-        description="What matches, what differs, what the written agreement never addresses, and what to ask before signing."
-      >
+      <Card title={t.cmpReportTitle} description={t.cmpReportDesc}>
         <p aria-live="polite" className="text-sm text-muted">
           {running ? statusMsg : ""}
         </p>
         {running && (
           <p className="mt-1">
-            <Spinner label={statusMsg || "Working…"} />
+            <Spinner label={statusMsg || t.commonWorking} />
           </p>
         )}
         {findings === null ? (
           <>
             <div className="mt-2">
               <EmptyState
-                title="No comparison yet"
+                title={t.cmpNoComparisonTitle}
                 description={
                   extractedDocs.length < 2
-                    ? "Extract terms from at least two documents to compare them."
-                    : "Terms are extracted. Generate the comparison when ready."
+                    ? t.cmpNoComparisonNeedTwo
+                    : t.cmpNoComparisonReady
                 }
               />
             </div>
@@ -926,7 +941,7 @@ export default function ComparePage() {
                   !configOk || running || !gate.allowed || extractedDocs.length < 2
                 }
               >
-                {comparing ? "Comparing…" : "Generate comparison"}
+                {comparing ? t.cmpComparing : t.cmpGenerate}
               </Button>
             </div>
             {!gate.allowed && (
@@ -939,7 +954,8 @@ export default function ComparePage() {
           <>
             {comparisonSource !== null && (
               <p className="mb-2 text-sm text-muted" role="status">
-                Comparison {describeActualSource(comparisonSource).label.toLowerCase()}
+                {t.evComparisonPrefix}{" "}
+                {describeActualSource(comparisonSource, language).label.toLowerCase()}
               </p>
             )}
             <CompareReport
@@ -954,7 +970,7 @@ export default function ComparePage() {
                 onClick={() => void handleCompare()}
                 disabled={!configOk || running || !gate.allowed}
               >
-                {comparing ? "Comparing…" : "Regenerate comparison"}
+                {comparing ? t.cmpComparing : t.cmpRegenerate}
               </Button>
             </div>
           </>

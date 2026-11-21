@@ -9,6 +9,8 @@ import { Button, Card, EmptyState, Spinner, StatusLabel } from "@/components/ui"
 import { useAuth } from "@/lib/auth";
 import { localeForCountryName } from "@/lib/corridors";
 import { getFirebaseClient } from "@/lib/firebaseClient";
+import { useLang } from "@/lib/lang";
+import { getStrings, type UiStrings } from "@/lib/strings";
 import {
   deleteInvestigation,
   getInvestigationsDb,
@@ -17,7 +19,7 @@ import {
   type Investigation,
 } from "@/lib/investigations";
 
-function formatDate(iso: string | null, country?: string | null): string {
+function formatDate(t: UiStrings, iso: string | null, country?: string | null): string {
   if (!iso) {
     return "—";
   }
@@ -30,6 +32,8 @@ function formatDate(iso: string | null, country?: string | null): string {
 
 export default function InvestigationsPage() {
   const { user } = useAuth();
+  const { language } = useLang();
+  const t = getStrings(language);
   const [items, setItems] = useState<Investigation[]>([]);
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState<string | null>(null);
@@ -96,7 +100,7 @@ export default function InvestigationsPage() {
       return;
     }
     if (renameValue.trim() === "") {
-      setMessage("Title cannot be empty.");
+      setMessage(t.invTitleEmpty);
       return;
     }
     setBusyId(id);
@@ -141,34 +145,34 @@ export default function InvestigationsPage() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">My investigations</h1>
-          <p className="mt-1 text-muted">Every opportunity you reviewed and saved.</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t.invTitle}</h1>
+          <p className="mt-1 text-muted">{t.invSubtitle}</p>
         </div>
         <Link
           href="/workspace/review"
           className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
         >
-          Review new opportunity
+          {t.invReviewNew}
         </Link>
       </div>
 
       <Card>
-        {phase === "loading" && <Spinner label="Loading investigations…" />}
+        {phase === "loading" && <Spinner label={t.ovLoading} />}
         {phase === "error" && (
           <p className="text-sm leading-6" role="alert">
-            <span className="font-semibold">Couldn&apos;t load investigations:</span> {message}
+            <span className="font-semibold">{t.ovLoadFailed}</span> {message}
           </p>
         )}
         {phase === "ready" && items.length === 0 && (
           <EmptyState
-            title="No investigations yet"
-            description="Saved reviews appear here with their facts, concerns, and evidence."
+            title={t.ovEmptyTitle}
+            description={t.invEmptyDesc}
             action={
               <Link
                 href="/workspace/review"
                 className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
               >
-                Review an opportunity
+                {t.ovReviewCta}
               </Link>
             }
           />
@@ -191,7 +195,7 @@ export default function InvestigationsPage() {
                     className="flex flex-wrap items-center gap-2"
                   >
                     <label htmlFor={`rename-${item.id}`} className="sr-only">
-                      New title
+                      {t.invNewTitleAria}
                     </label>
                     <input
                       id={`rename-${item.id}`}
@@ -202,14 +206,14 @@ export default function InvestigationsPage() {
                       autoFocus
                     />
                     <Button type="submit" disabled={busyId === item.id}>
-                      Save
+                      {t.commonSave}
                     </Button>
                     <Button
                       type="button"
                       variant="ghost"
                       onClick={() => setRenamingId(null)}
                     >
-                      Cancel
+                      {t.commonCancel}
                     </Button>
                   </form>
                 ) : (
@@ -220,12 +224,12 @@ export default function InvestigationsPage() {
                     >
                       {item.title}
                     </Link>
-                    <span className="text-sm text-muted">{item.report?.destination_country ?? "Unknown country"}</span>
+                    <span className="text-sm text-muted">{item.report?.destination_country ?? t.commonUnknownCountry}</span>
                     <StatusLabel tone={item.status === "complete" ? "ok" : "info"}>
-                      {item.status === "complete" ? "Complete" : "Reviewed"}
+                      {item.status === "complete" ? t.commonStatusComplete : t.commonStatusReviewed}
                     </StatusLabel>
-                    <span className="text-sm text-muted" title="Last updated">
-                      {formatDate(item.updatedAt ?? item.createdAt, item.report?.destination_country)}
+                    <span className="text-sm text-muted" title={t.invLastUpdatedTitle}>
+                      {formatDate(t, item.updatedAt ?? item.createdAt, item.report?.destination_country)}
                     </span>
                     <span className="flex gap-1 text-sm">
                       <button
@@ -237,7 +241,7 @@ export default function InvestigationsPage() {
                         }}
                         className="cursor-pointer rounded px-2 py-1 font-medium text-brand hover:underline"
                       >
-                        Rename
+                        {t.invRename}
                       </button>
                       {confirmingDeleteId === item.id ? (
                         <>
@@ -247,14 +251,14 @@ export default function InvestigationsPage() {
                             disabled={busyId === item.id}
                             className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline disabled:opacity-50 dark:text-red-300"
                           >
-                            Confirm delete
+                            {t.invConfirmDelete}
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfirmingDeleteId(null)}
                             className="cursor-pointer rounded px-2 py-1 text-muted hover:underline"
                           >
-                            Cancel
+                            {t.commonCancel}
                           </button>
                         </>
                       ) : (
@@ -266,7 +270,7 @@ export default function InvestigationsPage() {
                           }}
                           className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline dark:text-red-300"
                         >
-                          Delete
+                          {t.invDelete}
                         </button>
                       )}
                     </span>

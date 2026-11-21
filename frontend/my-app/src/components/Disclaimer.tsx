@@ -2,7 +2,11 @@
 // contextual-notice box. Wording lives in lib/disclaimer.ts; this file
 // only renders it.
 
-import { FULL_DISCLAIMER_PARAGRAPHS } from "@/lib/disclaimer";
+"use client";
+
+import { getFullDisclaimerParagraphs } from "@/lib/disclaimer";
+import { useLang } from "@/lib/lang";
+import { getStrings } from "@/lib/strings";
 
 export function ContextualNotice({ children }: { children: React.ReactNode }) {
   return (
@@ -13,10 +17,13 @@ export function ContextualNotice({ children }: { children: React.ReactNode }) {
 }
 
 export default function Disclaimer() {
+  const { language } = useLang();
+  const t = getStrings(language);
+  const paragraphs = getFullDisclaimerParagraphs(language);
   return (
-    <section aria-label="About OpporCheck findings" className="rounded-md bg-brand-soft p-4">
-      <h3 className="font-semibold">What OpporCheck is — and isn&apos;t</h3>
-      {FULL_DISCLAIMER_PARAGRAPHS.map((paragraph) => (
+    <section aria-label={t.disclaimerSectionAria} className="rounded-md bg-brand-soft p-4">
+      <h3 className="font-semibold">{t.disclaimerHeading}</h3>
+      {paragraphs.map((paragraph) => (
         <p key={paragraph.slice(0, 32)} className="mt-1 text-sm leading-6">
           {paragraph}
         </p>

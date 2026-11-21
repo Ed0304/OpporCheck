@@ -11,8 +11,13 @@
 // and the backend's inability to analyze or persist (no credentials).
 //
 // Dependency-free and pure so every transition is unit-testable.
+//
+// Gate messages render in the UI language (default English). Every `id`
+// string below is a WORKING DRAFT needing native-speaker review before
+// it can be considered final. Never present them as final.
 
 import { DETECTOR_VERSION } from "./privacyDetection";
+import type { UiLanguage } from "./strings";
 
 export type PrivacyGateState =
   | "NOT_STARTED"
@@ -106,20 +111,31 @@ export function approvalCovers(
 export function assertAnalysisAllowed(
   approval: PrivacyApproval | null | undefined,
   candidateText: string,
+  language: UiLanguage = "en",
 ): void {
+  const id = language === "id";
   if (!approval) {
     throw new PrivacyGateError(
       "missing",
-      "Privacy Check approval is required before analysis.",
+      id
+        ? "Persetujuan Periksa Privasi diperlukan sebelum analisis." // WORKING DRAFT
+        : "Privacy Check approval is required before analysis.",
     );
   }
   if (!isWellFormed(approval)) {
-    throw new PrivacyGateError("malformed", "Privacy Check approval is invalid.");
+    throw new PrivacyGateError(
+      "malformed",
+      id
+        ? "Persetujuan Periksa Privasi tidak valid." // WORKING DRAFT
+        : "Privacy Check approval is invalid.",
+    );
   }
   if (!approvalCovers(approval, candidateText)) {
     throw new PrivacyGateError(
       "stale",
-      "The text changed since Privacy Check approval. Run Privacy Check again.",
+      id
+        ? "Teks berubah sejak persetujuan Periksa Privasi. Jalankan Periksa Privasi lagi." // WORKING DRAFT
+        : "The text changed since Privacy Check approval. Run Privacy Check again.",
     );
   }
 }
@@ -143,26 +159,34 @@ export function resolveSavePayload(input: {
   currentText: string;
   approval: PrivacyApproval | null | undefined;
   analysis: AnalysisSnapshot | null;
+  language?: UiLanguage;
 }): SaveResolution {
+  const id = input.language === "id";
   if (!input.approval) {
     return {
       ok: false,
       code: "missing",
-      reason: "Approve the privacy-checked text before saving.",
+      reason: id
+        ? "Setujui teks yang telah diperiksa privasinya sebelum menyimpan." // WORKING DRAFT
+        : "Approve the privacy-checked text before saving.",
     };
   }
   if (!approvalCovers(input.approval, input.currentText)) {
     return {
       ok: false,
       code: "stale",
-      reason: "The text changed since approval. Re-check privacy before saving.",
+      reason: id
+        ? "Teks berubah sejak persetujuan. Periksa privasi lagi sebelum menyimpan." // WORKING DRAFT
+        : "The text changed since approval. Re-check privacy before saving.",
     };
   }
   if (!input.analysis || input.analysis.textHash !== input.approval.textHash) {
     return {
       ok: false,
       code: "mismatch",
-      reason: "The analysis does not match the current text. Re-analyze before saving.",
+      reason: id
+        ? "Analisis tidak cocok dengan teks saat ini. Analisis ulang sebelum menyimpan." // WORKING DRAFT
+        : "The analysis does not match the current text. Re-analyze before saving.",
     };
   }
   return { ok: true, postingText: input.currentText };
@@ -197,17 +221,25 @@ export function computeGateState(input: GateViewInput): PrivacyGateState {
  * InferenceSource) produce a positive claim; anything else — undefined,
  * "unknown", future values — renders as unavailable, never guessed.
  */
-export function describeActualSource(source: unknown): {
+export function describeActualSource(
+  source: unknown,
+  language: UiLanguage = "en",
+): {
   label: string;
   known: boolean;
 } {
+  const id = language === "id";
   if (source === "on_device") {
-    return { label: "Processed on-device.", known: true };
+    // Indonesian labels are WORKING DRAFTS needing native-speaker review.
+    return { label: id ? "Diproses di perangkat." : "Processed on-device.", known: true };
   }
   if (source === "in_cloud") {
-    return { label: "Processed in the cloud.", known: true };
+    return { label: id ? "Diproses di cloud." : "Processed in the cloud.", known: true };
   }
-  return { label: "Processing location unavailable.", known: false };
+  return {
+    label: id ? "Lokasi pemrosesan tidak tersedia." : "Processing location unavailable.",
+    known: false,
+  };
 }
 
 export type InferenceDisclosureMode =
@@ -227,30 +259,58 @@ export interface InferenceDisclosure {
  * Honest per-mode disclosure. Modes that allow cloud fallback are never
  * described as on-device-only.
  */
-export function describeInference(mode: InferenceDisclosureMode): InferenceDisclosure {
+export function describeInference(
+  mode: InferenceDisclosureMode,
+  language: UiLanguage = "en",
+): InferenceDisclosure {
+  // Indonesian disclosures are WORKING DRAFTS needing native-speaker review.
   if (mode === "on-device-only") {
-    return {
-      destination: "On-device only",
-      allowsCloudFallback: false,
-      processingNote:
-        "Analysis runs on this device only and the text never leaves the browser. " +
-        "If on-device analysis is unavailable, the run stops instead of falling back.",
-    };
+    return language === "id"
+      ? {
+          destination: "Khusus di perangkat",
+          allowsCloudFallback: false,
+          processingNote:
+            "Analisis hanya berjalan di perangkat ini dan teks tidak pernah keluar dari browser. " +
+            "Jika analisis di perangkat tidak tersedia, proses berhenti alih-alih beralih.",
+        }
+      : {
+          destination: "On-device only",
+          allowsCloudFallback: false,
+          processingNote:
+            "Analysis runs on this device only and the text never leaves the browser. " +
+            "If on-device analysis is unavailable, the run stops instead of falling back.",
+        };
   }
   if (mode === "only-in-cloud") {
-    return {
-      destination: "Cloud processing",
-      allowsCloudFallback: true,
-      processingNote:
-        "Analysis always runs in the cloud: the approved text is transmitted " +
-        "outside this device to the configured cloud model.",
-    };
+    return language === "id"
+      ? {
+          destination: "Pemrosesan cloud",
+          allowsCloudFallback: true,
+          processingNote:
+            "Analisis selalu berjalan di cloud: teks yang disetujui dikirim " +
+            "ke luar perangkat ini ke model cloud yang dikonfigurasi.",
+        }
+      : {
+          destination: "Cloud processing",
+          allowsCloudFallback: true,
+          processingNote:
+            "Analysis always runs in the cloud: the approved text is transmitted " +
+            "outside this device to the configured cloud model.",
+        };
   }
-  return {
-    destination: "On-device when available, cloud fallback",
-    allowsCloudFallback: true,
-    processingNote:
-      "Analysis tries on-device first; when unavailable, the approved text is " +
-      "sent to the cloud model. Only the approved sanitized text is ever sent.",
-  };
+  return language === "id"
+    ? {
+        destination: "Di perangkat bila tersedia, fallback cloud",
+        allowsCloudFallback: true,
+        processingNote:
+          "Analisis mencoba di perangkat terlebih dahulu; bila tidak tersedia, teks yang disetujui " +
+          "dikirim ke model cloud. Hanya teks bersih yang disetujui yang pernah dikirim.",
+      }
+    : {
+        destination: "On-device when available, cloud fallback",
+        allowsCloudFallback: true,
+        processingNote:
+          "Analysis tries on-device first; when unavailable, the approved text is " +
+          "sent to the cloud model. Only the approved sanitized text is ever sent.",
+      };
 }

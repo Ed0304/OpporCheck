@@ -8,6 +8,12 @@
 //
 // Text matching cannot see visual signatures, photographs, or scanned ID
 // images — that limitation is stated in the UI, not solved here.
+//
+// Detection labels and reasons render in the UI language (default
+// English). Every `id` string below is a WORKING DRAFT needing
+// native-speaker review before it can be considered final. Never present
+// them as final. Placeholders ([EMAIL], [PHONE], …) and confidence values
+// stay English: they flow into sanitized output and approvals.
 
 export type PrivacyCategory =
   | "identity"
@@ -45,6 +51,8 @@ export interface DetectionResult {
   detectorVersion: string;
 }
 
+import type { UiLanguage } from "./strings";
+
 export const DETECTOR_VERSION = "1";
 
 export const CATEGORY_TITLES: Record<PrivacyCategory, string> = {
@@ -54,6 +62,19 @@ export const CATEGORY_TITLES: Record<PrivacyCategory, string> = {
   credential: "Passwords and access keys",
   signature: "Signature fields",
 };
+
+/** Indonesian working-draft category titles (need native-speaker review). */
+export const CATEGORY_TITLES_ID: Record<PrivacyCategory, string> = {
+  identity: "Dokumen dan nomor identitas",
+  contact: "Detail kontak",
+  financial: "Detail bank dan pembayaran",
+  credential: "Kata sandi dan kunci akses",
+  signature: "Kolom tanda tangan",
+};
+
+export function getCategoryTitles(language: UiLanguage): Record<PrivacyCategory, string> {
+  return language === "id" ? CATEGORY_TITLES_ID : CATEGORY_TITLES;
+}
 
 const CONFIDENCE_RANK: Record<PrivacyConfidence, number> = {
   high: 3,
@@ -120,24 +141,39 @@ function nikDatePlausible(nik: string): boolean {
   return dayOk && month >= 1 && month <= 12;
 }
 
-function isEmail(text: string): Candidate[] {
+/** Localized "X after Y" reason glue; quoted user text stays as matched. */
+function numberAfter(id: boolean, label: string): string {
+  return id ? `Angka setelah "${label}"` : `Number after "${label}"`;
+}
+
+function valueAfter(id: boolean, label: string): string {
+  return id ? `Nilai setelah "${label}"` : `Value after "${label}"`;
+}
+
+function addressKeyword(id: boolean, keyword: string): string {
+  return id
+    ? `Kata kunci alamat ("${keyword}") dengan teks lanjutan`
+    : `Address keyword ("${keyword}") with following text`;
+}
+
+function isEmail(text: string, id: boolean): Candidate[] {
   return collect(
     text,
     /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g,
     (match) => ({
       category: "contact",
-      label: "Email address",
+      label: id ? "Alamat email" : "Email address",
       start: match.index,
       end: match.index + match[0].length,
       confidence: "high",
-      reason: "Email-shaped text",
+      reason: id ? "Teks berbentuk email" : "Email-shaped text",
       uncertain: false,
       placeholder: "[EMAIL]",
     }),
   );
 }
 
-function isPassport(text: string): Candidate[] {
+function isPassport(text: string, id: boolean): Candidate[] {
   // Long label first, and the value must not be the label word itself
   // (otherwise "number" in "Passport number" matches as the value).
   // A single embedded newline covers identifiers wrapped across lines.
@@ -148,15 +184,19 @@ function isPassport(text: string): Candidate[] {
       const value = match[2] ?? "";
       const start = match.index + match[0].lastIndexOf(value);
       const explicit = /number|no\.?|#|nomor/i.test(match[1] ?? "");
+      const reason = explicit
+        ? "Identifier after an explicit passport label"
+        : "Identifier after a passport mention";
+      const reasonId = explicit
+        ? "Pengenal setelah label paspor yang eksplisit"
+        : "Pengenal setelah penyebutan paspor";
       return {
         category: "identity" as const,
-        label: "Passport number",
+        label: id ? "Nomor paspor" : "Passport number",
         start,
         end: start + value.length,
         confidence: (explicit ? "high" : "medium") as PrivacyConfidence,
-        reason: explicit
-          ? "Identifier after an explicit passport label"
-          : "Identifier after a passport mention",
+        reason: id ? reasonId : reason,
         uncertain: !explicit,
         placeholder: "[PASSPORT]",
       };
@@ -171,7 +211,7 @@ function isPassport(text: string): Candidate[] {
   });
 }
 
-function isNationalId(text: string): Candidate[] {
+function isNationalId(text: string, id: boolean): Candidate[] {
   // Values never span spaces (that ate trailing words like "dan n");
   // a single embedded newline covers wrapped identifiers. Bare "ID"
   // needs its own digit-bearing value so TLDs like "co.id" cannot match.
@@ -183,11 +223,13 @@ function isNationalId(text: string): Candidate[] {
       const start = match.index + match[0].lastIndexOf(match[2] ?? "");
       return {
         category: "identity" as const,
-        label: "National ID number",
+        label: id ? "Nomor identitas nasional" : "National ID number",
         start,
         end: start + value.length,
         confidence: "high" as const,
-        reason: `Number after an identity label ("${(match[1] ?? "").trim()}")`,
+        reason: id
+          ? `Angka setelah label identitas ("${(match[1] ?? "").trim()}")`
+          : `Number after an identity label ("${(match[1] ?? "").trim()}")`,
         uncertain: false,
         placeholder: "[ID_NUMBER]",
       };
@@ -206,11 +248,11 @@ function isNationalId(text: string): Candidate[] {
       const start = match.index + match[0].lastIndexOf(value);
       return {
         category: "identity" as const,
-        label: "National ID number",
+        label: id ? "Nomor identitas nasional" : "National ID number",
         start,
         end: start + value.length,
         confidence: "high" as const,
-        reason: 'Digit-bearing value after "ID"',
+        reason: id ? 'Nilai berdigit setelah "ID"' : 'Digit-bearing value after "ID"',
         uncertain: false,
         placeholder: "[ID_NUMBER]",
       };
@@ -228,11 +270,13 @@ function isNationalId(text: string): Candidate[] {
   // catch-all below.
   for (const candidate of collect(text, /\b\d{16}\b/g, (match) => ({
     category: "identity" as const,
-    label: "National ID number",
+    label: id ? "Nomor identitas nasional" : "National ID number",
     start: match.index,
     end: match.index + 16,
     confidence: "medium" as const,
-    reason: "16 digits with a plausible NIK birth-date embedding",
+    reason: id
+      ? "16 digit dengan tanggal lahir NIK yang masuk akal"
+      : "16 digits with a plausible NIK birth-date embedding",
     uncertain: true,
     placeholder: "[ID_NUMBER]",
   }))) {
@@ -247,7 +291,7 @@ const MONTHS =
   "jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december|" +
   "januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember";
 
-function isDateOfBirth(text: string): Candidate[] {
+function isDateOfBirth(text: string, id: boolean): Candidate[] {
   // Dates are employment evidence (contract dates, start dates), so bare
   // dates are NEVER flagged — only dates with a birth context.
   const date = String.raw`(?:\d{1,2}[\/.\- ]\d{1,2}[\/.\- ]\d{2,4}|\d{1,2}\s+(?:${MONTHS})\s+\d{4}|(?:${MONTHS})\s+\d{1,2},?\s+\d{4})`;
@@ -260,11 +304,11 @@ function isDateOfBirth(text: string): Candidate[] {
     const start = match.index + match[0].lastIndexOf(value);
     return {
       category: "identity",
-      label: "Date of birth",
+      label: id ? "Tanggal lahir" : "Date of birth",
       start,
       end: start + value.length,
       confidence: "medium",
-      reason: "Date with a birth context",
+      reason: id ? "Tanggal dengan konteks kelahiran" : "Date with a birth context",
       uncertain: true,
       placeholder: "[DATE_OF_BIRTH]",
     };
@@ -275,7 +319,7 @@ function countDigits(value: string): number {
   return (value.match(/\d/g) ?? []).length;
 }
 
-function isPhone(text: string): Candidate[] {
+function isPhone(text: string, id: boolean): Candidate[] {
   const out = collect(
     text,
     /(phone|telephone|tel\.?|mobile|handphone|\bHP\b|WhatsApp|\bWA\b|call|contact|hubungi|kontak|nomor\s*(?:telepon|hp|handphone)?)\s*[:.\-]?\s*(\+?[\d][\d\s().\-]{5,22}\d)/gi,
@@ -286,11 +330,11 @@ function isPhone(text: string): Candidate[] {
       const strong = /whatsapp|phone|hubungi/i.test(match[1] ?? "");
       return {
         category: "contact",
-        label: "Phone number",
+        label: id ? "Nomor telepon" : "Phone number",
         start,
         end: start + value.length,
         confidence: strong && digits >= 7 && digits <= 15 ? "high" : "medium",
-        reason: `Number after "${(match[1] ?? "").trim()}"`,
+        reason: numberAfter(id, (match[1] ?? "").trim()),
         uncertain: digits < 7 || digits > 15,
         placeholder: "[PHONE]",
       };
@@ -299,11 +343,13 @@ function isPhone(text: string): Candidate[] {
   // Bare international-format numbers are distinctive enough for medium.
   for (const candidate of collect(text, /(?<!\d)\+[1-9]\d{7,14}\b/g, (match) => ({
     category: "contact" as const,
-    label: "Phone number",
+    label: id ? "Nomor telepon" : "Phone number",
     start: match.index,
     end: match.index + match[0].length,
     confidence: "medium" as const,
-    reason: "International-format number without a label",
+    reason: id
+      ? "Nomor format internasional tanpa label"
+      : "International-format number without a label",
     uncertain: true,
     placeholder: "[PHONE]",
   }))) {
@@ -335,7 +381,7 @@ function trimToSentence(text: string, start: number, end: number): number {
   return end;
 }
 
-function isAddress(text: string): Candidate[] {
+function isAddress(text: string, id: boolean): Candidate[] {
   // Line-anchored: flags the address portion of the line, capped so one
   // keyword cannot swallow the rest of the document. Workplace labels
   // such as "work location" are deliberately NOT keywords.
@@ -344,11 +390,11 @@ function isAddress(text: string): Candidate[] {
     /\b(addresses|address|alamat|perumahan|rumah|jalan|jl\.?|streets|street|resides?\s+at|lives?\s+at|tinggal\s+di|tempat\s+tinggal|kecamatan|kec\.?|kelurahan|kel\.?|desa|postal(?:\s*code)?|postcode|kode\s*pos|RT\s*\d{0,3}\s*\/?\s*RW(?:\s*\d{1,3})?)\b[^\n]{0,160}/gi,
     (match) => ({
       category: "contact",
-      label: "Residential address",
+      label: id ? "Alamat tempat tinggal" : "Residential address",
       start: match.index,
       end: trimToSentence(text, match.index, match.index + match[0].trimEnd().length),
       confidence: "medium",
-      reason: `Address keyword ("${(match[1] ?? "").trim()}") with following text`,
+      reason: addressKeyword(id, (match[1] ?? "").trim()),
       uncertain: true,
       placeholder: "[ADDRESS]",
     }),
@@ -356,7 +402,7 @@ function isAddress(text: string): Candidate[] {
   return out;
 }
 
-function isBankAccount(text: string): Candidate[] {
+function isBankAccount(text: string, id: boolean): Candidate[] {
   // Values are digit-led with no letters, so spans stay exact ("sort code
   // 12-34-56" no longer eats following words) and mismatched labels such
   // as "transfer to <words>" fall through to the right keyword.
@@ -369,11 +415,11 @@ function isBankAccount(text: string): Candidate[] {
       const strong = /account\s*number|rekening|\bIBAN\b/i.test(match[1] ?? "");
       return {
         category: "financial",
-        label: "Bank account number",
+        label: id ? "Nomor rekening bank" : "Bank account number",
         start,
         end: start + value.length,
         confidence: strong ? "high" : "medium",
-        reason: `Number after "${(match[1] ?? "").trim()}"`,
+        reason: numberAfter(id, (match[1] ?? "").trim()),
         uncertain: !strong,
         placeholder: "[BANK_ACCOUNT]",
       };
@@ -382,11 +428,11 @@ function isBankAccount(text: string): Candidate[] {
   // Bare IBAN-shaped tokens are distinctive; still medium, not high.
   for (const candidate of collect(text, /\b[A-Z]{2}\d{2}[A-Z0-9]{11,26}\b/g, (match) => ({
     category: "financial" as const,
-    label: "Bank account number",
+    label: id ? "Nomor rekening bank" : "Bank account number",
     start: match.index,
     end: match.index + match[0].length,
     confidence: "medium" as const,
-    reason: "IBAN-shaped token without a label",
+    reason: id ? "Token berbentuk IBAN tanpa label" : "IBAN-shaped token without a label",
     uncertain: true,
     placeholder: "[BANK_ACCOUNT]",
   }))) {
@@ -395,7 +441,7 @@ function isBankAccount(text: string): Candidate[] {
   return out;
 }
 
-function isPaymentCard(text: string): Candidate[] {
+function isPaymentCard(text: string, id: boolean): Candidate[] {
   const out = collect(
     text,
     /(credit\s*card|debit\s*card|\bcard\b|kartu\s*(?:kredit|debit)?|\bCC\b|CVV)\s*[:.\-]?\s*(\d[\d\s\-.]{11,24}\d)/gi,
@@ -404,11 +450,11 @@ function isPaymentCard(text: string): Candidate[] {
       const start = match.index + match[0].lastIndexOf(match[2] ?? "");
       return {
         category: "financial",
-        label: "Payment card number",
+        label: id ? "Nomor kartu pembayaran" : "Payment card number",
         start,
         end: start + value.length,
         confidence: "high",
-        reason: `Number after "${(match[1] ?? "").trim()}"`,
+        reason: numberAfter(id, (match[1] ?? "").trim()),
         uncertain: false,
         placeholder: "[CARD]",
       };
@@ -418,11 +464,13 @@ function isPaymentCard(text: string): Candidate[] {
   // with separators (4.500.000 / 220,000) can never match this pattern.
   for (const candidate of collect(text, /\b\d{13,19}\b/g, (match) => ({
     category: "financial" as const,
-    label: "Payment card number",
+    label: id ? "Nomor kartu pembayaran" : "Payment card number",
     start: match.index,
     end: match.index + match[0].length,
     confidence: "medium" as const,
-    reason: "Digit run that passes the card checksum (verify before redacting)",
+    reason: id
+      ? "Rangkaian digit yang lolos checksum kartu (verifikasi sebelum menyensor)"
+      : "Digit run that passes the card checksum (verify before redacting)",
     uncertain: true,
     placeholder: "[CARD]",
   }))) {
@@ -433,20 +481,23 @@ function isPaymentCard(text: string): Candidate[] {
   return out;
 }
 
-function isCredential(text: string): Candidate[] {
+function isCredential(text: string, id: boolean): Candidate[] {
   const out = collect(
     text,
     /(password|sandi|passwd|pwd|\bPIN\b|token|api[_ \-]?key|apikey|secret|credential|auth(?:entication)?\s*key)\s*[:=]\s*(\S{4,80})/gi,
     (match) => {
       const value = match[2] ?? "";
       const start = match.index + match[0].lastIndexOf(value);
+      const isPin = /pin/i.test(match[1] ?? "");
+      const label = isPin ? "PIN code" : "Password or secret";
+      const labelId = isPin ? "Kode PIN" : "Kata sandi atau rahasia";
       return {
         category: "credential",
-        label: /pin/i.test(match[1] ?? "") ? "PIN code" : "Password or secret",
+        label: id ? labelId : label,
         start,
         end: start + value.length,
         confidence: "high",
-        reason: `Value after "${(match[1] ?? "").trim()}"`,
+        reason: valueAfter(id, (match[1] ?? "").trim()),
         uncertain: false,
         placeholder: "[CREDENTIAL]",
       };
@@ -458,11 +509,11 @@ function isCredential(text: string): Candidate[] {
     /\b(ghp_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,})\b/g,
     (match) => ({
       category: "credential" as const,
-      label: "API key or token",
+      label: id ? "Kunci API atau token" : "API key or token",
       start: match.index,
       end: match.index + match[0].length,
       confidence: "high" as const,
-      reason: "Known access-key prefix",
+      reason: id ? "Awalan kunci akses yang dikenal" : "Known access-key prefix",
       uncertain: false,
       placeholder: "[CREDENTIAL]",
     }),
@@ -472,7 +523,7 @@ function isCredential(text: string): Candidate[] {
   return out;
 }
 
-function isSignatureField(text: string): Candidate[] {
+function isSignatureField(text: string, id: boolean): Candidate[] {
   // Label-only: text matching cannot see ink signatures or photos. The
   // span covers the label plus the rest of its line (often the name).
   return collect(
@@ -482,29 +533,33 @@ function isSignatureField(text: string): Candidate[] {
     /\b(signature|signed(\s+by)?|\bsign\s+here\b|\btanda\s+tangan\b|\bttd\b)(?!\s+on\b)[^\n]{0,80}/gi,
     (match) => ({
       category: "signature",
-      label: "Signature field",
+      label: id ? "Kolom tanda tangan" : "Signature field",
       start: match.index,
       end: trimToSentence(text, match.index, match.index + match[0].trimEnd().length),
       confidence: "low",
-      reason: "Signature label (images and ink cannot be detected in text)",
+      reason: id
+        ? "Label tanda tangan (gambar dan tinta tidak dapat dideteksi dalam teks)"
+        : "Signature label (images and ink cannot be detected in text)",
       uncertain: true,
       placeholder: "[SIGNATURE]",
     }),
   );
 }
 
-function isLongNumber(text: string): Candidate[] {
+function isLongNumber(text: string, id: boolean): Candidate[] {
   // Catch-all for bare contiguous digit runs nothing else claimed.
   // Deliberately low confidence: amounts use separators and cannot match,
   // but short references and years below 10 digits are left alone too.
   // A single embedded newline covers runs wrapped across lines.
   return collect(text, /\b\d{10,19}\b|\b\d{4,18}\n\d{1,14}\b/g, (match) => ({
     category: "identity",
-    label: "Long number (unclassified)",
+    label: id ? "Nomor panjang (tidak diklasifikasi)" : "Long number (unclassified)",
     start: match.index,
     end: match.index + match[0].length,
     confidence: "low",
-    reason: "Long digit run without identifying context — check what it is",
+    reason: id
+      ? "Rangkaian digit panjang tanpa konteks identitas — periksa apa itu"
+      : "Long digit run without identifying context — check what it is",
     uncertain: true,
     placeholder: "[NUMBER]",
   })).filter((candidate) => {
@@ -515,7 +570,7 @@ function isLongNumber(text: string): Candidate[] {
   });
 }
 
-function isPhoneCJK(text: string): Candidate[] {
+function isPhoneCJK(text: string, id: boolean): Candidate[] {
   return collect(
     text,
     /(電話|电话|携帯|手机)\s*[:：.\-]?\s*(\+?[\d][\d\s().\-]{5,22}\d)/g,
@@ -524,11 +579,11 @@ function isPhoneCJK(text: string): Candidate[] {
       const start = match.index + match[0].lastIndexOf(match[2] ?? "");
       return {
         category: "contact",
-        label: "Phone number",
+        label: id ? "Nomor telepon" : "Phone number",
         start,
         end: start + value.length,
         confidence: "medium",
-        reason: `Number after "${match[1] ?? ""}"`,
+        reason: numberAfter(id, match[1] ?? ""),
         uncertain: true,
         placeholder: "[PHONE]",
       };
@@ -536,7 +591,7 @@ function isPhoneCJK(text: string): Candidate[] {
   );
 }
 
-function isNationalIdCJK(text: string): Candidate[] {
+function isNationalIdCJK(text: string, id: boolean): Candidate[] {
   return collect(
     text,
     /(身分證|身份证)(?:\s*(?:號碼|号码|字號|号))?\s*[:：.\-]?\s*([A-Z0-9][A-Z0-9\-.]{4,19}[A-Z0-9])/g,
@@ -545,11 +600,11 @@ function isNationalIdCJK(text: string): Candidate[] {
       const start = match.index + match[0].lastIndexOf(value);
       return {
         category: "identity",
-        label: "National ID number",
+        label: id ? "Nomor identitas nasional" : "National ID number",
         start,
         end: start + value.length,
         confidence: "high",
-        reason: `Number after "${match[1] ?? ""}"`,
+        reason: numberAfter(id, match[1] ?? ""),
         uncertain: false,
         placeholder: "[ID_NUMBER]",
       };
@@ -559,14 +614,14 @@ function isNationalIdCJK(text: string): Candidate[] {
   );
 }
 
-function isAddressCJK(text: string): Candidate[] {
+function isAddressCJK(text: string, id: boolean): Candidate[] {
   return collect(text, /(地址|住址|住所|郵便番号)[^\n]{0,160}/g, (match) => ({
     category: "contact",
-    label: "Residential address",
+    label: id ? "Alamat tempat tinggal" : "Residential address",
     start: match.index,
     end: match.index + match[0].trimEnd().length,
     confidence: "medium",
-    reason: `Address keyword ("${match[1] ?? ""}") with following text`,
+    reason: addressKeyword(id, match[1] ?? ""),
     uncertain: true,
     placeholder: "[ADDRESS]",
   }));
@@ -597,7 +652,7 @@ export function resolveOverlaps(candidates: Candidate[]): Candidate[] {
   return accepted.sort((a, b) => a.start - b.start);
 }
 
-const DETECTORS: Array<(text: string) => Candidate[]> = [
+const DETECTORS: Array<(text: string, id: boolean) => Candidate[]> = [
   isEmail,
   isPassport,
   isNationalId,
@@ -615,9 +670,13 @@ const DETECTORS: Array<(text: string) => Candidate[]> = [
 ];
 
 /** Scans text locally. Pure: no network, no storage, no logging. */
-export function detectSensitiveInfo(text: string): DetectionResult {
+export function detectSensitiveInfo(
+  text: string,
+  language: UiLanguage = "en",
+): DetectionResult {
   const source = text ?? "";
-  const candidates = DETECTORS.flatMap((detect) => detect(source));
+  const id = language === "id";
+  const candidates = DETECTORS.flatMap((detect) => detect(source, id));
   const detections = resolveOverlaps(candidates).map(
     (candidate, index): PrivacyDetection => ({
       id: `${candidate.category}:${candidate.start}:${candidate.end}:${index}`,

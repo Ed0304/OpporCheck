@@ -4,13 +4,16 @@
 // Logic hybrid comparison -> validated, attribution-checked findings.
 // Nothing here is saved: results live in component state only, because
 // client-side findings writes are intentionally forbidden by the rules.
+//
+// Panel chrome follows the global website language preference. The
+// deterministic plan text itself stays English (see LOCALIZATION.md);
+// priorities shown beside it are internal enum values and stay English.
 
 "use client";
 
 import { useMemo, useState } from "react";
 import { Button, Card, EmptyState, EvidenceQuote, Spinner, StatusLabel } from "@/components/ui";
 import Disclaimer, { ContextualNotice } from "@/components/Disclaimer";
-import LanguageToggle from "@/components/LanguageToggle";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import {
   approvalCovers,
@@ -20,12 +23,18 @@ import {
 } from "@/lib/privacyGate";
 import { mapServiceError } from "@/lib/aiErrors";
 import { useLang } from "@/lib/lang";
-import { format, getStrings } from "@/lib/strings";
-import { INVESTIGATION_CONTEXT_NOTICE } from "@/lib/disclaimer";
 import {
-  ASSESSMENT_LABELS,
+  format,
+  getPlanCategoryLabel,
+  getSourceCategoryLabel,
+  getStrings,
+  type UiLanguage,
+} from "@/lib/strings";
+import { getInvestigationContextNotice } from "@/lib/disclaimer";
+import {
   ASSESSMENT_TONES,
-  UNVERIFIED_PHRASE,
+  getAssessmentLabels,
+  getUnverifiedPhrase,
   type AssessmentTone,
 } from "@/lib/reportLanguage";
 import {
@@ -51,31 +60,7 @@ import {
   type RetrievedSource,
   type SourceRetrievalError,
 } from "@/lib/sources";
-import type {
-  OfficialSourceCategory,
-  PlanItemCategory,
-} from "@/lib/validation";
-
-type Phase = "idle" | "retrieving" | "comparing" | "ready" | "error";
-
-const CATEGORY_LABELS: Record<PlanItemCategory, string> = {
-  "explicit-claim": "Posting claim",
-  "potential-concern": "Potential concern",
-  "missing-information": "Missing information",
-  "research-question": "Research question",
-};
-
-const SOURCE_LABELS: Record<OfficialSourceCategory, string> = {
-  "visa-route": "Visa route guidance",
-  "worker-rights-and-fees": "Worker rights and fees",
-  "seasonal-guidance": "Seasonal work guidance",
-  "pay-rates": "Pay rates",
-  "work-authorization": "Work authorization",
-  "recruitment-rules": "Recruitment rules",
-  "salary-protection": "Salary protection",
-  "complaint-channels": "Complaint channels",
-  "origin-protection": "Origin-country protection",
-};
+import type { OfficialSourceCategory } from "@/lib/validation";
 
 function priorityTone(priority: string): "warn" | "info" | "idle" {
   if (priority === "high") {
@@ -88,16 +73,20 @@ function priorityTone(priority: string): "warn" | "info" | "idle" {
 }
 
 function AssessmentLabel({ value }: { value: string }) {
+  const { language } = useLang();
+  const labels = getAssessmentLabels(language);
   const normalized = value.trim().toLowerCase().replace(/_/g, "-");
   const key =
     normalized === "supported" || normalized === "conflicting"
       ? normalized
       : "insufficient-evidence";
   const tone: AssessmentTone = ASSESSMENT_TONES[key];
-  return <StatusLabel tone={tone}>{ASSESSMENT_LABELS[key]}</StatusLabel>;
+  return <StatusLabel tone={tone}>{labels[key]}</StatusLabel>;
 }
 
 function TransientFindingCard({ finding }: { finding: InvestigationFinding }) {
+  const { language } = useLang();
+  const t = getStrings(language);
   return (
     <li className="py-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -106,36 +95,37 @@ function TransientFindingCard({ finding }: { finding: InvestigationFinding }) {
       </div>
       <EvidenceQuote>&ldquo;{finding.excerpt}&rdquo;</EvidenceQuote>
       <p className="mt-2 text-sm">
-        Source:{" "}
+        {t.commonSourceLabel}{" "}
         <a
           href={finding.source_url}
           target="_blank"
           rel="noopener noreferrer"
           className="font-medium text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
         >
-          {finding.source_title} (opens in a new tab)
+          {finding.source_title} {t.commonOpenInNewTab}
         </a>
       </p>
-      <p className="mt-1 text-xs text-muted">Retrieved: {finding.retrieved_at}</p>
+      <p className="mt-1 text-xs text-muted">
+        {t.commonRetrievedLabel} {finding.retrieved_at}
+      </p>
       <p className="mt-2 text-sm leading-6">{finding.explanation}</p>
       <p className="mt-2 text-sm leading-6">
-        <span className="font-semibold">Follow-up question: </span>
+        <span className="font-semibold">{t.commonFollowUpLabel} </span>
         {finding.follow_up_question}
       </p>
     </li>
   );
 }
 
-function friendlyError(err: unknown): string {
+function friendlyError(err: unknown, language: UiLanguage): string {
   const message = err instanceof Error ? err.message : String(err);
   if (/403|App Check|app-check/i.test(message)) {
-    return (
-      "The comparison was blocked by App Check. Register a localhost debug token " +
-      "(see the model playground guide) and try again."
-    );
+    return getStrings(language).commonAppCheckEvidence;
   }
-  return mapServiceError(message) ?? message;
+  return mapServiceError(message, language) ?? message;
 }
+
+type Phase = "idle" | "retrieving" | "comparing" | "ready" | "error";
 
 export default function EvidenceInvestigation({
   report,
@@ -188,7 +178,7 @@ export default function EvidenceInvestigation({
 
   const handlePrivacyApproved = (next: PrivacyApproval, sanitized: string) => {
     if (hashContent(postingText) !== hashContent(privacySource)) {
-      setRunError("The posting changed while you were reviewing. Check privacy again.");
+      setRunError(t.evPostingChanged);
       return;
     }
     setApproval(next);
@@ -215,7 +205,7 @@ export default function EvidenceInvestigation({
     if (effectiveSanitized === null) {
       setPhase("error");
       setStatus("");
-      setRunError("Approve the Privacy Check for this posting before running the evidence check.");
+      setRunError(t.evApproveFirst);
       return;
     }
     const runPlan = buildInvestigationPlan(
@@ -228,7 +218,7 @@ export default function EvidenceInvestigation({
     if (runPlan.items.length === 0) {
       setPhase("error");
       setStatus("");
-      setRunError("The approved text produced no investigation questions to check.");
+      setRunError(t.evNoQuestionsApproved);
       return;
     }
     setRunError(null);
@@ -238,9 +228,9 @@ export default function EvidenceInvestigation({
     setUncovered([]);
     setInferenceSource(null);
     setPhase("retrieving");
-    setStatus("Contacting official sources…");
+    setStatus(t.evContacting);
     try {
-      const catalog = await listOfficialSources(corridorCode);
+      const catalog = await listOfficialSources(corridorCode, language);
       const categories = [...new Set(runPlan.items.map((item) => item.source_category))];
       const questions = runPlan.items.map((item) => item.research_question);
       const matched = sourceIdsForCategories(catalog, categories);
@@ -250,7 +240,7 @@ export default function EvidenceInvestigation({
       let uncovered = matched.uncovered;
       let originIds: string[] = [];
       if (corridorCode !== "GB" && uncovered.length > 0) {
-        const originCatalog = await listOfficialSources("ID");
+        const originCatalog = await listOfficialSources("ID", language);
         const originMatched = sourceIdsForCategories(originCatalog, uncovered);
         uncovered = originMatched.uncovered;
         originIds = originMatched.ids;
@@ -259,17 +249,17 @@ export default function EvidenceInvestigation({
       if (matched.ids.length === 0 && originIds.length === 0) {
         setPhase("error");
         setStatus("");
-        setRunError("No approved official source covers these questions yet.");
+        setRunError(t.evNoApprovedSource);
         return;
       }
       const result =
         matched.ids.length > 0
-          ? await retrieveOfficialSources(matched.ids, questions, corridorCode)
+          ? await retrieveOfficialSources(matched.ids, questions, corridorCode, language)
           : { sources: [], errors: [] };
       let originSources: RetrievedSource[] = [];
       let originErrors: SourceRetrievalError[] = [];
       if (originIds.length > 0) {
-        const originResult = await retrieveOfficialSources(originIds, questions, "ID");
+        const originResult = await retrieveOfficialSources(originIds, questions, "ID", language);
         originSources = originResult.sources;
         originErrors = originResult.errors;
       }
@@ -281,13 +271,11 @@ export default function EvidenceInvestigation({
       if (merged.sources.length === 0) {
         setPhase("error");
         setStatus("");
-        setRunError(
-          "None of the official sources could be reached. The errors below explain what happened — try again later.",
-        );
+        setRunError(t.evNoneReached);
         return;
       }
       setPhase("comparing");
-      setStatus("Comparing the posting's claims against the retrieved excerpts…");
+      setStatus(t.evComparing);
       const client = getFirebaseClient();
       const model = createComparisonModel(client.ai, client.cloudModelName);
       const response = await model.generateContent(buildComparisonPrompt(runPlan.items, merged.sources));
@@ -306,7 +294,7 @@ export default function EvidenceInvestigation({
     } catch (err) {
       setPhase("error");
       setStatus("");
-      setRunError(friendlyError(err));
+      setRunError(friendlyError(err, language));
     }
   };
 
@@ -326,6 +314,11 @@ export default function EvidenceInvestigation({
   const retrievalErrors = retrieval?.errors ?? [];
   const retrievedSources: RetrievedSource[] = retrieval?.sources ?? [];
   const showResults = retrieval !== null && (phase === "ready" || phase === "error");
+  const groupLabels = [
+    ["supported", t.evGroupSupported],
+    ["conflicting", t.evGroupConflicting],
+    ["insufficient-evidence", t.evGroupInsufficient],
+  ] as const;
 
   return (
     <Card
@@ -334,9 +327,7 @@ export default function EvidenceInvestigation({
     >
       {!configOk && (
         <p className="mb-3 text-sm leading-6">
-          Firebase isn&apos;t configured (missing: {envProbe.missingConfigKeys.join(", ")}). The
-          evidence comparison needs it — check <code className="font-mono">.env.local</code> and
-          restart the dev server.
+          {format(t.evConfigMissing, { keys: envProbe.missingConfigKeys.join(", ") })}
         </p>
       )}
 
@@ -361,7 +352,6 @@ export default function EvidenceInvestigation({
             ))}
           </select>
         </label>
-        <LanguageToggle />
         <p className="pb-2 text-sm text-muted" role="status">
           {t.rulesApplied}: {profile.displayName} ·{" "}
           {profile.status === "sources_verified"
@@ -386,7 +376,7 @@ export default function EvidenceInvestigation({
       ) : (
         <section aria-labelledby="oc-plan">
           <h3 id="oc-plan" className="font-semibold">
-            Investigation questions ({plan.items.length})
+            {format(t.evPlanTitle, { count: String(plan.items.length) })}
           </h3>
           <ul className="mt-2 divide-y divide-edge">
             {plan.items.map((item) => (
@@ -395,11 +385,15 @@ export default function EvidenceInvestigation({
                 <p className="mt-1 text-sm leading-6 text-muted">{item.why_it_matters}</p>
                 <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                   <StatusLabel tone={priorityTone(item.priority)}>
-                    {item.priority} priority
+                    {format(t.evPriorityLabel, { priority: item.priority })}
                   </StatusLabel>
-                  <span className="text-muted">{CATEGORY_LABELS[item.category]}</span>
                   <span className="text-muted">
-                    Recommended source: {SOURCE_LABELS[item.source_category]}
+                    {getPlanCategoryLabel(language, item.category)}
+                  </span>
+                  <span className="text-muted">
+                    {format(t.evRecommendedSource, {
+                      label: getSourceCategoryLabel(language, item.source_category),
+                    })}
                   </span>
                 </div>
               </li>
@@ -408,7 +402,7 @@ export default function EvidenceInvestigation({
           <div className="mt-4 rounded-md border border-edge p-4">
             <div className="flex flex-wrap items-center gap-2">
               <StatusLabel tone={effectiveSanitized !== null ? "ok" : "idle"}>
-                {effectiveSanitized !== null ? "Privacy approved" : "Privacy check required"}
+                {effectiveSanitized !== null ? t.evPrivacyApproved : t.evPrivacyRequired}
               </StatusLabel>
             </div>
             {!privacyOpen ? (
@@ -422,12 +416,9 @@ export default function EvidenceInvestigation({
                     setPrivacyOpen(true);
                   }}
                 >
-                  Check privacy
+                  {t.commonCheckPrivacy}
                 </Button>
-                <p className="mt-2 text-sm text-muted">
-                  The evidence check sends posting quotes to AI. Approve the cleaned
-                  text first; the check runs on that text only.
-                </p>
+                <p className="mt-2 text-sm text-muted">{t.evPrivacyExplainer}</p>
               </div>
             ) : (
               <div className="mt-2">
@@ -446,7 +437,7 @@ export default function EvidenceInvestigation({
               onClick={() => void handleRun()}
               disabled={!configOk || running || effectiveSanitized === null}
             >
-              {running ? "Investigating…" : phase === "idle" ? "Run evidence check" : "Run again"}
+              {running ? t.evInvestigating : phase === "idle" ? t.evRun : t.evRunAgain}
             </Button>
           </div>
           <p aria-live="polite" className="mt-2 text-sm text-muted">
@@ -454,7 +445,7 @@ export default function EvidenceInvestigation({
           </p>
           {running && (
             <p className="mt-1">
-              <Spinner label={status || "Working…"} />
+              <Spinner label={status || t.commonWorking} />
             </p>
           )}
         </section>
@@ -462,7 +453,7 @@ export default function EvidenceInvestigation({
 
       {runError && (
         <p role="alert" className="mt-4 text-sm leading-6">
-          <span className="font-semibold">Evidence check failed:</span> {runError}
+          <span className="font-semibold">{t.evFailedLabel}</span> {runError}
         </p>
       )}
 
@@ -470,7 +461,7 @@ export default function EvidenceInvestigation({
         <div className="mt-6 flex flex-col gap-6">
           <section aria-labelledby="oc-sources">
             <h3 id="oc-sources" className="font-semibold">
-              Sources checked ({retrievedSources.length})
+              {format(t.evSourcesTitle, { count: String(retrievedSources.length) })}
             </h3>
             {retrievedSources.length > 0 ? (
               <ul className="mt-2 flex flex-col gap-2">
@@ -482,22 +473,22 @@ export default function EvidenceInvestigation({
                       rel="noopener noreferrer"
                       className="font-medium text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
                     >
-                      {source.title} (opens in a new tab)
+                      {source.title} {t.commonOpenInNewTab}
                     </a>{" "}
                     <span className="text-muted">
-                      · Retrieved {source.retrieved_at} · {source.excerpts.length} excerpt
-                      {source.excerpts.length === 1 ? "" : "s"}
+                      · {t.commonRetrievedLabel} {source.retrieved_at} · {source.excerpts.length}{" "}
+                      {source.excerpts.length === 1 ? t.evExcerptOne : t.evExcerptMany}
                     </span>
                     <details className="mt-1">
                       <summary className="cursor-pointer text-muted">
-                        Show retrieved excerpts
+                        {t.evShowExcerpts}
                       </summary>
                       <div className="mt-1 flex flex-col gap-2">
                         {source.excerpts.map((excerpt, index) => (
                           <EvidenceQuote key={`${source.source_id}-${index}`}>
                             &ldquo;{excerpt.text}&rdquo;
                             {excerpt.truncated && (
-                              <span className="text-muted"> (trimmed)</span>
+                              <span className="text-muted"> {t.evTrimmed}</span>
                             )}
                           </EvidenceQuote>
                         ))}
@@ -507,43 +498,32 @@ export default function EvidenceInvestigation({
                 ))}
               </ul>
             ) : (
-              <p className="mt-1 text-sm text-muted">
-                No sources could be retrieved this run.
-              </p>
+              <p className="mt-1 text-sm text-muted">{t.evNoSources}</p>
             )}
           </section>
 
           {phase === "ready" && (
             <section aria-labelledby="oc-findings">
               <h3 id="oc-findings" className="font-semibold">
-                Findings ({findings.length})
+                {format(t.evFindingsTitle, { count: String(findings.length) })}
               </h3>
               {inferenceSource !== null && (
                 <p className="mt-1 text-sm text-muted" role="status">
-                  Comparison {describeActualSource(inferenceSource).label.toLowerCase()}
+                  {t.evComparisonPrefix}{" "}
+                  {describeActualSource(inferenceSource, language).label.toLowerCase()}
                 </p>
               )}
-              <p className="mt-1 text-sm leading-6 text-muted">
-                Quotes are copied from the retrieved pages; each assessment is an AI-generated
-                interpretation of one quote, not a verdict on the offer.
-              </p>
+              <p className="mt-1 text-sm leading-6 text-muted">{t.evQuotesNote}</p>
               <div className="mt-2">
-                <ContextualNotice>{INVESTIGATION_CONTEXT_NOTICE}</ContextualNotice>
+                <ContextualNotice>{getInvestigationContextNotice(language)}</ContextualNotice>
               </div>
               {findings.length === 0 ? (
                 <p className="mt-2 text-sm leading-6">
-                  No claim could be compared against the retrieved excerpts — the excerpts did not
-                  address the investigation questions. {UNVERIFIED_PHRASE}
+                  {t.evNoFindings} {getUnverifiedPhrase(language)}
                 </p>
               ) : (
                 <div className="mt-3 flex flex-col gap-4">
-                  {(
-                    [
-                      ["supported", "Supported"],
-                      ["conflicting", "Conflicting"],
-                      ["insufficient-evidence", "Insufficient evidence"],
-                    ] as const
-                  ).map(
+                  {groupLabels.map(
                     ([key, label]) =>
                       grouped[key]!.length > 0 && (
                         <div key={key}>
@@ -571,33 +551,38 @@ export default function EvidenceInvestigation({
             findingIssues.length > 0) && (
             <section aria-labelledby="oc-limits">
               <h3 id="oc-limits" className="font-semibold">
-                Errors and limitations
+                {t.evLimitsTitle}
               </h3>
               <ul className="mt-1 list-disc pl-5 text-sm leading-7">
                 {retrievalErrors.map((failure) => (
                   <li key={failure.source_id}>
-                    Could not check {failure.url}: {failure.error}
+                    {format(t.evCouldNotCheck, { url: failure.url, error: failure.error })}
                   </li>
                 ))}
                 {uncovered.map((category) => (
                   <li key={category}>
-                    No approved source covers {SOURCE_LABELS[category]} questions yet.
+                    {format(t.evNoSourceCovers, {
+                      label: getSourceCategoryLabel(language, category),
+                    })}
                   </li>
                 ))}
                 {findingIssues.length > 0 && (
                   <li>
-                    {findingIssues.length} comparison result
-                    {findingIssues.length === 1 ? " was" : "s were"} dropped because{" "}
-                    {findingIssues.length === 1 ? "it" : "they"} failed validation
-                    (unverifiable quote or source) and are not shown.
+                    {format(t.evDropped, {
+                      count: String(findingIssues.length),
+                      resultWord:
+                        findingIssues.length === 1 ? t.evDroppedResultOne : t.evDroppedResultMany,
+                      verb: findingIssues.length === 1 ? t.evDroppedVerbOne : t.evDroppedVerbMany,
+                      pronoun:
+                        findingIssues.length === 1
+                          ? t.evDroppedPronounOne
+                          : t.evDroppedPronounMany,
+                    })}
                   </li>
                 )}
-                <li>Only short excerpts were compared, not the full pages.</li>
-                <li>
-                  Government guidance pages describe general rules; they never verify a specific
-                  employer.
-                </li>
-                <li>Missing information means unverified — not false.</li>
+                <li>{t.evOnlyExcerpts}</li>
+                <li>{t.evGuidanceGeneral}</li>
+                <li>{t.commonMissingMeansUnverified}</li>
               </ul>
             </section>
           )}

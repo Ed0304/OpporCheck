@@ -5,6 +5,11 @@
 // Extraction input embeds [Page N] markers so the model can cite pages;
 // every citation is still verified by search before display. Long inputs
 // are truncated with an explicit marker, and the UI discloses the limit.
+//
+// Prompts stay English; an optional UI language adds one rule asking for
+// free-text fields (claim, explanation, followUpQuestion) in that language.
+// Schemas, category/status enums, and verbatim excerpts never change, so
+// attribution validation is unaffected by the output language.
 
 import type {
   ContractCategory,
@@ -12,6 +17,7 @@ import type {
   ContractDocumentType,
   EmploymentClaim,
 } from "./contractTypes";
+import type { UiLanguage } from "./strings";
 
 /** Max document characters sent for extraction (UI discloses trimming). */
 export const EXTRACTION_MAX_CHARS = 12000;
@@ -62,13 +68,40 @@ export function formatDocumentPages(doc: ContractDocumentText): string {
     .join("\n\n");
 }
 
-export function buildExtractionPrompt(doc: ContractDocumentText): string {
+/** Output-language rule for extraction, or "" when English (byte-identical prompt). */
+function extractionLanguageRule(language: UiLanguage): string {
+  if (language !== "id") {
+    return "";
+  }
+  return (
+    "- Write the claim of every term in Bahasa Indonesia. " +
+    "Copy every sourceExcerpt VERBATIM from the document text below; never translate quotations.\n"
+  );
+}
+
+/** Output-language rule for comparison, or "" when English (byte-identical prompt). */
+function comparisonLanguageRule(language: UiLanguage): string {
+  if (language !== "id") {
+    return "";
+  }
+  return (
+    "- Write every claim, explanation, and followUpQuestion in Bahasa Indonesia. " +
+    "Copy every sourceExcerpt VERBATIM from the excerpts below; never translate quotations. " +
+    "Keep category and status values exactly as specified.\n"
+  );
+}
+
+export function buildExtractionPrompt(
+  doc: ContractDocumentText,
+  language: UiLanguage = "en",
+): string {
   const { text, trimmed } = truncateWithMarker(formatDocumentPages(doc), EXTRACTION_MAX_CHARS);
   const categories = CATEGORY_NAMES.map((name) => `- ${CATEGORY_GUIDE[name]}`).join("\n");
   return (
     `You extract structured employment terms from the ${DOCUMENT_TYPE_LABELS[doc.documentType].toLowerCase()} below. ` +
     "Output JSON only.\n" +
     "Rules:\n" +
+    extractionLanguageRule(language) +
     "- For each employment term found, output its category, a short neutral claim, and the sourceExcerpt copied VERBATIM from the document text below. Never paraphrase or invent quotations.\n" +
     "- Use only these categories:\n" +
     `${categories}\n` +
@@ -98,7 +131,10 @@ function formatComparisonTerm(term: EmploymentClaim, ownerLabel: string): string
   );
 }
 
-export function buildPromiseComparisonPrompt(inputs: ComparisonInput[]): string {
+export function buildPromiseComparisonPrompt(
+  inputs: ComparisonInput[],
+  language: UiLanguage = "en",
+): string {
   const lines: string[] = [];
   for (const input of inputs) {
     const owner = `${DOCUMENT_TYPE_LABELS[input.documentType]} "${input.fileName}"`;
@@ -116,6 +152,7 @@ export function buildPromiseComparisonPrompt(inputs: ComparisonInput[]): string 
     "You compare employment terms across the documents below. For each term that can be judged, " +
     "output one finding as JSON. Output a JSON array only.\n" +
     "Rules:\n" +
+    comparisonLanguageRule(language) +
     "- Every sourceExcerpt MUST be copied verbatim from the excerpts below. Never paraphrase, shorten, or invent quotations.\n" +
     "- Every documentId MUST be copied exactly from the document list.\n" +
     "- Status 'consistent': the documents agree on the term.\n" +

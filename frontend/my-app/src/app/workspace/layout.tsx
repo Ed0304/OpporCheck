@@ -13,6 +13,8 @@ import AppHeader from "@/components/AppHeader";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { Spinner } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { useLang } from "@/lib/lang";
+import { getStrings } from "@/lib/strings";
 
 // Isolated so the pathname hook streams inside Suspense during prerender.
 function LoginRedirect({ user, loading }: { user: unknown; loading: boolean }) {
@@ -28,6 +30,8 @@ function LoginRedirect({ user, loading }: { user: unknown; loading: boolean }) {
 
 export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const { language } = useLang();
+  const t = getStrings(language);
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -39,7 +43,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         </Suspense>
         <AppHeader links={[]} />
         <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-16 sm:px-6">
-          <Spinner label={loading ? "Checking sign-in…" : "Redirecting to sign-in…"} />
+          <Spinner label={loading ? t.wsCheckingSignIn : t.wsRedirecting} />
         </div>
       </div>
     );
@@ -58,7 +62,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
           aria-haspopup="dialog"
           className="cursor-pointer rounded-md border border-edge bg-card px-3 py-2 text-sm font-medium hover:bg-brand-soft"
         >
-          Workspace menu
+          {t.wsMenuButton}
         </button>
       </div>
       <div className="mx-auto flex w-full max-w-6xl flex-1 gap-5 px-4 py-4 sm:px-6 lg:py-6">

@@ -2,10 +2,15 @@
 
 // Contextual workspace sidebar: collapsible on desktop, drawer on mobile.
 // Collapse state persists for the session; Escape closes the drawer.
+// Labels follow the global website language preference. The two-letter
+// collapsed-rail shorts stay fixed (decorative; the full localized label
+// is always exposed to assistive technology).
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { useLang } from "@/lib/lang";
+import { getStrings, type UiLanguage } from "@/lib/strings";
 
 export interface WorkspaceNavItem {
   href: string;
@@ -13,14 +18,20 @@ export interface WorkspaceNavItem {
   short: string;
 }
 
-export const WORKSPACE_NAV: WorkspaceNavItem[] = [
-  { href: "/workspace", label: "Overview", short: "Ov" },
-  { href: "/workspace/review", label: "Review opportunity", short: "Re" },
-  { href: "/workspace/compare", label: "Compare documents", short: "Co" },
-  { href: "/workspace/investigations", label: "My investigations", short: "In" },
-  { href: "/workspace/resources", label: "Resources", short: "Rs" },
-  { href: "/workspace/settings", label: "Settings", short: "Se" },
-];
+export function getWorkspaceNav(language: UiLanguage): WorkspaceNavItem[] {
+  const t = getStrings(language);
+  return [
+    { href: "/workspace", label: t.wsNavOverview, short: "Ov" },
+    { href: "/workspace/review", label: t.wsNavReview, short: "Re" },
+    { href: "/workspace/compare", label: t.wsNavCompare, short: "Co" },
+    { href: "/workspace/investigations", label: t.wsNavInvestigations, short: "In" },
+    { href: "/workspace/resources", label: t.wsNavResources, short: "Rs" },
+    { href: "/workspace/settings", label: t.wsNavSettings, short: "Se" },
+  ];
+}
+
+/** English default, kept for existing imports; UI code prefers getWorkspaceNav. */
+export const WORKSPACE_NAV: WorkspaceNavItem[] = getWorkspaceNav("en");
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/workspace") {
@@ -41,6 +52,9 @@ export default function WorkspaceSidebar({
   onCloseDrawer: () => void;
 }) {
   const pathname = usePathname();
+  const { language } = useLang();
+  const t = getStrings(language);
+  const nav = getWorkspaceNav(language);
 
   useEffect(() => {
     if (!drawerOpen) {
@@ -57,7 +71,7 @@ export default function WorkspaceSidebar({
 
   const list = (onNavigate?: () => void, slim = false) => (
     <ul className="flex flex-col gap-1">
-      {WORKSPACE_NAV.map((item) => {
+      {nav.map((item) => {
         const active = isActive(pathname, item.href);
         return (
           <li key={item.href}>
@@ -83,10 +97,10 @@ export default function WorkspaceSidebar({
     <>
       {/* Desktop: collapsible rail */}
       <aside
-        aria-label="Workspace"
+        aria-label={t.wsSidebarAria}
         className={`hidden shrink-0 flex-col gap-3 lg:flex ${collapsed ? "w-16" : "w-60"}`}
       >
-        <nav aria-label="Workspace sections" className="rounded-lg border border-edge bg-card p-2">
+        <nav aria-label={t.wsSectionsAria} className="rounded-lg border border-edge bg-card p-2">
           {list(undefined, collapsed)}
         </nav>
         <button
@@ -95,32 +109,32 @@ export default function WorkspaceSidebar({
           aria-expanded={!collapsed}
           className="cursor-pointer rounded-md border border-edge bg-card px-3 py-2 text-sm font-medium hover:bg-brand-soft"
         >
-          {collapsed ? "Expand" : "Collapse"}
+          {collapsed ? t.wsExpand : t.wsCollapse}
         </button>
       </aside>
 
       {/* Mobile: drawer */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Workspace menu">
+        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label={t.wsMenuButton}>
           <button
             type="button"
-            aria-label="Close workspace menu"
+            aria-label={t.wsCloseMenuAria}
             onClick={onCloseDrawer}
             className="absolute inset-0 h-full w-full cursor-default bg-black/40"
           />
           <div className="absolute left-0 top-0 flex h-full w-72 flex-col gap-3 overflow-y-auto bg-card p-4">
             <div className="flex items-center justify-between">
-              <p className="font-semibold">Workspace</p>
+              <p className="font-semibold">{t.wsSidebarAria}</p>
               <button
                 type="button"
                 onClick={onCloseDrawer}
                 autoFocus
                 className="cursor-pointer rounded-md border border-edge px-3 py-1.5 text-sm font-medium hover:bg-brand-soft"
               >
-                Close
+                {t.commonClose}
               </button>
             </div>
-            <nav aria-label="Workspace sections">{list(onCloseDrawer)}</nav>
+            <nav aria-label={t.wsSectionsAria}>{list(onCloseDrawer)}</nav>
           </div>
         </div>
       )}

@@ -1,14 +1,12 @@
 // Destination-aware resources section: corridor selector plus the curated
 // guidance list for the chosen destination. Profiles without link-outs yet
-// say so instead of showing another country's links. The resource-language
-// filter is local section state: it never changes navigation, page titles,
-// or any other surface.
+// say so instead of showing another country's links. Section text follows
+// the global website language preference (see the header selector).
 
 "use client";
 
 import { useState } from "react";
 import GuidanceList from "@/components/GuidanceList";
-import ResourceLanguageFilter from "@/components/ResourceLanguageFilter";
 import { EmptyState } from "@/components/ui";
 import {
   CORRIDORS,
@@ -16,11 +14,12 @@ import {
   GUIDANCE_BY_PROFILE,
   type CorridorCode,
 } from "@/lib/corridors";
-import { format, getStrings, type UiLanguage } from "@/lib/strings";
+import { useLang } from "@/lib/lang";
+import { format, getStrings } from "@/lib/strings";
 
 export default function CorridorResources() {
   const [code, setCode] = useState<CorridorCode>(DEFAULT_CORRIDOR_CODE);
-  const [language, setLanguage] = useState<UiLanguage>("en");
+  const { language } = useLang();
   const t = getStrings(language);
   const profile = CORRIDORS[code];
   const entries = GUIDANCE_BY_PROFILE[code];
@@ -41,7 +40,6 @@ export default function CorridorResources() {
             ))}
           </select>
         </label>
-        <ResourceLanguageFilter value={language} onChange={setLanguage} />
         <p className="pb-2 text-sm text-muted" role="status">
           {profile.status === "sources_verified"
             ? t.statusSourcesVerified

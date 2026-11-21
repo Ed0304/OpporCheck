@@ -2,7 +2,11 @@
 // evidence quotes, and status labels. Status is always text, never
 // color alone.
 
+"use client";
+
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import { useLang } from "@/lib/lang";
+import { getStrings } from "@/lib/strings";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -146,14 +150,16 @@ export function EmptyState({
   );
 }
 
-export function Spinner({ label = "Loading…" }: { label?: string }) {
+export function Spinner({ label }: { label?: string }) {
+  const { language } = useLang();
+  const text = label ?? getStrings(language).commonLoading;
   return (
     <span role="status" className="inline-flex items-center gap-2 text-sm text-muted">
       <span
         aria-hidden
         className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-edge border-t-brand"
       />
-      {label}
+      {text}
     </span>
   );
 }

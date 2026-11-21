@@ -1,7 +1,8 @@
 "use client";
 
-// Global top navigation: brand wordmark, section links, theme switcher,
-// account menu (or sign-in link). Mobile menu opens a navigation drawer.
+// Global top navigation: brand wordmark, section links, website language
+// selector, theme switcher, account menu (or sign-in link). Mobile menu
+// opens a navigation drawer.
 //
 // The pathname hook lives in Suspense-isolated nav components (with static
 // fallbacks) so statically prerendered pages keep building: URL data is
@@ -11,6 +12,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { useLang } from "@/lib/lang";
+import { UI_LANGUAGES, format, getStrings } from "@/lib/strings";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
 
 export interface NavLink {
@@ -18,43 +21,78 @@ export interface NavLink {
   label: string;
 }
 
-const THEME_LABEL: Record<ThemeChoice, string> = {
-  light: "Light",
-  dark: "Dark",
-  system: "System",
-};
-
 const THEME_ORDER: ThemeChoice[] = ["light", "dark", "system"];
+
+/** The one global website language selector (EN/ID), persisted via LangProvider. */
+function LanguageSelector() {
+  const { language, setLanguage } = useLang();
+  const t = getStrings(language);
+  return (
+    <div
+      role="radiogroup"
+      aria-label={t.languageLabel}
+      className="inline-flex h-9 items-center rounded-md border border-edge p-0.5"
+    >
+      {UI_LANGUAGES.map((entry) => (
+        <button
+          key={entry.code}
+          type="button"
+          role="radio"
+          aria-checked={language === entry.code}
+          title={entry.label}
+          aria-label={entry.label}
+          onClick={() => setLanguage(entry.code)}
+          className={`h-7 cursor-pointer rounded px-2 text-xs font-medium ${
+            language === entry.code
+              ? "bg-brand-soft font-semibold text-navy"
+              : "text-muted hover:bg-brand-soft hover:text-ink"
+          }`}
+        >
+          {entry.code.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function ThemeSwitcher() {
   const { choice, setChoice } = useTheme();
+  const { language } = useLang();
+  const t = getStrings(language);
+  const labels: Record<ThemeChoice, string> = {
+    light: t.themeLight,
+    dark: t.themeDark,
+    system: t.themeSystem,
+  };
   const next = THEME_ORDER[(THEME_ORDER.indexOf(choice) + 1) % THEME_ORDER.length]!;
   return (
     <button
       type="button"
       onClick={() => setChoice(next)}
-      aria-label={`Theme: ${THEME_LABEL[choice]}. Activate to switch to ${THEME_LABEL[next]}.`}
-      title={`Theme: ${THEME_LABEL[choice]}`}
+      aria-label={format(t.headerThemeAria, { current: labels[choice], next: labels[next] })}
+      title={format(t.headerThemeTitle, { current: labels[choice] })}
       className="inline-flex h-9 cursor-pointer items-center rounded-md border border-edge px-3 text-sm font-medium hover:bg-brand-soft"
     >
-      {THEME_LABEL[choice]}
+      {labels[choice]}
     </button>
   );
 }
 
 function AccountMenu() {
   const { user, signOutUser } = useAuth();
+  const { language } = useLang();
+  const t = getStrings(language);
   if (!user) {
     return (
       <Link
         href="/login"
         className="inline-flex h-9 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
       >
-        Sign in
+        {t.headerSignIn}
       </Link>
     );
   }
-  const label = user.displayName || user.email || "Account";
+  const label = user.displayName || user.email || t.headerAccountFallback;
   return (
     <details className="relative">
       <summary className="inline-flex h-9 cursor-pointer list-none items-center rounded-md border border-edge px-3 text-sm font-medium hover:bg-brand-soft [&::-webkit-details-marker]:hidden">
@@ -66,20 +104,20 @@ function AccountMenu() {
           href="/workspace"
           className="block rounded px-3 py-2 text-sm hover:bg-brand-soft"
         >
-          Workspace
+          {t.headerWorkspace}
         </Link>
         <Link
           href="/workspace/settings"
           className="block rounded px-3 py-2 text-sm hover:bg-brand-soft"
         >
-          Settings
+          {t.headerSettings}
         </Link>
         <button
           type="button"
           onClick={() => void signOutUser()}
           className="block w-full cursor-pointer rounded px-3 py-2 text-left text-sm hover:bg-brand-soft"
         >
-          Sign out
+          {t.headerSignOut}
         </button>
       </div>
     </details>
@@ -114,8 +152,10 @@ function DesktopLinks({ links, pathname }: { links: NavLink[]; pathname: string 
 
 function DesktopNav({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
+  const { language } = useLang();
+  const t = getStrings(language);
   return (
-    <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
+    <nav aria-label={t.headerPrimaryAria} className="hidden items-center gap-1 md:flex">
       <DesktopLinks links={links} pathname={pathname} />
     </nav>
   );
@@ -160,23 +200,25 @@ function MobileNav({ links, onNavigate }: { links: NavLink[]; onNavigate: () => 
 
 export default function AppHeader({ links }: { links: NavLink[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { language } = useLang();
+  const t = getStrings(language);
   const closeMenu = () => setMenuOpen(false);
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-card">
       <a href="#main-content" className="skip-link">
-        Skip to main content
+        {t.headerSkipLink}
       </a>
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link
           href="/"
           className="text-xl font-bold tracking-tight text-navy"
-          aria-label="OpporCheck home"
+          aria-label={t.headerHomeAria}
         >
           OpporCheck
         </Link>
         <Suspense
           fallback={
-            <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
+            <nav aria-label={t.headerPrimaryAria} className="hidden items-center gap-1 md:flex">
               <DesktopLinks links={links} pathname={null} />
             </nav>
           }
@@ -184,6 +226,7 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
           <DesktopNav links={links} />
         </Suspense>
         <div className="hidden items-center gap-2 md:flex">
+          <LanguageSelector />
           <ThemeSwitcher />
           <AccountMenu />
         </div>
@@ -195,20 +238,21 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
             aria-controls="mobile-nav"
             onClick={() => setMenuOpen((open) => !open)}
           >
-            {menuOpen ? "Close" : "Menu"}
+            {menuOpen ? t.commonClose : t.commonMenu}
           </button>
         )}
       </div>
       {menuOpen && (
         <nav
           id="mobile-nav"
-          aria-label="Mobile"
+          aria-label={t.headerMobileAria}
           className="border-t border-edge bg-card px-4 py-3 md:hidden"
         >
           <Suspense fallback={<MobileLinks links={links} pathname={null} onNavigate={closeMenu} />}>
             <MobileNav links={links} onNavigate={closeMenu} />
           </Suspense>
           <div className="mt-2 flex items-center gap-2 border-t border-edge pt-3">
+            <LanguageSelector />
             <ThemeSwitcher />
             <AccountMenu />
           </div>

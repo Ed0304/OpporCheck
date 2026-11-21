@@ -111,6 +111,29 @@ test("comparison prompt embeds terms, ids, statuses, and the worked example", ()
   assert.match(prompt, /recruiter says accommodation is free/);
 });
 
+test("default prompts carry no output-language rule (byte-identical English)", () => {
+  const inputs: ComparisonInput[] = [
+    { documentId: "doc-1", documentType: "employment_contract", fileName: "c.pdf", terms: [claim()] },
+  ];
+  assert.ok(!buildExtractionPrompt(DOC).includes("Bahasa Indonesia"));
+  assert.ok(!buildPromiseComparisonPrompt(inputs).includes("Bahasa Indonesia"));
+});
+
+test("Indonesian prompts request free-text fields in Bahasa Indonesia, excerpts verbatim", () => {
+  const inputs: ComparisonInput[] = [
+    { documentId: "doc-1", documentType: "employment_contract", fileName: "c.pdf", terms: [claim()] },
+  ];
+  const extraction = buildExtractionPrompt(DOC, "id");
+  assert.ok(extraction.includes("Write the claim of every term in Bahasa Indonesia."));
+  assert.ok(extraction.includes("never translate quotations"));
+  const comparison = buildPromiseComparisonPrompt(inputs, "id");
+  assert.ok(
+    comparison.includes("Write every claim, explanation, and followUpQuestion in Bahasa Indonesia."),
+  );
+  assert.ok(comparison.includes("never translate quotations"));
+  assert.ok(comparison.includes("Keep category and status values exactly as specified."));
+});
+
 test("comparison prompt caps terms and excerpts with markers", () => {
   const terms = Array.from({ length: COMPARISON_MAX_TERMS + 10 }, (_, index) =>
     claim({ claim: `Term number ${index} with enough words to validate length.` }),

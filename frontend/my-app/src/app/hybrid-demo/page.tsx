@@ -29,6 +29,8 @@ import {
   type PrivacyApproval,
 } from "@/lib/privacyGate";
 import { mapServiceError } from "@/lib/aiErrors";
+import { useLang } from "@/lib/lang";
+import { format, getStrings, type UiLanguage } from "@/lib/strings";
 
 type DemoMode = "prefer-on-device" | "only-in-cloud";
 type DeviceState = "idle" | "initializing" | "ready" | "error";
@@ -123,16 +125,12 @@ async function probePromptApi(): Promise<string> {
   }
 }
 
-function friendlyError(err: unknown): string {
+function friendlyError(err: unknown, language: UiLanguage = "en"): string {
   const message = err instanceof Error ? err.message : String(err);
   if (/403|App Check|app-check|FH: \(auth/i.test(message)) {
-    return (
-      `${message} ` +
-      "This usually means App Check is enforced but the request had no valid token. " +
-      "Register a debug token for localhost (see README section below) or check the reCAPTCHA Enterprise key."
-    );
+    return `${message} ${getStrings(language).hdAppCheckHint}`;
   }
-  return mapServiceError(message) ?? message;
+  return mapServiceError(message, language) ?? message;
 }
 
 function StatusDot({ tone }: { tone: "ok" | "warn" | "bad" | "idle" }) {
@@ -165,6 +163,8 @@ interface ClientStatus {
 export default function HybridDemoPage() {
   // Env-only probe: safe to run as initial state on server and client.
   const [envProbe] = useState(() => probeFirebaseConfig());
+  const { language } = useLang();
+  const t = getStrings(language);
   const [clientStatus, setClientStatus] = useState<ClientStatus>({
     phase: "pending",
     appCheck: null,
@@ -175,7 +175,7 @@ export default function HybridDemoPage() {
   const [device, setDevice] = useState<DeviceStatus>({
     state: "idle",
     progress: null,
-    message: "Not initialized.",
+    message: getStrings(language).hdDeviceIdle,
   });
   const [mode, setMode] = useState<DemoMode>("prefer-on-device");
   const [opportunityText, setOpportunityText] = useState(SAMPLE_OPPORTUNITY);
@@ -209,20 +209,20 @@ export default function HybridDemoPage() {
         cloudRef.current = createCloudModel(client.ai, envProbe.cloudModelName);
         setClientStatus({ phase: "ready", appCheck: client.appCheckStatus, message: null });
       } catch (err) {
-        setClientStatus({ phase: "error", appCheck: null, message: friendlyError(err) });
+        setClientStatus({ phase: "error", appCheck: null, message: friendlyError(err, language) });
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [envProbe]);
+  }, [envProbe, language]);
 
   const handleInitDevice = async () => {
     const model = hybridRef.current;
     if (!model) {
       return;
     }
-    setDevice({ state: "initializing", progress: 0, message: "Starting on-device model…" });
+    setDevice({ state: "initializing", progress: 0, message: t.hdDeviceStarting });
     try {
       // Must be called from a user gesture, before the first on-device query.
       // Resolves when the model is downloaded and ready; progress is 0..1.
@@ -230,18 +230,20 @@ export default function HybridDemoPage() {
         setDevice((prev) => ({
           ...prev,
           progress: progressValue,
-          message: `Downloading on-device model: ${Math.round(progressValue * 10000) / 100}%`,
+          message: format(t.hdDeviceDownloading, {
+            percent: String(Math.round(progressValue * 10000) / 100),
+          }),
         }));
       });
-      setDevice({ state: "ready", progress: 1, message: "On-device model is ready." });
+      setDevice({ state: "ready", progress: 1, message: t.hdDeviceReady });
     } catch (err) {
-      setDevice({ state: "error", progress: null, message: friendlyError(err) });
+      setDevice({ state: "error", progress: null, message: friendlyError(err, language) });
     }
   };
 
   const handlePrivacyApproved = (next: PrivacyApproval, sanitized: string) => {
     if (hashContent(opportunityText) !== hashContent(privacySource)) {
-      setRunError("The text changed while you were reviewing. Check privacy again.");
+      setRunError(t.hdPrivacyChanged);
       return;
     }
     setApproval(next);
@@ -251,7 +253,7 @@ export default function HybridDemoPage() {
 
   const handleAnalyze = async () => {
     try {
-      assertAnalysisAllowed(approval, opportunityText);
+      assertAnalysisAllowed(approval, opportunityText, language);
     } catch (err) {
       setRunError(err instanceof Error ? err.message : String(err));
       return;
@@ -281,7 +283,7 @@ export default function HybridDemoPage() {
         usedCloudFallback: mode === "prefer-on-device" && inferenceSource === "in_cloud",
       });
     } catch (err) {
-      setRunError(friendlyError(err));
+      setRunError(friendlyError(err, language));
     } finally {
       setRunning(false);
     }
@@ -294,79 +296,75 @@ export default function HybridDemoPage() {
   return (
     <div className="min-h-full bg-zinc-50 font-sans text-zinc-950 dark:bg-black dark:text-zinc-50">
       <main className="mx-auto w-full max-w-3xl px-6 py-10">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">OpporCheck · Milestone 1</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Hybrid inference demo</h1>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">{t.hdEyebrow}</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">{t.hdTitle}</h1>
         <p className="mt-2 max-w-2xl leading-7 text-zinc-700 dark:text-zinc-300">
-          Analyzes an employment opportunity into structured JSON using Firebase AI Logic in the
-          browser. The SDK routes each prompt to the on-device model or the cloud model depending
-          on the selected mode and device capability.
+          {t.hdSubtitle}
         </p>
 
         {/* Environment status */}
-        <section aria-label="Environment status" className="mt-8 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="text-lg font-semibold">Environment</h2>
+        <section aria-label={t.hdEnvAria} className="mt-8 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+          <h2 className="text-lg font-semibold">{t.hdEnvTitle}</h2>
           <dl className="mt-2 divide-y divide-zinc-100 text-sm dark:divide-zinc-900">
-            <StatusRow label="Firebase config">
+            <StatusRow label={t.hdEnvFirebaseConfig}>
               {configOk ? (
-                <span className="flex items-center gap-2"><StatusDot tone="ok" /> Loaded from env</span>
+                <span className="flex items-center gap-2"><StatusDot tone="ok" /> {t.hdEnvConfigOk}</span>
               ) : (
-                <span className="flex items-center gap-2"><StatusDot tone="bad" /> Missing: {envProbe.missingConfigKeys.join(", ")}</span>
+                <span className="flex items-center gap-2"><StatusDot tone="bad" /> {format(t.hdEnvConfigMissing, { keys: envProbe.missingConfigKeys.join(", ") })}</span>
               )}
             </StatusRow>
-            <StatusRow label="App Check">
+            <StatusRow label={t.hdEnvAppCheck}>
               {clientStatus.appCheck === "configured" ? (
                 <span className="flex items-center gap-2"><StatusDot tone="ok" /> reCAPTCHA Enterprise</span>
               ) : clientStatus.appCheck === "missing-site-key" ? (
-                <span className="flex items-center gap-2"><StatusDot tone="warn" /> No site key (cloud calls may 403 if enforced)</span>
+                <span className="flex items-center gap-2"><StatusDot tone="warn" /> {t.hdEnvNoSiteKey}</span>
               ) : (
-                <span className="flex items-center gap-2"><StatusDot tone="idle" /> Not initialized</span>
+                <span className="flex items-center gap-2"><StatusDot tone="idle" /> {t.hdEnvNotInitialized}</span>
               )}
             </StatusRow>
-            <StatusRow label="Cloud model">
+            <StatusRow label={t.hdEnvCloudModel}>
               <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-zinc-800">
                 {envProbe.cloudModelName}
               </code>
             </StatusRow>
-            <StatusRow label="Browser">
+            <StatusRow label={t.hdEnvBrowser}>
               {browser === null ? (
-                <span className="flex items-center gap-2"><StatusDot tone="idle" /> Checking…</span>
+                <span className="flex items-center gap-2"><StatusDot tone="idle" /> {t.hdEnvChecking}</span>
               ) : browser.meetsRequirement ? (
-                <span className="flex items-center gap-2"><StatusDot tone="ok" /> Chrome {browser.chromeVersion} desktop</span>
+                <span className="flex items-center gap-2"><StatusDot tone="ok" /> {format(t.hdEnvChromeDesktop, { version: String(browser.chromeVersion) })}</span>
               ) : (
                 <span className="flex items-center gap-2">
                   <StatusDot tone="warn" />
                   {browser.chromeVersion === null
-                    ? "Not Chrome desktop — on-device unavailable, cloud still works"
-                    : `Chrome ${browser.chromeVersion} — needs v139+ on desktop`}
+                    ? t.hdEnvNotChrome
+                    : format(t.hdEnvChromeOld, { version: String(browser.chromeVersion) })}
                 </span>
               )}
             </StatusRow>
-            <StatusRow label="Prompt API model">
+            <StatusRow label={t.hdEnvPromptApi}>
               <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-zinc-800">
-                {browser?.promptApi ?? "checking…"}
+                {browser?.promptApi ?? t.hdEnvPromptChecking}
               </code>
             </StatusRow>
           </dl>
           {(!configOk || initError) && (
             <div className="mt-4 rounded-md border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="font-semibold">Setup required before testing</p>
+              <p className="font-semibold">{t.hdSetupTitle}</p>
               <ol className="mt-1 list-decimal pl-5">
-                <li>Copy <code className="font-mono">.env.example</code> to <code className="font-mono">.env.local</code> and fill in your Firebase web app keys.</li>
-                <li>Provision AI Logic once: <code className="font-mono">npx -y firebase-tools@latest init ailogic</code> in your Firebase project directory.</li>
-                <li>Restart <code className="font-mono">npm run dev</code> so the new env vars load.</li>
+                <li>{t.hdSetupStep1Before} <code className="font-mono">.env.example</code> {t.hdSetupStep1Mid} <code className="font-mono">.env.local</code> {t.hdSetupStep1After}</li>
+                <li>{t.hdSetupStep2Before} <code className="font-mono">npx -y firebase-tools@latest init ailogic</code> {t.hdSetupStep2After}</li>
+                <li>{t.hdSetupStep3Before} <code className="font-mono">npm run dev</code> {t.hdSetupStep3After}</li>
               </ol>
-              {initError && <p className="mt-2">Error: {initError}</p>}
+              {initError && <p className="mt-2">{t.hdSetupErrorLabel} {initError}</p>}
             </div>
           )}
         </section>
 
         {/* Step 1: initialize on-device model */}
-        <section aria-label="Initialize on-device model" className="mt-6 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="text-lg font-semibold">Step 1 · Initialize the on-device model</h2>
+        <section aria-label={t.hdStep1Aria} className="mt-6 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+          <h2 className="text-lg font-semibold">{t.hdStep1Title}</h2>
           <p className="mt-1 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
-            Chrome requires a user gesture before the on-device model can download. Click once;
-            the first download can take several minutes. This step is optional for the cloud-only
-            path.
+            {t.hdStep1Desc}
           </p>
           <div className="mt-3 flex items-center gap-3">
             <button
@@ -375,7 +373,7 @@ export default function HybridDemoPage() {
               disabled={!clientReady || device.state === "initializing" || device.state === "ready"}
               className="h-10 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
             >
-              {device.state === "initializing" ? "Downloading…" : "Initialize on-device model"}
+              {device.state === "initializing" ? t.hdInitDownloading : t.hdInitButton}
             </button>
             <span className="flex items-center gap-2 text-sm">
               <StatusDot
@@ -399,7 +397,7 @@ export default function HybridDemoPage() {
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.round(device.progress * 100)}
-              aria-label="On-device model download progress"
+              aria-label={t.hdInitProgressAria}
             >
               <div
                 className="h-2 rounded-full bg-zinc-900 transition-[width] dark:bg-zinc-100"
@@ -409,19 +407,18 @@ export default function HybridDemoPage() {
           )}
           {device.state === "error" && (
             <p className="mt-2 text-sm leading-6">
-              Download failed. Check the Chrome flag{" "}
-              <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</code>,
-              available disk space, and that you are on Chrome desktop v139+. The cloud path below
-              still works.
+              {t.hdInitFailedBefore}{" "}
+              <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</code>
+              {t.hdInitFailedAfter}
             </p>
           )}
         </section>
 
         {/* Step 2: run analysis */}
-        <section aria-label="Run opportunity analysis" className="mt-6 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="text-lg font-semibold">Step 2 · Analyze an opportunity</h2>
+        <section aria-label={t.hdStep2Aria} className="mt-6 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+          <h2 className="text-lg font-semibold">{t.hdStep2Title}</h2>
           <fieldset className="mt-3">
-            <legend className="text-sm font-medium">Inference mode</legend>
+            <legend className="text-sm font-medium">{t.hdInferenceMode}</legend>
             <div className="mt-2 flex flex-col gap-2 text-sm">
               <label className="flex cursor-pointer items-start gap-2">
                 <input
@@ -434,7 +431,7 @@ export default function HybridDemoPage() {
                 />
                 <span>
                   <span className="font-mono font-medium">PREFER_ON_DEVICE</span>
-                  <span className="text-zinc-600 dark:text-zinc-400"> — on-device when available, otherwise cloud fallback</span>
+                  <span className="text-zinc-600 dark:text-zinc-400"> {t.hdModePreferHint}</span>
                 </span>
               </label>
               <label className="flex cursor-pointer items-start gap-2">
@@ -448,13 +445,13 @@ export default function HybridDemoPage() {
                 />
                 <span>
                   <span className="font-mono font-medium">ONLY_IN_CLOUD</span>
-                  <span className="text-zinc-600 dark:text-zinc-400"> — cloud model only, never on-device</span>
+                  <span className="text-zinc-600 dark:text-zinc-400"> {t.hdModeCloudHint}</span>
                 </span>
               </label>
             </div>
           </fieldset>
           <label htmlFor="opportunity-text" className="mt-4 block text-sm font-medium">
-            Opportunity text
+            {t.hdOpportunityLabel}
           </label>
           <textarea
             id="opportunity-text"
@@ -465,9 +462,9 @@ export default function HybridDemoPage() {
           />
           <div className="mt-3 rounded-md border border-zinc-300 p-3 dark:border-zinc-700">
             <p className="text-sm font-medium">
-              Privacy Check{" "}
+              {t.hdPrivacyTitle}{" "}
               <span className="font-normal text-zinc-600 dark:text-zinc-400">
-                {approvalCovers(approval, opportunityText) ? "(approved)" : "(required)"}
+                {approvalCovers(approval, opportunityText) ? t.hdPrivacyApproved : t.hdPrivacyRequired}
               </span>
             </p>
             {!privacyOpen ? (
@@ -481,7 +478,7 @@ export default function HybridDemoPage() {
                 }}
                 className="mt-2 h-9 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
               >
-                Check privacy
+                {t.commonCheckPrivacy}
               </button>
             ) : (
               <div className="mt-2">
@@ -506,11 +503,11 @@ export default function HybridDemoPage() {
             }
             className="mt-3 h-10 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
           >
-            {running ? "Analyzing…" : `Analyze (${MODE_LABEL[mode]})`}
+            {running ? t.hdAnalyzing : format(t.hdAnalyzeButton, { mode: MODE_LABEL[mode] })}
           </button>
           {runError && (
             <p className="mt-3 text-sm leading-6">
-              <span className="font-semibold">Request failed:</span> {runError}
+              <span className="font-semibold">{t.hdRequestFailed}</span> {runError}
             </p>
           )}
           {result && (
@@ -523,16 +520,15 @@ export default function HybridDemoPage() {
                   </code>
                 </span>
                 <span>
-                  Latency: <span className="font-semibold">{Math.round(result.latencyMs)} ms</span>
+                  {t.hdLatency} <span className="font-semibold">{Math.round(result.latencyMs)} ms</span>
                 </span>
                 <span>
-                  Mode: <span className="font-mono">{MODE_LABEL[result.mode]}</span>
+                  {t.hdModeLabel} <span className="font-mono">{MODE_LABEL[result.mode]}</span>
                 </span>
               </div>
               {result.usedCloudFallback && (
                 <p className="mt-2 text-sm leading-6">
-                  Notice: the on-device model was unavailable (not initialized, still downloading,
-                  or unsupported), so the SDK fell back to the cloud model for this request.
+                  {t.hdFallbackNotice}
                 </p>
               )}
               {result.parseError && (
@@ -540,13 +536,13 @@ export default function HybridDemoPage() {
               )}
               {result.data && (
                 <dl className="mt-3 divide-y divide-zinc-100 text-sm dark:divide-zinc-900">
-                  <StatusRow label="Occupation">{result.data.occupation}</StatusRow>
-                  <StatusRow label="Salary">{result.data.salary}</StatusRow>
-                  <StatusRow label="Destination country">{result.data.destination_country}</StatusRow>
-                  <StatusRow label="Employment type">
+                  <StatusRow label={t.hdResultOccupation}>{result.data.occupation}</StatusRow>
+                  <StatusRow label={t.hdResultSalary}>{result.data.salary}</StatusRow>
+                  <StatusRow label={t.hdResultCountry}>{result.data.destination_country}</StatusRow>
+                  <StatusRow label={t.hdResultEmpType}>
                     <span className="font-mono">{result.data.employment_type}</span>
                   </StatusRow>
-                  <StatusRow label="Missing information">
+                  <StatusRow label={t.hdResultMissing}>
                     {result.data.missing_information && result.data.missing_information.length > 0 ? (
                       <ul className="list-disc pl-4 text-left">
                         {result.data.missing_information.map((item) => (
@@ -554,13 +550,13 @@ export default function HybridDemoPage() {
                         ))}
                       </ul>
                     ) : (
-                      "None reported"
+                      t.hdResultNone
                     )}
                   </StatusRow>
                 </dl>
               )}
               <details className="mt-3 text-sm">
-                <summary className="cursor-pointer font-medium">Raw model output</summary>
+                <summary className="cursor-pointer font-medium">{t.hdRawOutput}</summary>
                 <pre className="mt-2 overflow-x-auto rounded-md bg-zinc-50 p-3 font-mono text-xs leading-5 dark:bg-zinc-900">
                   {result.rawText}
                 </pre>
@@ -570,27 +566,27 @@ export default function HybridDemoPage() {
         </section>
 
         {/* Test guide */}
-        <section aria-label="How to test" className="mt-6 rounded-md border border-zinc-200 bg-white p-5 text-sm leading-6 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="text-lg font-semibold">How to test both paths</h2>
+        <section aria-label={t.hdTestAria} className="mt-6 rounded-md border border-zinc-200 bg-white p-5 text-sm leading-6 dark:border-zinc-800 dark:bg-zinc-950">
+          <h2 className="text-lg font-semibold">{t.hdTestTitle}</h2>
           <ol className="mt-2 list-decimal pl-5">
             <li>
-              Use Chrome desktop v139+ with{" "}
+              {t.hdTest1Before}{" "}
               <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</code>{" "}
-              set to Enabled, then restart Chrome.
+              {t.hdTest1After}
             </li>
             <li>
-              On-device path: click “Initialize on-device model”, wait for Ready, select{" "}
-              <span className="font-mono">PREFER_ON_DEVICE</span>, and Analyze. Expect{" "}
+              {t.hdTest2Before} “{t.hdInitButton}”, {t.hdTest2Mid}{" "}
+              <span className="font-mono">PREFER_ON_DEVICE</span>{t.hdTest2After}{" "}
               <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">inferenceSource: on_device</code>.
             </li>
             <li>
-              Cloud path: select <span className="font-mono">ONLY_IN_CLOUD</span> and Analyze. Expect{" "}
+              {t.hdTest3Before} <span className="font-mono">ONLY_IN_CLOUD</span> {t.hdTest3Mid}{" "}
               <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">inferenceSource: in_cloud</code>.
             </li>
             <li>
-              Fallback check: in a fresh Chrome profile (or with the flag disabled), select{" "}
-              <span className="font-mono">PREFER_ON_DEVICE</span> without initializing and Analyze.
-              Expect <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">in_cloud</code> plus the fallback notice.
+              {t.hdTest4Before}{" "}
+              <span className="font-mono">PREFER_ON_DEVICE</span> {t.hdTest4Mid}{" "}
+              <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">in_cloud</code> {t.hdTest4After}
             </li>
           </ol>
         </section>

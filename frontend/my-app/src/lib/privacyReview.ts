@@ -6,8 +6,13 @@
 // splicing replacements from the end backwards so offsets never shift.
 // The source text is never mutated; the sanitized text is a separate
 // representation built only from explicit decisions.
+//
+// Error copy renders in the UI language (default English). The Indonesian
+// messages are WORKING DRAFTS needing native-speaker review — never
+// present them as final.
 
 import type { PrivacyDetection } from "./privacyDetection";
+import type { UiLanguage } from "./strings";
 
 export type ReviewDecision = "undecided" | "redact" | "replace" | "retain";
 
@@ -123,17 +128,26 @@ export function addManualSpan(
   start: number,
   end: number,
   replacement: string | null = null,
+  language: UiLanguage = "en",
 ): AddSpanResult {
   const from = Math.min(start, end);
   const to = Math.max(start, end);
+  // Indonesian errors are WORKING DRAFTS needing native-speaker review.
+  const id = language === "id";
   if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to > state.sourceText.length) {
-    return { ok: false, error: "Selection is outside the text." };
+    return { ok: false, error: id ? "Seleksi di luar teks." : "Selection is outside the text." };
   }
   if (to - from < 1) {
-    return { ok: false, error: "Select at least one character to redact." };
+    return {
+      ok: false,
+      error: id ? "Pilih setidaknya satu karakter untuk disensor." : "Select at least one character to redact.",
+    };
   }
   if (to - from > 2000) {
-    return { ok: false, error: "Selections are limited to 2000 characters." };
+    return {
+      ok: false,
+      error: id ? "Seleksi dibatasi hingga 2000 karakter." : "Selections are limited to 2000 characters.",
+    };
   }
   const blocked =
     state.items.some((item) =>
@@ -141,7 +155,10 @@ export function addManualSpan(
     ) ||
     state.manual.some((span) => rangesOverlap(from, to, span.start, span.end));
   if (blocked) {
-    return { ok: false, error: "Selection overlaps an existing item." };
+    return {
+      ok: false,
+      error: id ? "Seleksi tumpang tindih dengan item lain." : "Selection overlaps an existing item.",
+    };
   }
   manualCounter += 1;
   return {

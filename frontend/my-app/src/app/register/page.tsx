@@ -8,10 +8,14 @@ import { useEffect, useState } from "react";
 import PublicShell from "@/components/PublicShell";
 import { Button, Card, Field, TextInput } from "@/components/ui";
 import { friendlyAuthError, useAuth } from "@/lib/auth";
+import { useLang } from "@/lib/lang";
+import { getStrings } from "@/lib/strings";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { user, loading, setupError, signUp, signInWithGoogle } = useAuth();
+  const { language } = useLang();
+  const t = getStrings(language);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +35,7 @@ export default function RegisterPage() {
       await signUp(email, password);
       router.replace("/workspace");
     } catch (err) {
-      setError(friendlyAuthError(err));
+      setError(friendlyAuthError(err, language));
     } finally {
       setBusy(false);
     }
@@ -44,7 +48,7 @@ export default function RegisterPage() {
       await signInWithGoogle();
       router.replace("/workspace");
     } catch (err) {
-      setError(friendlyAuthError(err));
+      setError(friendlyAuthError(err, language));
     } finally {
       setBusy(false);
     }
@@ -53,16 +57,16 @@ export default function RegisterPage() {
   return (
     <PublicShell>
       <div className="mx-auto w-full max-w-md">
-        <h1 className="text-3xl font-bold tracking-tight text-navy">Create account</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-navy">{t.authCreateAccount}</h1>
         <div className="mt-5">
           <Card>
                 {setupError && (
                   <p role="alert" className="mb-3 text-sm font-medium text-red-700">
-                    Firebase isn&apos;t configured: {setupError}
+                    {t.authSetupPrefix} {setupError}
                   </p>
                 )}
                 <form onSubmit={submit} className="flex flex-col gap-4">
-                  <Field label="Email" htmlFor="register-email">
+                  <Field label={t.authEmail} htmlFor="register-email">
                     <TextInput
                       id="register-email"
                       type="email"
@@ -74,9 +78,9 @@ export default function RegisterPage() {
                     />
                   </Field>
                   <Field
-                    label="Password"
+                    label={t.authPassword}
                     htmlFor="register-password"
-                    hint="At least 6 characters."
+                    hint={t.authPasswordHint}
                   >
                     <TextInput
                       id="register-password"
@@ -95,18 +99,18 @@ export default function RegisterPage() {
                     </p>
                   )}
                   <Button type="submit" disabled={busy}>
-                    {busy ? "Creating account…" : "Create account"}
+                    {busy ? t.authCreating : t.authCreateAccount}
                   </Button>
                 </form>
                 <div className="mt-4 border-t border-edge pt-4">
                   <Button type="button" variant="secondary" onClick={() => void google()} disabled={busy} className="w-full">
-                    Continue with Google
+                    {t.authGoogle}
                   </Button>
                 </div>
                 <p className="mt-4 text-sm">
-                  Already have an account?{" "}
+                  {t.authHaveAccount}{" "}
                   <Link href="/login" className="text-brand underline">
-                    Sign in
+                    {t.authSignInTitle}
                   </Link>
                 </p>
           </Card>

@@ -13,7 +13,7 @@ import {
   backendErrorMessage,
   registerBackendTokenProvider,
 } from "../../src/lib/documents";
-import { listOfficialSources } from "../../src/lib/sources";
+import { listOfficialSources, retrieveOfficialSources } from "../../src/lib/sources";
 
 test("backendAuthHeaders is empty without a provider", async () => {
   registerBackendTokenProvider(null);
@@ -57,6 +57,21 @@ test("evidence-source 401 surfaces the re-sign-in message", async () => {
       json: async () => ({ error: "Missing or malformed Authorization header." }),
     })) as unknown as typeof fetch;
     await assert.rejects(listOfficialSources("GB"), /sign in again/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("evidence-source 401 surfaces the Indonesian re-sign-in message", async () => {
+  const realFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = (async () => ({
+      ok: false,
+      status: 401,
+      json: async () => ({ error: "Missing or malformed Authorization header." }),
+    })) as unknown as typeof fetch;
+    await assert.rejects(listOfficialSources("GB", "id"), /masuk lagi/);
+    await assert.rejects(retrieveOfficialSources([], [], "GB", "id"), /masuk lagi/);
   } finally {
     globalThis.fetch = realFetch;
   }

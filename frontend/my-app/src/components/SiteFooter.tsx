@@ -1,42 +1,51 @@
 // Public footer: links to real pages only. No fabricated legal pages.
 // Carries the full canonical disclaimer.
 
-import Link from "next/link";
-import { FULL_DISCLAIMER_PARAGRAPHS } from "@/lib/disclaimer";
+"use client";
 
-const COLUMNS: Array<{ heading: string; links: Array<{ href: string; label: string }> }> = [
-  {
-    heading: "Product",
-    links: [
-      { href: "/about", label: "About OpporCheck" },
-      { href: "/how-it-works", label: "How it works" },
-      { href: "/resources", label: "Employment guidance" },
-    ],
-  },
-  {
-    heading: "Workspace",
-    links: [
-      { href: "/workspace/review", label: "Review an opportunity" },
-      { href: "/workspace/investigations", label: "My investigations" },
-      { href: "/hybrid-demo", label: "Model playground" },
-    ],
-  },
-  {
-    heading: "Account",
-    links: [
-      { href: "/login", label: "Sign in" },
-      { href: "/register", label: "Create account" },
-      { href: "/workspace/settings", label: "Settings" },
-    ],
-  },
-];
+import Link from "next/link";
+import { getFullDisclaimerParagraphs } from "@/lib/disclaimer";
+import { useLang } from "@/lib/lang";
+import { format, getStrings } from "@/lib/strings";
 
 export default function SiteFooter() {
+  const { language } = useLang();
+  const t = getStrings(language);
+  const paragraphs = getFullDisclaimerParagraphs(language);
+  const columns: Array<{ heading: string; links: Array<{ href: string; label: string }> }> = [
+    {
+      heading: t.footerProduct,
+      links: [
+        { href: "/about", label: t.footerAbout },
+        { href: "/how-it-works", label: t.footerHowItWorks },
+        { href: "/resources", label: t.footerGuidance },
+      ],
+    },
+    {
+      heading: t.footerWorkspace,
+      links: [
+        { href: "/workspace/review", label: t.footerReview },
+        { href: "/workspace/investigations", label: t.footerInvestigations },
+        { href: "/hybrid-demo", label: t.footerPlayground },
+      ],
+    },
+    {
+      heading: t.footerAccount,
+      links: [
+        { href: "/login", label: t.footerSignIn },
+        { href: "/register", label: t.footerCreateAccount },
+        { href: "/workspace/settings", label: t.footerSettings },
+      ],
+    },
+  ];
   return (
     <footer className="border-t border-edge bg-card">
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
-        {COLUMNS.map((column) => (
-          <nav key={column.heading} aria-label={`Footer: ${column.heading}`}>
+        {columns.map((column) => (
+          <nav
+            key={column.heading}
+            aria-label={format(t.footerNavAria, { heading: column.heading })}
+          >
             <h2 className="text-sm font-semibold">{column.heading}</h2>
             <ul className="mt-2 flex flex-col gap-1">
               {column.links.map((link) => (
@@ -52,16 +61,13 @@ export default function SiteFooter() {
       </div>
       <div className="border-t border-edge">
         <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6">
-          <p className="text-sm font-semibold">Product notice</p>
-          {FULL_DISCLAIMER_PARAGRAPHS.map((paragraph) => (
+          <p className="text-sm font-semibold">{t.footerNoticeHeading}</p>
+          {paragraphs.map((paragraph) => (
             <p key={paragraph.slice(0, 32)} className="mt-1 text-sm leading-6 text-muted">
               {paragraph}
             </p>
           ))}
-          <p className="mt-2 text-sm text-muted">
-            OpporCheck helps you review overseas job opportunities with evidence and clear
-            explanations.
-          </p>
+          <p className="mt-2 text-sm text-muted">{t.footerTagline}</p>
         </div>
       </div>
     </footer>

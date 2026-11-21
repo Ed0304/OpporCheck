@@ -8,9 +8,13 @@ import { useState } from "react";
 import PublicShell from "@/components/PublicShell";
 import { Button, Card, Field, TextInput } from "@/components/ui";
 import { friendlyAuthError, useAuth } from "@/lib/auth";
+import { useLang } from "@/lib/lang";
+import { getStrings } from "@/lib/strings";
 
 export default function ForgotPasswordPage() {
   const { sendReset } = useAuth();
+  const { language } = useLang();
+  const t = getStrings(language);
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -24,7 +28,7 @@ export default function ForgotPasswordPage() {
       await sendReset(email);
       setSent(true);
     } catch (err) {
-      setError(friendlyAuthError(err));
+      setError(friendlyAuthError(err, language));
     } finally {
       setBusy(false);
     }
@@ -33,24 +37,24 @@ export default function ForgotPasswordPage() {
   return (
     <PublicShell>
       <div className="mx-auto w-full max-w-md">
-        <h1 className="text-3xl font-bold tracking-tight text-navy">Reset password</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-navy">{t.authResetTitle}</h1>
         <div className="mt-5">
           <Card>
             {sent ? (
               <div>
                 <p className="leading-6">
-                  If an account exists for <strong>{email}</strong>, a reset link is on
-                  its way. Please check your inbox (and spam folder).
+                  {t.authResetSentBefore} <strong>{email}</strong>
+                  {t.authResetSentAfter}
                 </p>
                 <p className="mt-3 text-sm">
                   <Link href="/login" className="text-brand underline">
-                    Back to sign in
+                    {t.commonBackToSignIn}
                   </Link>
                 </p>
               </div>
             ) : (
               <form onSubmit={submit} className="flex flex-col gap-4">
-                <Field label="Email" htmlFor="reset-email">
+                <Field label={t.authEmail} htmlFor="reset-email">
                   <TextInput
                     id="reset-email"
                     type="email"
@@ -67,11 +71,11 @@ export default function ForgotPasswordPage() {
                   </p>
                 )}
                 <Button type="submit" disabled={busy}>
-                  {busy ? "Sending…" : "Send reset link"}
+                  {busy ? t.authSending : t.authSendReset}
                 </Button>
                 <p className="text-sm">
                   <Link href="/login" className="text-brand underline">
-                    Back to sign in
+                    {t.commonBackToSignIn}
                   </Link>
                 </p>
               </form>

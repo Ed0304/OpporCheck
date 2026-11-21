@@ -5,13 +5,19 @@
 // preview, inference disclosure, and explicit approval. Parents remount
 // (via key) for each new check. Nothing is submitted automatically:
 // approval is delivered through onApproved for the parent to adopt.
+//
+// Panel chrome follows the global website language preference, and so do
+// detection labels and reasons (via detectSensitiveInfo's UI language).
+// Category titles are localized; placeholders stay English.
 
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, StatusLabel } from "@/components/ui";
+import { useLang } from "@/lib/lang";
+import { format, getStrings } from "@/lib/strings";
 import {
-  CATEGORY_TITLES,
+  getCategoryTitles,
   lineNumberOf,
   detectSensitiveInfo,
   type PrivacyCategory,
@@ -66,20 +72,22 @@ function DetectionRow({
   onDecide: (decision: ReviewDecision, replacement: string) => void;
   onReset: () => void;
 }) {
+  const { language } = useLang();
+  const t = getStrings(language);
   const [replaceText, setReplaceText] = useState("");
   const detection = item.detection;
   return (
     <li className="rounded-md border border-edge p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">
-          {detection.label} · line {lineNumberOf(sourceText, detection.start)}
+          {detection.label} · {t.pvLineWord} {lineNumberOf(sourceText, detection.start)}
         </p>
         <StatusLabel tone={confidenceTone(detection.confidence)}>
           {detection.confidence === "high"
-            ? "Likely sensitive"
+            ? t.pvLikely
             : detection.confidence === "medium"
-              ? "Possibly sensitive"
-              : "Needs judgment"}
+              ? t.pvPossibly
+              : t.pvNeedsJudgment}
         </StatusLabel>
       </div>
       <p className="mt-1 break-words font-mono text-sm">
@@ -91,24 +99,24 @@ function DetectionRow({
           variant={item.decision === "redact" ? "primary" : "secondary"}
           onClick={() => onDecide("redact", "")}
         >
-          Redact
+          {t.pvRedact}
         </Button>
         <Button
           variant={item.decision === "replace" ? "primary" : "secondary"}
           onClick={() => onDecide("replace", replaceText.trim())}
           disabled={item.decision === "replace" && replaceText.trim().length === 0}
         >
-          Replace
+          {t.pvReplace}
         </Button>
         <Button
           variant={item.decision === "retain" ? "primary" : "secondary"}
           onClick={() => onDecide("retain", "")}
         >
-          Keep
+          {t.pvKeep}
         </Button>
         {item.reviewed && (
           <Button variant="ghost" onClick={onReset}>
-            Undo choice
+            {t.pvUndo}
           </Button>
         )}
       </div>
@@ -122,9 +130,11 @@ function DetectionRow({
               onDecide("replace", replaceText.trim());
             }
           }}
-          placeholder={`Replacement text (suggestion: ${detection.placeholder})`}
+          placeholder={format(t.pvReplacementPlaceholder, {
+            suggestion: detection.placeholder,
+          })}
           maxLength={200}
-          aria-label={`Replacement for ${detection.label}`}
+          aria-label={format(t.pvReplacementAria, { label: detection.label })}
           className="mt-2 h-9 w-full rounded-md border border-edge bg-card px-3 text-sm"
         />
       )}
@@ -139,8 +149,11 @@ export default function PrivacyCheckPanel({
   onCancel,
   onProgress,
 }: PrivacyCheckPanelProps) {
+  const { language } = useLang();
+  const t = getStrings(language);
+  const titles = getCategoryTitles(language);
   const [review, setReview] = useState<PrivacyReviewState>(() =>
-    startReview(sourceText, detectSensitiveInfo(sourceText).detections),
+    startReview(sourceText, detectSensitiveInfo(sourceText, language).detections),
   );
   useEffect(() => {
     onProgress?.(
@@ -154,7 +167,7 @@ export default function PrivacyCheckPanel({
 
   const sanitized = useMemo(() => buildSanitized(review), [review]);
   const ready = allReviewed(review);
-  const disclosure = describeInference(disclosureMode);
+  const disclosure = describeInference(disclosureMode, language);
 
   const grouped = useMemo(() => {
     const groups = new Map<PrivacyCategory, ReviewedDetection[]>();
@@ -176,10 +189,10 @@ export default function PrivacyCheckPanel({
     const replacement =
       replacing && manualReplacement.trim().length > 0 ? manualReplacement.trim() : null;
     if (replacing && replacement === null) {
-      setManualError("Type replacement text first, or choose Redact selection.");
+      setManualError(t.pvNeedReplacement);
       return;
     }
-    const result = addManualSpan(review, start, end, replacement);
+    const result = addManualSpan(review, start, end, replacement, language);
     if (!result.ok) {
       setManualError(result.error);
       return;
@@ -206,33 +219,29 @@ export default function PrivacyCheckPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="max-w-3xl text-sm leading-6 text-muted">
-        Employment documents often mix personal details in with the evidence you
-        need analyzed. This check highlights text that looks like personal
-        information so you can redact or replace it before analysis. Your
-        original text stays unchanged until you approve the cleaned version.
-      </p>
+      <p className="max-w-3xl text-sm leading-6 text-muted">{t.pvIntro}</p>
 
       {review.items.length === 0 ? (
         <p className="text-sm leading-6" role="status">
-          No potential sensitive information was found. You can still redact
-          anything manually below, or approve to continue.
+          {t.pvNoneFound}
         </p>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm" role="status">
-            {review.items.filter((item) => item.reviewed).length} of {review.items.length}{" "}
-            items reviewed.
+            {format(t.pvReviewedCount, {
+              done: String(review.items.filter((item) => item.reviewed).length),
+              total: String(review.items.length),
+            })}
           </p>
           <Button variant="ghost" onClick={() => setReview(confirmAllSuggestions(review))}>
-            Confirm all suggestions
+            {t.pvConfirmAll}
           </Button>
         </div>
       )}
 
       {grouped.map(([category, items]) => (
-        <section key={category} aria-label={CATEGORY_TITLES[category]}>
-          <h4 className="text-sm font-semibold">{CATEGORY_TITLES[category]}</h4>
+        <section key={category} aria-label={titles[category]}>
+          <h4 className="text-sm font-semibold">{titles[category]}</h4>
           <ul className="mt-2 flex flex-col gap-2">
             {items.map((item) => (
               <DetectionRow
@@ -249,17 +258,15 @@ export default function PrivacyCheckPanel({
         </section>
       ))}
 
-      <section aria-label="Manual redaction">
-        <h4 className="text-sm font-semibold">Redact something yourself</h4>
-        <p className="mt-1 text-sm text-muted">
-          Select any text below (for example a name), then choose Redact or Replace.
-        </p>
+      <section aria-label={t.pvManualTitle}>
+        <h4 className="text-sm font-semibold">{t.pvManualTitle}</h4>
+        <p className="mt-1 text-sm text-muted">{t.pvManualHint}</p>
         <textarea
           ref={sourceRef}
           readOnly
           value={review.sourceText}
           rows={6}
-          aria-label="Original text for manual selection"
+          aria-label={t.pvManualAria}
           className="mt-2 w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
         />
         {manualError && (
@@ -269,19 +276,19 @@ export default function PrivacyCheckPanel({
         )}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Button variant="secondary" onClick={() => handleManual(false)}>
-            Redact selection
+            {t.pvRedactSelection}
           </Button>
           <input
             type="text"
             value={manualReplacement}
             onChange={(event) => setManualReplacement(event.target.value)}
-            placeholder="Replacement text"
+            placeholder={t.pvReplacementShort}
             maxLength={200}
-            aria-label="Replacement text for manual selection"
+            aria-label={t.pvManualReplaceAria}
             className="h-9 w-56 rounded-md border border-edge bg-card px-3 text-sm"
           />
           <Button variant="secondary" onClick={() => handleManual(true)}>
-            Replace selection
+            {t.pvReplaceSelection}
           </Button>
         </div>
         {review.manual.length > 0 && (
@@ -296,7 +303,7 @@ export default function PrivacyCheckPanel({
                   variant="ghost"
                   onClick={() => setReview(removeManualSpan(review, span.id))}
                 >
-                  Remove
+                  {t.commonRemove}
                 </Button>
               </li>
             ))}
@@ -304,48 +311,43 @@ export default function PrivacyCheckPanel({
         )}
       </section>
 
-      <section aria-label="Cleaned preview">
-        <h4 className="text-sm font-semibold">Cleaned preview</h4>
+      <section aria-label={t.pvPreviewTitle}>
+        <h4 className="text-sm font-semibold">{t.pvPreviewTitle}</h4>
         <p className="mt-1 text-sm text-muted">
-          {sanitized.redacted} redacted · {sanitized.replaced} replaced ·{" "}
-          {sanitized.retained} kept as-is. The preview changes only through the
-          choices above.
+          {sanitized.redacted} {t.pvCountRedacted} · {sanitized.replaced} {t.pvCountReplaced} ·{" "}
+          {sanitized.retained} {t.pvCountKept}. {t.pvPreviewNote}
         </p>
         <textarea
           readOnly
           value={sanitized.text}
           rows={8}
-          aria-label="Cleaned text preview"
+          aria-label={t.pvPreviewTitle}
           className="mt-2 w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
         />
       </section>
 
       <div className="rounded-md border border-edge bg-card p-3">
-        <p className="text-sm font-medium">Before you approve</p>
-        <p className="mt-1 text-sm leading-6 text-muted">
-          Automatic detection can miss sensitive information, and anything it
-          finds is only a possibility — please review carefully, especially
-          names, numbers, and contact details.
-        </p>
+        <p className="text-sm font-medium">{t.pvBeforeApprove}</p>
+        <p className="mt-1 text-sm leading-6 text-muted">{t.pvAutoDetectNote}</p>
         <p className="mt-2 text-sm leading-6">
-          <span className="font-medium">Analysis destination:</span> {disclosure.destination}.{" "}
-          {disclosure.processingNote} Characters to send: {sanitized.text.length}.
+          <span className="font-medium">{t.pvDestination}</span> {disclosure.destination}.{" "}
+          {disclosure.processingNote} {t.pvCharsToSend} {sanitized.text.length}.
         </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={handleApprove} disabled={!ready}>
-          Approve cleaned text for analysis
+          {t.pvApprove}
         </Button>
         {onCancel && (
           <Button variant="ghost" onClick={onCancel}>
-            Cancel
+            {t.commonCancel}
           </Button>
         )}
       </div>
       {!ready && (
         <p className="text-sm text-muted" role="note">
-          Review each item above (or confirm all suggestions) to enable approval.
+          {t.pvEnableNote}
         </p>
       )}
     </div>

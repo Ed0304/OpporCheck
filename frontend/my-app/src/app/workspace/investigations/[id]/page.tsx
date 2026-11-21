@@ -13,11 +13,13 @@ import { Button, Card, EvidenceQuote, Spinner, StatusLabel } from "@/components/
 import { useAuth } from "@/lib/auth";
 import { localeForCountryName } from "@/lib/corridors";
 import { getFirebaseClient } from "@/lib/firebaseClient";
+import { useLang } from "@/lib/lang";
 import {
-  ASSESSMENT_LABELS,
+  getAssessmentLabels,
   ASSESSMENT_TONES,
   type AssessmentTone,
 } from "@/lib/reportLanguage";
+import { getStrings, type UiStrings } from "@/lib/strings";
 import {
   getInvestigation,
   getInvestigationsDb,
@@ -26,7 +28,7 @@ import {
   type InvestigationFinding,
 } from "@/lib/investigations";
 
-function formatDateTime(iso: string | null, country?: string | null): string {
+function formatDateTime(t: UiStrings, iso: string | null, country?: string | null): string {
   if (!iso) {
     return "—";
   }
@@ -40,16 +42,20 @@ function formatDateTime(iso: string | null, country?: string | null): string {
 }
 
 function AssessmentLabel({ value }: { value: string }) {
+  const { language } = useLang();
+  const labels = getAssessmentLabels(language);
   const normalized = value.trim().toLowerCase().replace(/_/g, "-");
   const key =
     normalized === "supported" || normalized === "conflicting"
       ? normalized
       : "insufficient-evidence";
   const tone: AssessmentTone = ASSESSMENT_TONES[key];
-  return <StatusLabel tone={tone}>{ASSESSMENT_LABELS[key]}</StatusLabel>;
+  return <StatusLabel tone={tone}>{labels[key]}</StatusLabel>;
 }
 
 function FindingCard({ finding }: { finding: InvestigationFinding }) {
+  const { language } = useLang();
+  const t = getStrings(language);
   return (
     <li className="py-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -58,20 +64,22 @@ function FindingCard({ finding }: { finding: InvestigationFinding }) {
       </div>
       <EvidenceQuote>&ldquo;{finding.excerpt}&rdquo;</EvidenceQuote>
       <p className="mt-2 text-sm">
-        Source:{" "}
+        {t.commonSourceLabel}{" "}
         <a
           href={finding.source_url}
           target="_blank"
           rel="noopener noreferrer"
           className="font-medium text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
         >
-          {finding.source_title} (opens in a new tab)
+          {finding.source_title} {t.commonOpenInNewTab}
         </a>
       </p>
-      <p className="mt-1 text-xs text-muted">Retrieved: {finding.retrieved_at}</p>
+      <p className="mt-1 text-xs text-muted">
+        {t.commonRetrievedLabel} {finding.retrieved_at}
+      </p>
       <p className="mt-2 text-sm leading-6">{finding.explanation}</p>
       <p className="mt-2 text-sm leading-6">
-        <span className="font-semibold">Follow-up question: </span>
+        <span className="font-semibold">{t.commonFollowUpLabel} </span>
         {finding.follow_up_question}
       </p>
     </li>
@@ -81,6 +89,8 @@ function FindingCard({ finding }: { finding: InvestigationFinding }) {
 export default function InvestigationReportPage() {
   const params = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { language } = useLang();
+  const t = getStrings(language);
   const [item, setItem] = useState<Investigation | null>(null);
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState<string | null>(null);
@@ -102,10 +112,10 @@ export default function InvestigationReportPage() {
         setMessage(loaded.message);
       } else if (!loaded.value) {
         setPhase("error");
-        setMessage("This investigation doesn't exist or was deleted.");
+        setMessage(t.invdNotExist);
       } else if (loaded.value.ownerId !== user.uid) {
         setPhase("error");
-        setMessage("This investigation belongs to a different account.");
+        setMessage(t.invdOtherAccount);
       } else {
         setItem(loaded.value);
         setPhase("ready");
@@ -119,6 +129,7 @@ export default function InvestigationReportPage() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, params.id]);
 
   const markComplete = async () => {
@@ -142,18 +153,18 @@ export default function InvestigationReportPage() {
   };
 
   if (phase === "loading") {
-    return <Spinner label="Loading investigation…" />;
+    return <Spinner label={t.invdLoading} />;
   }
 
   if (phase === "error" || !item) {
     return (
-      <Card title="Investigation unavailable">
+      <Card title={t.invdUnavailable}>
         <p className="text-sm leading-6" role="alert">
-          {message ?? "Something went wrong."}
+          {message ?? t.invdFallbackError}
         </p>
         <p className="mt-3 text-sm">
           <Link href="/workspace/investigations" className="text-brand underline">
-            Back to investigations
+            {t.invdBack}
           </Link>
         </p>
       </Card>
@@ -170,24 +181,24 @@ export default function InvestigationReportPage() {
       <div>
         <p className="text-sm">
           <Link href="/workspace/investigations" className="text-brand underline">
-            ← All investigations
+            {t.invdAll}
           </Link>
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight">{item.title}</h1>
           <StatusLabel tone={item.status === "complete" ? "ok" : "info"}>
-            {item.status === "complete" ? "Complete" : "Reviewed"}
+            {item.status === "complete" ? t.commonStatusComplete : t.commonStatusReviewed}
           </StatusLabel>
         </div>
         <p className="mt-1 text-sm text-muted">
-          {report?.destination_country ?? "Unknown country"} · Reviewed{" "}
-          {formatDateTime(item.createdAt, report?.destination_country)} · Updated{" "}
-          {formatDateTime(item.updatedAt, report?.destination_country)}
+          {report?.destination_country ?? t.commonUnknownCountry} · {t.invdReviewedOn}{" "}
+          {formatDateTime(t, item.createdAt, report?.destination_country)} · {t.invdUpdatedOn}{" "}
+          {formatDateTime(t, item.updatedAt, report?.destination_country)}
         </p>
         {item.status !== "complete" && (
           <div className="mt-3">
             <Button variant="secondary" onClick={() => void markComplete()} disabled={updating}>
-              {updating ? "Updating…" : "Mark complete"}
+              {updating ? t.invdUpdating : t.invdMarkComplete}
             </Button>
           </div>
         )}
@@ -199,34 +210,32 @@ export default function InvestigationReportPage() {
       </div>
 
       {!report ? (
-        <Card title="Review unavailable">
+        <Card title={t.invdReviewUnavailable}>
           <p className="text-sm leading-6" role="alert">
-            This investigation&apos;s saved review data couldn&apos;t be read because it
-            doesn&apos;t match the expected format. The original posting text below is
-            still available.
+            {t.invdReviewUnreadable}
           </p>
         </Card>
       ) : (
         <>
-          <Card title="Summary">
+          <Card title={t.invdSummary}>
             <p className="leading-7">
-              {report.occupation} ({report.employment_type}) in {report.destination_country}.{" "}
-              {concerns.length} potential concern
-              {concerns.length === 1 ? "" : "s"}, {missing.length} missing detail
-              {missing.length === 1 ? "" : "s"}
+              {report.occupation} ({report.employment_type}) {t.invdSummaryIn}{" "}
+              {report.destination_country}. {concerns.length}{" "}
+              {concerns.length === 1 ? t.invdConcernOne : t.invdConcernMany},{" "}
+              {missing.length} {missing.length === 1 ? t.invdMissingOne : t.invdMissingMany}
               {findings.length > 0
-                ? `, ${findings.length} official-source finding${findings.length === 1 ? "" : "s"}.`
-                : " recorded."}
+                ? `, ${findings.length} ${findings.length === 1 ? t.invdFindingOne : t.invdFindingMany}.`
+                : ` ${t.invdRecorded}`}
             </p>
           </Card>
 
-          <Card title="Review details">
+          <Card title={t.invdReviewDetails}>
             <AnalysisResults report={report} />
           </Card>
         </>
       )}
 
-      <Card title="Official-source findings">
+      <Card title={t.invdFindingsTitle}>
         {findings.length > 0 ? (
           <ul className="divide-y divide-edge">
             {findings.map((finding, index) => (
@@ -237,18 +246,14 @@ export default function InvestigationReportPage() {
             ))}
           </ul>
         ) : (
-          <p className="text-sm leading-6 text-muted">
-            No saved official-source findings for this investigation. Client-saved
-            findings are intentionally not supported — use the transient evidence
-            check below instead. Its results are shown once and never saved.
-          </p>
+          <p className="text-sm leading-6 text-muted">{t.invdNoFindings}</p>
         )}
       </Card>
 
       {report && <EvidenceInvestigation report={report} postingText={item.postingText} />}
 
       <details className="rounded-lg border border-edge bg-card p-5">
-        <summary className="cursor-pointer font-semibold">Original posting text</summary>
+        <summary className="cursor-pointer font-semibold">{t.invdOriginalPosting}</summary>
         <pre className="mt-2 max-h-80 overflow-auto whitespace-pre-wrap font-sans text-sm leading-6 text-muted">
           {item.postingText}
         </pre>

@@ -8,12 +8,16 @@ import { Suspense, useEffect, useState } from "react";
 import PublicShell from "@/components/PublicShell";
 import { Button, Card, Field, Spinner, TextInput } from "@/components/ui";
 import { friendlyAuthError, useAuth } from "@/lib/auth";
+import { useLang } from "@/lib/lang";
+import { getStrings } from "@/lib/strings";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/workspace";
   const { user, loading, setupError, signIn, signInWithGoogle } = useAuth();
+  const { language } = useLang();
+  const t = getStrings(language);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +37,7 @@ function LoginForm() {
       await signIn(email, password);
       router.replace(next);
     } catch (err) {
-      setError(friendlyAuthError(err));
+      setError(friendlyAuthError(err, language));
     } finally {
       setBusy(false);
     }
@@ -46,7 +50,7 @@ function LoginForm() {
       await signInWithGoogle();
       router.replace(next);
     } catch (err) {
-      setError(friendlyAuthError(err));
+      setError(friendlyAuthError(err, language));
     } finally {
       setBusy(false);
     }
@@ -54,16 +58,16 @@ function LoginForm() {
 
   return (
     <div className="mx-auto w-full max-w-md">
-      <h1 className="text-3xl font-bold tracking-tight text-navy">Sign in</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-navy">{t.authSignInTitle}</h1>
       <div className="mt-5">
         <Card>
           {setupError && (
             <p role="alert" className="mb-3 text-sm font-medium text-red-700">
-              Firebase isn&apos;t configured: {setupError}
+              {t.authSetupPrefix} {setupError}
             </p>
           )}
           <form onSubmit={submit} className="flex flex-col gap-4">
-            <Field label="Email" htmlFor="login-email">
+            <Field label={t.authEmail} htmlFor="login-email">
               <TextInput
                 id="login-email"
                 type="email"
@@ -74,7 +78,7 @@ function LoginForm() {
                 disabled={busy}
               />
             </Field>
-            <Field label="Password" htmlFor="login-password">
+            <Field label={t.authPassword} htmlFor="login-password">
               <TextInput
                 id="login-password"
                 type="password"
@@ -91,20 +95,20 @@ function LoginForm() {
               </p>
             )}
             <Button type="submit" disabled={busy}>
-              {busy ? "Signing in…" : "Sign in"}
+              {busy ? t.authSigningIn : t.authSignInTitle}
             </Button>
           </form>
           <div className="mt-4 border-t border-edge pt-4">
             <Button type="button" variant="secondary" onClick={() => void google()} disabled={busy} className="w-full">
-              Continue with Google
+              {t.authGoogle}
             </Button>
           </div>
           <div className="mt-4 flex items-center justify-between text-sm">
             <Link href="/forgot-password" className="text-brand underline">
-              Forgot password?
+              {t.authForgot}
             </Link>
             <Link href="/register" className="text-brand underline">
-              Create account
+              {t.authCreateAccount}
             </Link>
           </div>
         </Card>
@@ -113,10 +117,16 @@ function LoginForm() {
   );
 }
 
+function LoginFallback() {
+  const { language } = useLang();
+  const t = getStrings(language);
+  return <Spinner label={t.authLoadingSignIn} />;
+}
+
 export default function LoginPage() {
   return (
     <PublicShell>
-      <Suspense fallback={<Spinner label="Loading sign-in…" />}>
+      <Suspense fallback={<LoginFallback />}>
         <LoginForm />
       </Suspense>
     </PublicShell>

@@ -1,6 +1,10 @@
 // Promise-to-Paper session helpers: document records, finding summaries,
 // and display labels. Pure and dependency-free (type-only imports) so the
 // report math stays unit-testable without any AI or UI framework.
+//
+// Labels and gate messages render in the UI language (default English).
+// Every `id` string below is a WORKING DRAFT needing native-speaker
+// review before it can be considered final. Never present them as final.
 
 import type {
   ContractCategory,
@@ -14,6 +18,7 @@ import {
   hashContent,
   type PrivacyApproval,
 } from "./privacyGate";
+import type { UiLanguage } from "./strings";
 
 export type CompareDocSource = "pdf" | "pasted";
 
@@ -34,11 +39,19 @@ export interface CompareDocumentInput {
 export function failedPagesLimitation(
   fileName: string,
   failedPages: number[] | undefined,
+  language: UiLanguage = "en",
 ): string | null {
   if (!failedPages || failedPages.length === 0) {
     return null;
   }
   const list = [...failedPages].sort((a, b) => a - b).join(", ");
+  if (language === "id") {
+    // WORKING DRAFT — needs native-speaker review.
+    return (
+      `${fileName}: halaman ${list} tidak dapat ` +
+      "diekstraksi dan dikecualikan dari perbandingan."
+    );
+  }
   const singular = failedPages.length === 1;
   return (
     `${fileName}: page${singular ? "" : "s"} ${list} could not ` +
@@ -114,12 +127,23 @@ export function recordPageApproval(
   approval: PrivacyApproval,
   sanitizedText: string,
   sourceText: string,
+  language: UiLanguage = "en",
 ): DocPrivacyState {
   if (index < 0 || index >= pageCount) {
-    throw new PrivacyGateError("malformed", "Page index is out of range.");
+    throw new PrivacyGateError(
+      "malformed",
+      language === "id"
+        ? "Indeks halaman di luar jangkauan." // WORKING DRAFT
+        : "Page index is out of range.",
+    );
   }
   if (!approvalCovers(approval, sanitizedText)) {
-    throw new PrivacyGateError("mismatch", "Approval does not match the cleaned text.");
+    throw new PrivacyGateError(
+      "mismatch",
+      language === "id"
+        ? "Persetujuan tidak cocok dengan teks yang dibersihkan." // WORKING DRAFT
+        : "Approval does not match the cleaned text.",
+    );
   }
   const approvals = [...privacy.approvals];
   while (approvals.length < pageCount) {
@@ -182,11 +206,14 @@ export function approvedPagesOrThrow(
   privacy: DocPrivacyState,
   pages: string[],
   fileName: string,
+  language: UiLanguage = "en",
 ): string[] {
   if (!isDocPrivacyApproved(privacy, pages)) {
     throw new PrivacyGateError(
       "missing",
-      `Privacy Check is incomplete for ${fileName}: approve every page first.`,
+      language === "id"
+        ? `Periksa Privasi belum lengkap untuk ${fileName}: setujui setiap halaman terlebih dahulu.` // WORKING DRAFT
+        : `Privacy Check is incomplete for ${fileName}: approve every page first.`,
     );
   }
   return privacy.sanitized.slice(0, pages.length);
@@ -254,6 +281,37 @@ export const COMPARE_DOC_TYPE_LABELS: Record<ContractDocumentType, string> = {
   employment_contract: "Employment contract",
 };
 
+// Indonesian working-draft labels (need native-speaker review).
+export const COMPARE_CATEGORY_LABELS_ID: Record<ContractCategory, string> = {
+  compensation: "Kompensasi",
+  deductions: "Potongan",
+  working_conditions: "Kondisi kerja",
+  employment_period: "Masa kerja",
+  benefits: "Tunjangan",
+  termination: "Pemutusan hubungan kerja",
+  immigration: "Imigrasi & otorisasi kerja",
+  responsibilities: "Tanggung jawab",
+};
+
+export const COMPARE_DOC_TYPE_LABELS_ID: Record<ContractDocumentType, string> = {
+  job_advertisement: "Iklan lowongan",
+  recruiter_communication: "Komunikasi perekrut",
+  offer_letter: "Surat penawaran",
+  employment_contract: "Kontrak kerja",
+};
+
+export function getCompareCategoryLabels(
+  language: UiLanguage,
+): Record<ContractCategory, string> {
+  return language === "id" ? COMPARE_CATEGORY_LABELS_ID : COMPARE_CATEGORY_LABELS;
+}
+
+export function getCompareDocTypeLabels(
+  language: UiLanguage,
+): Record<ContractDocumentType, string> {
+  return language === "id" ? COMPARE_DOC_TYPE_LABELS_ID : COMPARE_DOC_TYPE_LABELS;
+}
+
 export type AnalysisGateMode = "on-device-only" | "prefer-on-device";
 
 export interface AnalysisGate {
@@ -270,14 +328,24 @@ export interface AnalysisGate {
 export function analysisGate(
   mode: AnalysisGateMode,
   options: { consent: boolean; deviceReady: boolean },
+  language: UiLanguage = "en",
 ): AnalysisGate {
   if (mode === "prefer-on-device" && !options.consent) {
-    return { allowed: false, reason: "Consent to cloud processing is required for this mode." };
+    return {
+      allowed: false,
+      reason:
+        language === "id"
+          ? "Persetujuan untuk pemrosesan cloud diperlukan untuk mode ini." // WORKING DRAFT
+          : "Consent to cloud processing is required for this mode.",
+    };
   }
   if (mode === "on-device-only" && !options.deviceReady) {
     return {
       allowed: false,
-      reason: "Prepare on-device analysis first — on-device-only mode never falls back to cloud.",
+      reason:
+        language === "id"
+          ? "Siapkan analisis di perangkat terlebih dahulu — mode khusus di perangkat tidak pernah beralih ke cloud." // WORKING DRAFT
+          : "Prepare on-device analysis first — on-device-only mode never falls back to cloud.",
     };
   }
   return { allowed: true, reason: null };

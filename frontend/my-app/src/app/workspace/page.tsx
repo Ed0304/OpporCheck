@@ -10,6 +10,8 @@ import { Card, EmptyState, Spinner, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { localeForCountryName } from "@/lib/corridors";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
+import { useLang } from "@/lib/lang";
+import { format, getStrings, type UiStrings } from "@/lib/strings";
 import {
   getInvestigationsDb,
   listUserInvestigations,
@@ -22,9 +24,9 @@ interface RecentState {
   message: string | null;
 }
 
-function formatDate(iso: string | null, country?: string | null): string {
+function formatDate(t: UiStrings, iso: string | null, country?: string | null): string {
   if (!iso) {
-    return "Just now";
+    return t.commonJustNow;
   }
   return new Date(iso).toLocaleDateString(localeForCountryName(country), {
     day: "numeric",
@@ -35,6 +37,8 @@ function formatDate(iso: string | null, country?: string | null): string {
 
 export default function WorkspaceOverviewPage() {
   const { user } = useAuth();
+  const { language } = useLang();
+  const t = getStrings(language);
   const [envProbe] = useState(() => probeFirebaseConfig());
   const configOk = envProbe.missingConfigKeys.length === 0;
   const [recent, setRecent] = useState<RecentState>({ phase: "loading", items: [], message: null });
@@ -70,58 +74,56 @@ export default function WorkspaceOverviewPage() {
     };
   }, [user, configOk]);
 
-  const displayName = user?.displayName || user?.email || "there";
+  const displayName = user?.displayName || user?.email || null;
 
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Welcome{displayName ? `, ${displayName}` : ""}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t.ovWelcome}{displayName ? `, ${displayName}` : ""}</h1>
         <p className="mt-1 max-w-2xl leading-6 text-muted">
-          OpporCheck turns a job posting into a structured review — facts, concerns with
-          quoted evidence, missing details, and relevant official guidance — saved as an
-          investigation you can revisit any time.
+          {t.ovIntro}
         </p>
         <div className="mt-4">
           <Link
             href="/workspace/review"
             className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action hover:bg-brand-strong"
           >
-            Review an opportunity
+            {t.ovReviewCta}
           </Link>
         </div>
       </div>
 
       <Card
-        title="Recent investigations"
+        title={t.ovRecent}
         actions={
           <Link href="/workspace/investigations" className="text-sm font-medium text-brand underline">
-            View all
+            {t.ovViewAll}
           </Link>
         }
       >
         {!configOk && (
           <p className="text-sm leading-6">
-            Firebase isn&apos;t configured (missing: {envProbe.missingConfigKeys.join(", ")}).
-            Fill in <code className="font-mono">.env.local</code> and restart the dev server.
+            {format(t.commonSetupMissing, { keys: envProbe.missingConfigKeys.join(", ") })}{" "}
+            {t.commonSetupFillEnv}
           </p>
         )}
-        {configOk && recent.phase === "loading" && <Spinner label="Loading investigations…" />}
+        {configOk && recent.phase === "loading" && <Spinner label={t.ovLoading} />}
         {recent.phase === "error" && (
           <p className="text-sm leading-6">
-            <span className="font-semibold">Couldn&apos;t load investigations:</span>{" "}
+            <span className="font-semibold">{t.ovLoadFailed}</span>{" "}
             {recent.message}
           </p>
         )}
         {recent.phase === "ready" && recent.items.length === 0 && (
           <EmptyState
-            title="No investigations yet"
-            description="Review your first opportunity to see it here with its facts, concerns, and evidence."
+            title={t.ovEmptyTitle}
+            description={t.ovEmptyDesc}
             action={
               <Link
                 href="/workspace/review"
                 className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
               >
-                Review an opportunity
+                {t.ovReviewCta}
               </Link>
             }
           />
@@ -135,11 +137,11 @@ export default function WorkspaceOverviewPage() {
                   className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5"
                 >
                   <span className="min-w-44 flex-1 font-medium">{item.title}</span>
-                  <span className="text-sm text-muted">{item.report?.destination_country ?? "Unknown country"}</span>
+                  <span className="text-sm text-muted">{item.report?.destination_country ?? t.commonUnknownCountry}</span>
                   <StatusLabel tone={item.status === "complete" ? "ok" : "info"}>
-                    {item.status === "complete" ? "Complete" : "Reviewed"}
+                    {item.status === "complete" ? t.commonStatusComplete : t.commonStatusReviewed}
                   </StatusLabel>
-                  <span className="text-sm text-muted">{formatDate(item.createdAt, item.report?.destination_country)}</span>
+                  <span className="text-sm text-muted">{formatDate(t, item.createdAt, item.report?.destination_country)}</span>
                 </Link>
               </li>
             ))}

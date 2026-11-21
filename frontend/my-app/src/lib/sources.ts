@@ -1,8 +1,11 @@
 // FastAPI official-source client: catalog listing and excerpt retrieval
 // for evidence investigation. The backend owns the allowlist; this client
 // only ever sends catalog ids and research-question queries, never URLs.
+//
+// Indonesian error strings are WORKING DRAFTS needing native-speaker review.
 
-import { apiBase, BACKEND_UNAUTHORIZED_MESSAGE, backendAuthHeaders } from "./documents";
+import { apiBase, backendAuthHeaders, backendErrorMessage } from "./documents";
+import type { UiLanguage } from "./strings";
 import type { OfficialSourceCategory } from "./validation";
 
 export interface SourceCatalogEntry {
@@ -45,11 +48,12 @@ export interface RetrievalResult {
   errors: SourceRetrievalError[];
 }
 
-function serviceHint(base: string): string {
-  return (
-    `Cannot reach the evidence service at ${base}. Start the backend first ` +
-    "(see backend/README.md)."
-  );
+function serviceHint(base: string, language: UiLanguage): string {
+  return language === "id"
+    ? `Tidak dapat menghubungi layanan bukti di ${base}. Jalankan backend terlebih dahulu ` +
+      "(lihat backend/README.md)."
+    : `Cannot reach the evidence service at ${base}. Start the backend first ` +
+      "(see backend/README.md).";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -108,9 +112,13 @@ function parseRetrievalError(value: unknown): SourceRetrievalError | null {
   return { source_id, url, error };
 }
 
-export async function listOfficialSources(profile = "GB"): Promise<SourceCatalog> {
+export async function listOfficialSources(
+  profile = "GB",
+  language: UiLanguage = "en",
+): Promise<SourceCatalog> {
   const base = apiBase();
   const headers = await backendAuthHeaders();
+  const id = language === "id";
   let response: Response;
   try {
     response = await fetch(
@@ -118,26 +126,38 @@ export async function listOfficialSources(profile = "GB"): Promise<SourceCatalog
       { headers },
     );
   } catch {
-    throw new Error(serviceHint(base));
+    throw new Error(serviceHint(base, language));
   }
   let data: unknown = null;
   try {
     data = (await response.json()) as unknown;
   } catch {
-    throw new Error(`The evidence service returned an unreadable response (${response.status}).`);
+    throw new Error(
+      id
+        ? `Layanan bukti mengembalikan respons yang tidak terbaca (${response.status}).`
+        : `The evidence service returned an unreadable response (${response.status}).`,
+    );
   }
   if (!response.ok || !isRecord(data) || !Array.isArray(data["sources"])) {
     if (response.status === 401) {
-      throw new Error(BACKEND_UNAUTHORIZED_MESSAGE);
+      throw new Error(backendErrorMessage(response.status, undefined, "", language));
     }
     const detail = isRecord(data) && typeof data["error"] === "string" ? `: ${data["error"]}` : "";
-    throw new Error(`The evidence service request failed (${response.status})${detail}.`);
+    throw new Error(
+      id
+        ? `Permintaan layanan bukti gagal (${response.status})${detail}.`
+        : `The evidence service request failed (${response.status})${detail}.`,
+    );
   }
   const sources: SourceCatalogEntry[] = [];
   for (const item of data["sources"]) {
     const entry = parseCatalogEntry(item);
     if (!entry) {
-      throw new Error("The evidence service returned an unreadable source catalog.");
+      throw new Error(
+        id
+          ? "Layanan bukti mengembalikan katalog sumber yang tidak terbaca."
+          : "The evidence service returned an unreadable source catalog.",
+      );
     }
     sources.push(entry);
   }
@@ -151,12 +171,14 @@ export async function retrieveOfficialSources(
   sourceIds: string[] | null,
   queries: string[],
   profile = "GB",
+  language: UiLanguage = "en",
 ): Promise<RetrievalResult> {
   const base = apiBase();
   const headers = {
     "Content-Type": "application/json",
     ...(await backendAuthHeaders()),
   };
+  const id = language === "id";
   let response: Response;
   try {
     response = await fetch(`${base}/api/v1/sources/retrieve`, {
@@ -165,29 +187,45 @@ export async function retrieveOfficialSources(
       body: JSON.stringify({ source_ids: sourceIds, queries, profile }),
     });
   } catch {
-    throw new Error(serviceHint(base));
+    throw new Error(serviceHint(base, language));
   }
   let data: unknown = null;
   try {
     data = (await response.json()) as unknown;
   } catch {
-    throw new Error(`The evidence service returned an unreadable response (${response.status}).`);
+    throw new Error(
+      id
+        ? `Layanan bukti mengembalikan respons yang tidak terbaca (${response.status}).`
+        : `The evidence service returned an unreadable response (${response.status}).`,
+    );
   }
   if (!response.ok || !isRecord(data)) {
     if (response.status === 401) {
-      throw new Error(BACKEND_UNAUTHORIZED_MESSAGE);
+      throw new Error(backendErrorMessage(response.status, undefined, "", language));
     }
     const detail = isRecord(data) && typeof data["error"] === "string" ? `: ${data["error"]}` : "";
-    throw new Error(`The evidence service request failed (${response.status})${detail}.`);
+    throw new Error(
+      id
+        ? `Permintaan layanan bukti gagal (${response.status})${detail}.`
+        : `The evidence service request failed (${response.status})${detail}.`,
+    );
   }
   if (!Array.isArray(data["sources"]) || !Array.isArray(data["errors"])) {
-    throw new Error("The evidence service returned an unreadable response.");
+    throw new Error(
+      id
+        ? "Layanan bukti mengembalikan respons yang tidak terbaca."
+        : "The evidence service returned an unreadable response.",
+    );
   }
   const sources: RetrievedSource[] = [];
   for (const item of data["sources"]) {
     const source = parseRetrievedSource(item);
     if (!source) {
-      throw new Error("The evidence service returned an unreadable source.");
+      throw new Error(
+        id
+          ? "Layanan bukti mengembalikan sumber yang tidak terbaca."
+          : "The evidence service returned an unreadable source.",
+      );
     }
     sources.push(source);
   }
@@ -195,7 +233,11 @@ export async function retrieveOfficialSources(
   for (const item of data["errors"]) {
     const failure = parseRetrievalError(item);
     if (!failure) {
-      throw new Error("The evidence service returned an unreadable error entry.");
+      throw new Error(
+        id
+          ? "Layanan bukti mengembalikan entri kesalahan yang tidak terbaca."
+          : "The evidence service returned an unreadable error entry.",
+      );
     }
     errors.push(failure);
   }

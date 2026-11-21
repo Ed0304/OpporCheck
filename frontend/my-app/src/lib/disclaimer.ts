@@ -3,6 +3,14 @@
 // the wording cannot drift between pages. The full disclaimer must keep
 // its canonical meaning; concise variants link to pages carrying the full
 // notice. Dependency-free so unit tests can assert exact wording.
+//
+// The English constants are canonical and asserted verbatim by
+// productTrust.test.ts. The Indonesian variants are WORKING DRAFTS needing
+// native-speaker AND legal review before they can be considered final —
+// never present them as final. UI code reads notices through the
+// get*(language) getters.
+
+import type { UiLanguage } from "./strings";
 
 export const FULL_DISCLAIMER_PARAGRAPHS: readonly string[] = [
   "OpporCheck is an informational and decision-support tool. It is not a scam detection service, fraud detector, legal advisory service, or employment verification authority.",
@@ -34,3 +42,60 @@ export const UPLOAD_SENSITIVITY_NOTICE =
 /** Review-page processing disclosure: fixed hybrid mode, stated plainly. */
 export const REVIEW_PROCESSING_NOTICE =
   "Analysis runs on-device when your browser supports it, otherwise in the cloud via Firebase AI Logic. Your posting text leaves the device only for cloud analysis.";
+
+// ---------------------------------------------------------------------------
+// INDONESIAN WORKING DRAFTS — need native-speaker AND legal review.
+// ---------------------------------------------------------------------------
+
+export const FULL_DISCLAIMER_PARAGRAPHS_ID: readonly string[] = [
+  "OpporCheck adalah alat informasi dan pendukung keputusan. OpporCheck bukan layanan deteksi penipuan, layanan nasihat hukum, atau otoritas verifikasi pekerjaan.",
+  "Analisis kami menyoroti potensi masalah, ketentuan yang tidak jelas, informasi yang hilang, dan panduan resmi yang relevan. Temuan ini tidak menyatakan bahwa pemberi kerja, perekrut, iklan lowongan, atau kontrak kerja itu sah, curang, atau patuh hukum.",
+  "Selalu verifikasi informasi penting secara independen. Jika Anda mencurigai penipuan, eksploitasi, perekrutan ilegal, atau pelanggaran lain, hubungi otoritas setempat atau instansi pemerintah terkait melalui kanal resmi mereka.",
+  "Jangan hanya mengandalkan OpporCheck saat membuat keputusan pekerjaan, keuangan, imigrasi, atau hukum.",
+];
+
+export const CONCISE_NOTICE_ID =
+  "OpporCheck adalah alat pendukung keputusan, bukan pendeteksi penipuan, penasihat hukum, atau otoritas verifikasi pekerjaan. Selalu verifikasi informasi penting secara independen.";
+
+export const ANALYSIS_CONTEXT_NOTICE_ID =
+  "Potensi masalah yang ditandai di sini adalah alasan untuk bertanya, bukan bukti penipuan. Informasi yang hilang berarti belum terverifikasi — bukan salah.";
+
+export const COMPARISON_CONTEXT_NOTICE_ID =
+  "Perbedaan antar dokumen adalah perbedaan wording yang perlu diklarifikasi — bukan bukti otomatis kesalahan atau ketidakpatuhan hukum.";
+
+export const INVESTIGATION_CONTEXT_NOTICE_ID =
+  "Panduan pemerintah yang dikutip menjelaskan aturan umum. Panduan tersebut tidak memverifikasi secara independen pemberi kerja, perekrut, atau peluang kerja tertentu.";
+
+export const UPLOAD_SENSITIVITY_NOTICE_ID =
+  "Dokumen pekerjaan dapat memuat informasi personal yang sensitif seperti nama, alamat, nomor identitas, dan detail bank. Unggah hanya dokumen yang boleh Anda bagikan.";
+
+export const REVIEW_PROCESSING_NOTICE_ID =
+  "Analisis berjalan di perangkat bila browser Anda mendukungnya, atau di cloud via Firebase AI Logic. Teks lowongan Anda keluar dari perangkat hanya untuk analisis cloud.";
+
+export function getFullDisclaimerParagraphs(language: UiLanguage): readonly string[] {
+  return language === "id" ? FULL_DISCLAIMER_PARAGRAPHS_ID : FULL_DISCLAIMER_PARAGRAPHS;
+}
+
+export function getConciseNotice(language: UiLanguage): string {
+  return language === "id" ? CONCISE_NOTICE_ID : CONCISE_NOTICE;
+}
+
+export function getAnalysisContextNotice(language: UiLanguage): string {
+  return language === "id" ? ANALYSIS_CONTEXT_NOTICE_ID : ANALYSIS_CONTEXT_NOTICE;
+}
+
+export function getComparisonContextNotice(language: UiLanguage): string {
+  return language === "id" ? COMPARISON_CONTEXT_NOTICE_ID : COMPARISON_CONTEXT_NOTICE;
+}
+
+export function getInvestigationContextNotice(language: UiLanguage): string {
+  return language === "id" ? INVESTIGATION_CONTEXT_NOTICE_ID : INVESTIGATION_CONTEXT_NOTICE;
+}
+
+export function getUploadSensitivityNotice(language: UiLanguage): string {
+  return language === "id" ? UPLOAD_SENSITIVITY_NOTICE_ID : UPLOAD_SENSITIVITY_NOTICE;
+}
+
+export function getReviewProcessingNotice(language: UiLanguage): string {
+  return language === "id" ? REVIEW_PROCESSING_NOTICE_ID : REVIEW_PROCESSING_NOTICE;
+}

@@ -1,5 +1,11 @@
 // FastAPI document client: PDF text extraction for opportunity review.
 // Upload uses XMLHttpRequest so the UI can show real upload progress.
+//
+// Error copy renders in the UI language (default English). Every `id`
+// string below is a WORKING DRAFT needing native-speaker review before
+// it can be considered final. Never present them as final.
+
+import type { UiLanguage } from "./strings";
 
 export const MAX_PDF_BYTES = 10 * 1024 * 1024; // 10 MB, mirrors the backend cap
 
@@ -38,19 +44,27 @@ export function apiBase(): string {
 }
 
 /** Client-side validation; the backend re-validates everything. Returns an error or null. */
-export function validatePdfFile(file: File): string | null {
+export function validatePdfFile(file: File, language: UiLanguage = "en"): string | null {
   const lower = file.name.toLowerCase();
+  // Indonesian messages are WORKING DRAFTS needing native-speaker review.
+  const id = language === "id";
   if (!lower.endsWith(".pdf")) {
-    return `"${file.name}" doesn't look like a PDF. Please choose a .pdf file.`;
+    return id
+      ? `"${file.name}" tampaknya bukan PDF. Pilih berkas .pdf.`
+      : `"${file.name}" doesn't look like a PDF. Please choose a .pdf file.`;
   }
   if (file.type !== "" && file.type !== "application/pdf") {
-    return `"${file.name}" isn't a PDF file (detected as ${file.type}).`;
+    return id
+      ? `"${file.name}" bukan berkas PDF (terdeteksi sebagai ${file.type}).`
+      : `"${file.name}" isn't a PDF file (detected as ${file.type}).`;
   }
   if (file.size === 0) {
-    return `"${file.name}" is empty.`;
+    return id ? `"${file.name}" kosong.` : `"${file.name}" is empty.`;
   }
   if (file.size > MAX_PDF_BYTES) {
-    return `"${file.name}" is larger than the 10 MB limit.`;
+    return id
+      ? `"${file.name}" melebihi batas 10 MB.`
+      : `"${file.name}" is larger than the 10 MB limit.`;
   }
   return null;
 }
@@ -164,8 +178,11 @@ export function uploadPdf(
   onProgress: (fraction: number | null) => void,
   language?: string,
   createXhr: () => XhrLike = () => new XMLHttpRequest() as unknown as XhrLike,
+  uiLanguage: UiLanguage = "en",
 ): Promise<ExtractResult> {
   const base = apiBase();
+  // Indonesian errors are WORKING DRAFTS needing native-speaker review.
+  const id = uiLanguage === "id";
   return (async () => {
     const headers = await backendAuthHeaders();
     return new Promise<ExtractResult>((resolve, reject) => {
@@ -182,7 +199,13 @@ export function uploadPdf(
       try {
         data = JSON.parse(xhr.responseText) as unknown;
       } catch {
-        reject(new Error(`The document service returned an unreadable response (${xhr.status}).`));
+        reject(
+          new Error(
+            id
+              ? `Layanan dokumen mengembalikan respons yang tidak terbaca (${xhr.status}).`
+              : `The document service returned an unreadable response (${xhr.status}).`,
+          ),
+        );
         return;
       }
       if (xhr.status >= 200 && xhr.status < 300) {
@@ -197,14 +220,24 @@ export function uploadPdf(
           ? (data as Record<string, unknown>)["error"]
           : undefined;
       reject(
-        new Error(backendErrorMessage(xhr.status, message, `Upload failed (${xhr.status}).`)),
+        new Error(
+          backendErrorMessage(
+            xhr.status,
+            message,
+            id ? `Pengunggahan gagal (${xhr.status}).` : `Upload failed (${xhr.status}).`,
+            uiLanguage,
+          ),
+        ),
       );
     };
     xhr.onerror = () => {
       reject(
         new Error(
-          `Cannot reach the document service at ${base}. Start the backend first ` +
-            "(see backend/README.md), or paste the text instead.",
+          id
+            ? `Tidak dapat menghubungi layanan dokumen di ${base}. Jalankan backend terlebih ` +
+              "dahulu (lihat backend/README.md), atau tempel teks sebagai gantinya."
+            : `Cannot reach the document service at ${base}. Start the backend first ` +
+              "(see backend/README.md), or paste the text instead.",
         ),
       );
     };
@@ -256,21 +289,29 @@ export interface OcrResult {
 }
 
 /** Client-side validation; the backend re-validates everything. Returns an error or null. */
-export function validateImageFile(file: File): string | null {
+export function validateImageFile(file: File, language: UiLanguage = "en"): string | null {
   const lower = file.name.toLowerCase();
   const hasImageExtension =
     lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png");
+  // Indonesian messages are WORKING DRAFTS needing native-speaker review.
+  const id = language === "id";
   if (!hasImageExtension) {
-    return `"${file.name}" doesn't look like a supported image. Please choose a .jpg, .jpeg, or .png file.`;
+    return id
+      ? `"${file.name}" tampaknya bukan gambar yang didukung. Pilih berkas .jpg, .jpeg, atau .png.`
+      : `"${file.name}" doesn't look like a supported image. Please choose a .jpg, .jpeg, or .png file.`;
   }
   if (file.type !== "" && file.type !== "image/jpeg" && file.type !== "image/png") {
-    return `"${file.name}" isn't a supported image (detected as ${file.type}).`;
+    return id
+      ? `"${file.name}" bukan gambar yang didukung (terdeteksi sebagai ${file.type}).`
+      : `"${file.name}" isn't a supported image (detected as ${file.type}).`;
   }
   if (file.size === 0) {
-    return `"${file.name}" is empty.`;
+    return id ? `"${file.name}" kosong.` : `"${file.name}" is empty.`;
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return `"${file.name}" is larger than the 10 MB limit.`;
+    return id
+      ? `"${file.name}" melebihi batas 10 MB.`
+      : `"${file.name}" is larger than the 10 MB limit.`;
   }
   return null;
 }
@@ -346,14 +387,19 @@ export async function backendAuthHeaders(): Promise<Record<string, string>> {
 export const BACKEND_UNAUTHORIZED_MESSAGE =
   "Your sign-in expired. Please sign in again, then retry.";
 
+/** Indonesian working draft of the re-sign-in message (needs native-speaker review). */
+export const BACKEND_UNAUTHORIZED_MESSAGE_ID =
+  "Sesi masuk Anda kedaluwarsa. Silakan masuk lagi, lalu coba lagi.";
+
 /** Maps backend failures to user copy; 401 always means re-sign-in. */
 export function backendErrorMessage(
   status: number | null,
   serverMessage: unknown,
   fallback: string,
+  language: UiLanguage = "en",
 ): string {
   if (status === 401) {
-    return BACKEND_UNAUTHORIZED_MESSAGE;
+    return language === "id" ? BACKEND_UNAUTHORIZED_MESSAGE_ID : BACKEND_UNAUTHORIZED_MESSAGE;
   }
   return typeof serverMessage === "string" ? serverMessage : fallback;
 }
@@ -379,8 +425,11 @@ export function uploadImage(
   language: OcrLanguage,
   onProgress: (fraction: number | null) => void,
   createXhr: () => XhrLike = () => new XMLHttpRequest() as unknown as XhrLike,
+  uiLanguage: UiLanguage = "en",
 ): Promise<OcrResult> {
   const base = apiBase();
+  // Indonesian errors are WORKING DRAFTS needing native-speaker review.
+  const id = uiLanguage === "id";
   return (async () => {
     const headers = await backendAuthHeaders();
     return new Promise<OcrResult>((resolve, reject) => {
@@ -397,7 +446,13 @@ export function uploadImage(
       try {
         data = JSON.parse(xhr.responseText) as unknown;
       } catch {
-        reject(new Error(`The document service returned an unreadable response (${xhr.status}).`));
+        reject(
+          new Error(
+            id
+              ? `Layanan dokumen mengembalikan respons yang tidak terbaca (${xhr.status}).`
+              : `The document service returned an unreadable response (${xhr.status}).`,
+          ),
+        );
         return;
       }
       if (xhr.status >= 200 && xhr.status < 300) {
@@ -412,14 +467,24 @@ export function uploadImage(
           ? (data as Record<string, unknown>)["error"]
           : undefined;
       reject(
-        new Error(backendErrorMessage(xhr.status, message, `Upload failed (${xhr.status}).`)),
+        new Error(
+          backendErrorMessage(
+            xhr.status,
+            message,
+            id ? `Pengunggahan gagal (${xhr.status}).` : `Upload failed (${xhr.status}).`,
+            uiLanguage,
+          ),
+        ),
       );
     };
     xhr.onerror = () => {
       reject(
         new Error(
-          `Cannot reach the document service at ${base}. Start the backend first ` +
-            "(see backend/README.md), or paste the text instead.",
+          id
+            ? `Tidak dapat menghubungi layanan dokumen di ${base}. Jalankan backend terlebih ` +
+              "dahulu (lihat backend/README.md), atau tempel teks sebagai gantinya."
+            : `Cannot reach the document service at ${base}. Start the backend first ` +
+              "(see backend/README.md), or paste the text instead.",
         ),
       );
     };

@@ -17,7 +17,7 @@ import { ContextualNotice } from "@/components/Disclaimer";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import { Button, Card, EmptyState, Field, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
-import { REVIEW_PROCESSING_NOTICE, UPLOAD_SENSITIVITY_NOTICE } from "@/lib/disclaimer";
+import { getReviewProcessingNotice, getUploadSensitivityNotice } from "@/lib/disclaimer";
 import {
   OCR_LANGUAGES,
   apiBase,
@@ -32,6 +32,8 @@ import {
   type OcrLanguage,
 } from "@/lib/documents";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
+import { useLang } from "@/lib/lang";
+import { format, getStrings, type UiLanguage, type UiStrings } from "@/lib/strings";
 import {
   analyzerSchema,
   buildAnalyzerPrompt,
@@ -106,37 +108,38 @@ function createAnalyzer(ai: AI, cloudModel: string): GenerativeModel {
   });
 }
 
-const GATE_STATUS: Record<
+function gateStatus(t: UiStrings): Record<
   PrivacyGateState,
   { tone: "ok" | "bad" | "info" | "idle"; label: string }
-> = {
-  NOT_STARTED: { tone: "idle", label: "Not checked" },
-  SCANNING: { tone: "info", label: "Scanning…" },
-  REVIEW_REQUIRED: { tone: "info", label: "Review in progress" },
-  READY_FOR_APPROVAL: { tone: "info", label: "Ready to approve" },
-  APPROVED: { tone: "ok", label: "Approved for analysis" },
-  INVALIDATED: { tone: "bad", label: "Approval expired — text changed" },
-};
+> {
+  return {
+    NOT_STARTED: { tone: "idle", label: t.revGateNotStarted },
+    SCANNING: { tone: "info", label: t.revGateScanning },
+    REVIEW_REQUIRED: { tone: "info", label: t.revGateReviewing },
+    READY_FOR_APPROVAL: { tone: "info", label: t.revGateReady },
+    APPROVED: { tone: "ok", label: t.revGateApproved },
+    INVALIDATED: { tone: "bad", label: t.revGateInvalidatedLabel },
+  };
+}
 
-function friendlyError(err: unknown): string {
+function friendlyError(err: unknown, language: UiLanguage): string {
   const message = err instanceof Error ? err.message : String(err);
   if (/403|App Check|app-check/i.test(message)) {
-    return (
-      "The request was blocked by App Check. Register a localhost debug token " +
-      "(see the model playground guide) and try again."
-    );
+    return getStrings(language).commonAppCheckRequest;
   }
-  return mapServiceError(message) ?? message;
+  return mapServiceError(message, language) ?? message;
 }
 
 export default function ReviewPage() {
   const { user } = useAuth();
+  const { language } = useLang();
+  const t = getStrings(language);
   const [envProbe] = useState(() => probeFirebaseConfig());
   const [modelError, setModelError] = useState<string | null>(null);
   const [device, setDevice] = useState<DeviceStatus>({
     state: "idle",
     progress: null,
-    message: "On-device analysis is optional; cloud fallback works without it.",
+    message: t.revDeviceIdle,
   });
   const [tab, setTab] = useState<InputTab>("paste");
   const [postingText, setPostingText] = useState(SAMPLE_POSTING);
@@ -205,18 +208,20 @@ export default function ReviewPage() {
     if (!model) {
       return;
     }
-    setDevice({ state: "initializing", progress: 0, message: "Preparing on-device analysis…" });
+    setDevice({ state: "initializing", progress: 0, message: t.revDevicePreparing });
     try {
       await model.initializeDeviceModel((progressValue) => {
         setDevice((prev) => ({
           ...prev,
           progress: progressValue,
-          message: `Downloading on-device model: ${Math.round(progressValue * 10000) / 100}%`,
+          message: format(t.revDeviceDownloading, {
+            percent: String(Math.round(progressValue * 10000) / 100),
+          }),
         }));
       });
-      setDevice({ state: "ready", progress: 1, message: "On-device analysis is ready." });
+      setDevice({ state: "ready", progress: 1, message: t.revDeviceReady });
     } catch (err) {
-      setDevice({ state: "error", progress: null, message: friendlyError(err) });
+      setDevice({ state: "error", progress: null, message: friendlyError(err, language) });
     }
   };
 
@@ -224,13 +229,18 @@ export default function ReviewPage() {
     if (!file || pdf.phase === "uploading") {
       return;
     }
-    const invalid = validatePdfFile(file);
+    const invalid = validatePdfFile(file, language);
     if (invalid) {
       setPdf({ phase: "error", progress: null, message: invalid, result: null });
       return;
     }
     setPdfFile(file);
-    setPdf({ phase: "uploading", progress: 0, message: `Uploading ${file.name}…`, result: null });
+    setPdf({
+      phase: "uploading",
+      progress: 0,
+      message: format(t.cmpUploadingFile, { name: file.name }),
+      result: null,
+    });
     try {
       const extracted = await uploadPdf(
         file,
@@ -238,18 +248,28 @@ export default function ReviewPage() {
           setPdf((prev) => ({ ...prev, progress: fraction }));
         },
         pdfLanguage,
+        undefined,
+        language,
       );
       const counts = pdfSourceCounts(extracted);
       const failed = failedPageNumbers(extracted);
       setPdf({
         phase: "ready",
         progress: 1,
-        message:
-          `Extracted ${extracted.pages} page${extracted.pages === 1 ? "" : "s"} from ` +
-          `${extracted.filename}${extracted.truncated ? " (trimmed to fit)" : ""}: ` +
-          `${counts.native} native, ${counts.ocr} OCR` +
-          (failed.length > 0 ? `, pages ${failed.join(", ")} failed` : "") +
-          ". Review below, then use the text.",
+        message: format(t.revPdfExtracted, {
+          pages: String(extracted.pages),
+          pageWord: extracted.pages === 1 ? t.revOcrPageOne : t.revOcrPageMany,
+          name: extracted.filename,
+          trimmed: extracted.truncated ? t.revTrimmedSuffix : "",
+          native: String(counts.native),
+          nativeWord: t.revNativeWord,
+          ocr: String(counts.ocr),
+          failed:
+            failed.length > 0
+              ? format(t.cmpFailedSuffix, { pages: failed.join(", ") })
+              : "",
+          review: t.revReviewBelow,
+        }),
         result: extracted,
       });
     } catch (err) {
@@ -283,17 +303,23 @@ export default function ReviewPage() {
     if (!file || ocr.phase === "uploading") {
       return;
     }
-    const invalid = validateImageFile(file);
+    const invalid = validateImageFile(file, language);
     if (invalid) {
       dispatchOcr({ type: "invalidate", message: invalid });
       return;
     }
-    dispatchOcr({ type: "select", fileName: file.name });
+    dispatchOcr({ type: "select", fileName: file.name, language });
     try {
-      const extracted = await uploadImage(file, ocr.language, (fraction) => {
-        dispatchOcr({ type: "progress", fraction });
-      });
-      dispatchOcr({ type: "extracted", result: extracted });
+      const extracted = await uploadImage(
+        file,
+        ocr.language,
+        (fraction) => {
+          dispatchOcr({ type: "progress", fraction });
+        },
+        undefined,
+        language,
+      );
+      dispatchOcr({ type: "extracted", result: extracted, language });
     } catch (err) {
       dispatchOcr({
         type: "failed",
@@ -335,9 +361,7 @@ export default function ReviewPage() {
 
   const handlePrivacyApproved = (next: PrivacyApproval, sanitized: string) => {
     if (hashContent(postingText) !== hashContent(privacySource)) {
-      setPrivacyError(
-        'The text changed while you were reviewing. Press "Check privacy" again on the current text.',
-      );
+      setPrivacyError(t.revPrivacyChanged);
       return;
     }
     setApproval(next);
@@ -348,7 +372,7 @@ export default function ReviewPage() {
 
   const handleAnalyze = async () => {
     try {
-      assertAnalysisAllowed(approval, postingText);
+      assertAnalysisAllowed(approval, postingText, language);
     } catch (err) {
       setRunError(err instanceof Error ? err.message : String(err));
       return;
@@ -363,9 +387,11 @@ export default function ReviewPage() {
     setAnalysisSnapshot(null);
     setSaveMessage(null);
     setSavedId(null);
+    // eslint-disable-next-line react-hooks/purity -- runs only in the analyze handler, never during render
     const started = performance.now();
     try {
       const response = await model.generateContent(buildAnalyzerPrompt(postingText));
+      // eslint-disable-next-line react-hooks/purity -- runs only in the analyze handler, never during render
       const latencyMs = performance.now() - started;
       const rawText = response.response.text();
       const inferenceSource = String(response.response.inferenceSource ?? "unknown");
@@ -373,7 +399,7 @@ export default function ReviewPage() {
       setResult({ data, parseError, inferenceSource, latencyMs });
       setAnalysisSnapshot({ textHash: hashContent(postingText) });
     } catch (err) {
-      setRunError(friendlyError(err));
+      setRunError(friendlyError(err, language));
     } finally {
       setRunning(false);
     }
@@ -387,6 +413,7 @@ export default function ReviewPage() {
       currentText: postingText,
       approval,
       analysis: analysisSnapshot,
+      language,
     });
     if (!resolution.ok) {
       setSaveMessage(resolution.reason);
@@ -400,8 +427,8 @@ export default function ReviewPage() {
       const country = result.data.destination_country.trim();
       const title =
         occupation && occupation.toLowerCase() !== "not specified"
-          ? `${occupation} — ${country || "unknown country"}`.slice(0, 120)
-          : "Untitled opportunity";
+          ? `${occupation} — ${country || t.revUnknownCountryTitle}`.slice(0, 120)
+          : t.revUntitled;
       const saved = await saveInvestigation(db, {
         ownerId: user.uid,
         title,
@@ -417,7 +444,7 @@ export default function ReviewPage() {
       });
       if (saved.ok) {
         setSavedId(saved.value);
-        setSaveMessage("Saved to your investigations.");
+        setSaveMessage(t.revSavedMessage);
       } else {
         setSaveMessage(saved.message);
       }
@@ -428,28 +455,29 @@ export default function ReviewPage() {
     }
   };
 
+  const gateLabels = gateStatus(t);
+
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Review an opportunity</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t.revTitle}</h1>
         <p className="mt-1 max-w-2xl leading-6 text-muted">
-          Paste a job posting or upload it as a PDF. You get a structured review with
-          quoted evidence — then you can save it as an investigation.
+          {t.revSubtitle}
         </p>
       </div>
 
       {(!configOk || modelError) && (
-        <Card title="Setup required">
+        <Card title={t.commonSetupRequired}>
           <p className="text-sm leading-6">
             {!configOk
-              ? `Firebase isn't configured (missing: ${envProbe.missingConfigKeys.join(", ")}). `
+              ? `${format(t.commonSetupMissing, { keys: envProbe.missingConfigKeys.join(", ") })} `
               : `${modelError} `}
-            Check <code className="font-mono">.env.local</code> and restart the dev server.
+            {t.commonSetupCheckEnv}
           </p>
         </Card>
       )}
 
-      <Card title="Your input">
+      <Card title={t.revInputTitle}>
         <div className="flex items-center gap-2 text-sm">
           <StatusLabel
             tone={
@@ -462,11 +490,11 @@ export default function ReviewPage() {
                     : "idle"
             }
           >
-            {device.message}
+            {device.state === "idle" ? t.revDeviceIdle : device.message}
           </StatusLabel>
           {device.state !== "ready" && device.state !== "initializing" && (
             <Button variant="secondary" onClick={() => void handleInitDevice()} disabled={!configOk}>
-              Enable on-device
+              {t.revEnableDevice}
             </Button>
           )}
         </div>
@@ -477,7 +505,7 @@ export default function ReviewPage() {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(device.progress * 100)}
-            aria-label="On-device model download progress"
+            aria-label={t.revDeviceProgressAria}
           >
             <div
               className="h-1.5 rounded-full bg-brand"
@@ -486,7 +514,7 @@ export default function ReviewPage() {
           </div>
         )}
 
-        <div role="tablist" aria-label="Input method" className="mt-4 flex gap-2">
+        <div role="tablist" aria-label={t.revInputMethodAria} className="mt-4 flex gap-2">
           <button
             type="button"
             role="tab"
@@ -496,7 +524,7 @@ export default function ReviewPage() {
               tab === "paste" ? "bg-brand-soft text-navy" : "hover:bg-brand-soft"
             }`}
           >
-            Paste text
+            {t.revTabPaste}
           </button>
           <button
             type="button"
@@ -507,7 +535,7 @@ export default function ReviewPage() {
               tab === "pdf" ? "bg-brand-soft text-navy" : "hover:bg-brand-soft"
             }`}
           >
-            Upload PDF
+            {t.revTabPdf}
           </button>
           <button
             type="button"
@@ -518,14 +546,14 @@ export default function ReviewPage() {
               tab === "image" ? "bg-brand-soft text-navy" : "hover:bg-brand-soft"
             }`}
           >
-            Upload image
+            {t.revTabImage}
           </button>
         </div>
 
         {tab === "paste" && (
           <div role="tabpanel" className="mt-3">
             <label htmlFor="posting-text" className="block text-sm font-medium">
-              Job posting text
+              {t.revPostingLabel}
             </label>
             <textarea
               id="posting-text"
@@ -537,10 +565,10 @@ export default function ReviewPage() {
             />
             <div className="mt-2 flex flex-wrap gap-2">
               <Button variant="secondary" onClick={() => setPostingText(SAMPLE_POSTING)}>
-                Load sample
+                {t.revLoadSample}
               </Button>
               <Button variant="ghost" onClick={() => setPostingText("")}>
-                Clear
+                {t.revClear}
               </Button>
             </div>
           </div>
@@ -549,10 +577,10 @@ export default function ReviewPage() {
         {tab === "pdf" && (
           <div role="tabpanel" className="mt-3">
             <div className="mb-3">
-              <ContextualNotice>{UPLOAD_SENSITIVITY_NOTICE}</ContextualNotice>
+              <ContextualNotice>{getUploadSensitivityNotice(language)}</ContextualNotice>
             </div>
             <div className="flex flex-wrap items-end gap-3">
-              <Field label="Document language" htmlFor="pdf-language">
+              <Field label={t.revDocLanguage} htmlFor="pdf-language">
                 <select
                   id="pdf-language"
                   value={pdfLanguage}
@@ -570,9 +598,9 @@ export default function ReviewPage() {
                 </select>
               </Field>
               <Field
-                label="PDF offer document"
+                label={t.revPdfLabel}
                 htmlFor="pdf-file"
-                hint={`PDF up to 10 MB and 30 pages. Text pages extract directly; scanned pages are OCRed by the document service at ${apiBase()}. Thai and Vietnamese are not supported.`}
+                hint={format(t.revPdfHint, { base: apiBase() })}
                 error={pdf.phase === "error" ? pdf.message : null}
               >
                 <input
@@ -592,7 +620,7 @@ export default function ReviewPage() {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={pdf.progress === null ? undefined : Math.round(pdf.progress * 100)}
-                aria-label="PDF upload progress"
+                aria-label={t.revPdfProgressAria}
               >
                 <div
                   className="h-1.5 rounded-full bg-brand"
@@ -614,28 +642,35 @@ export default function ReviewPage() {
                   }
                   const warn =
                     summary.meanConfidence < 0.9 || summary.lowLines > 0;
+                  const pageWord =
+                    summary.ocrPages === 1 ? t.revOcrPageOne : t.revOcrPageMany;
                   return (
                     <StatusLabel tone={warn ? "bad" : "ok"}>
                       {warn
-                        ? `OCR on ${summary.ocrPages} page${summary.ocrPages === 1 ? "" : "s"} ` +
-                          `(mean ${Math.round(summary.meanConfidence * 100)}%, ` +
-                          `${summary.lowLines} low-confidence lines). Check figures carefully — ` +
-                          "a high score does not guarantee correctness."
-                        : `OCR mean confidence ${Math.round(summary.meanConfidence * 100)}% ` +
-                          `across ${summary.ocrPages} page${summary.ocrPages === 1 ? "" : "s"}. ` +
-                          "Always verify figures before analysis."}
+                        ? format(t.revOcrWarn, {
+                            count: String(summary.ocrPages),
+                            pageWord,
+                            mean: String(Math.round(summary.meanConfidence * 100)),
+                            low: String(summary.lowLines),
+                          })
+                        : format(t.revOcrMeanOk, {
+                            mean: String(Math.round(summary.meanConfidence * 100)),
+                            count: String(summary.ocrPages),
+                            pageWord,
+                          })}
                     </StatusLabel>
                   );
                 })()}
                 {failedPageNumbers(pdf.result).length > 0 && (
                   <p role="alert" className="text-sm leading-6">
-                    <span className="font-semibold">Pages {failedPageNumbers(pdf.result).join(", ")} failed
-                    extraction and were excluded.</span>{" "}
-                    You can retry, or continue with the available pages.
+                    <span className="font-semibold">
+                      {format(t.revPagesFailed, { pages: failedPageNumbers(pdf.result).join(", ") })}
+                    </span>{" "}
+                    {t.revPagesFailedSuffix}
                   </p>
                 )}
                 {(pdf.result.page_results ?? []).length > 0 && (
-                  <ul className="flex max-h-44 flex-col gap-1 overflow-auto tabular-nums" aria-label="Per-page extraction results">
+                  <ul className="flex max-h-44 flex-col gap-1 overflow-auto tabular-nums" aria-label={t.revPerPageAria}>
                     {(pdf.result.page_results ?? []).map((page) => (
                       <li key={page.page} className="flex flex-wrap items-center gap-2 text-sm">
                         <StatusLabel
@@ -649,7 +684,7 @@ export default function ReviewPage() {
                                   : "ok"
                           }
                         >
-                          {`Page ${page.page}: ${page.source === "native" ? "Text" : page.source === "ocr" ? `OCR${page.mean_confidence !== null ? ` ${Math.round(page.mean_confidence * 100)}%` : ""}` : page.source === "native_empty" ? "Blank" : "Failed"}`}
+                          {`${format(t.revPageLabel, { n: String(page.page) })}: ${page.source === "native" ? t.revPageText : page.source === "ocr" ? `${t.revPageOcr}${page.mean_confidence !== null ? ` ${Math.round(page.mean_confidence * 100)}%` : ""}` : page.source === "native_empty" ? t.revPageBlank : t.revPageFailed}`}
                         </StatusLabel>
                         {page.warning && <span className="text-xs text-muted">{page.warning}</span>}
                         {page.status === "failed" && page.failure_code && (
@@ -665,17 +700,17 @@ export default function ReviewPage() {
                     onClick={handleAdoptPdf}
                     disabled={pdf.result.text.trim().length === 0}
                   >
-                    Use this text
+                    {t.commonUseThisText}
                   </Button>
                   <Button
                     variant="ghost"
                     onClick={() => void handleFile(pdfFile ?? undefined)}
                     disabled={!pdfFile}
                   >
-                    Retry
+                    {t.commonRetry}
                   </Button>
                   <Button variant="ghost" onClick={handleDiscardPdf}>
-                    Discard
+                    {t.commonDiscard}
                   </Button>
                 </div>
               </div>
@@ -686,7 +721,7 @@ export default function ReviewPage() {
                   variant="ghost"
                   onClick={() => void handleFile(pdfFile ?? undefined)}
                 >
-                  Retry
+                  {t.commonRetry}
                 </Button>
               </div>
             )}
@@ -696,10 +731,10 @@ export default function ReviewPage() {
         {tab === "image" && (
           <div role="tabpanel" className="mt-3">
             <div className="mb-3">
-              <ContextualNotice>{UPLOAD_SENSITIVITY_NOTICE}</ContextualNotice>
+              <ContextualNotice>{getUploadSensitivityNotice(language)}</ContextualNotice>
             </div>
             <div className="flex flex-wrap items-end gap-3">
-              <Field label="Document language" htmlFor="ocr-language">
+              <Field label={t.revDocLanguage} htmlFor="ocr-language">
                 <select
                   id="ocr-language"
                   value={ocr.language}
@@ -720,9 +755,9 @@ export default function ReviewPage() {
                 </select>
               </Field>
               <Field
-                label="Image offer document"
+                label={t.revImageLabel}
                 htmlFor="ocr-file"
-                hint={`JPG or PNG up to 10 MB (max 8000 px per side). Text is extracted by the document service at ${apiBase()}. Thai and Vietnamese are not supported.`}
+                hint={format(t.revImageHint, { base: apiBase() })}
                 error={
                   ocr.phase === "invalid" || ocr.phase === "error" ? ocr.message : null
                 }
@@ -746,7 +781,7 @@ export default function ReviewPage() {
                 aria-valuenow={
                   ocr.progress === null ? undefined : Math.round(ocr.progress * 100)
                 }
-                aria-label="Image upload and OCR progress"
+                aria-label={t.revImageProgressAria}
               >
                 <div
                   className="h-1.5 rounded-full bg-brand"
@@ -767,14 +802,18 @@ export default function ReviewPage() {
                   tone={shouldWarnLowConfidence(ocr.result) ? "bad" : "ok"}
                 >
                   {shouldWarnLowConfidence(ocr.result)
-                    ? `Low confidence on ${ocr.result.low_confidence_lines} of ${ocr.result.lines} lines ` +
-                      `(mean ${Math.round(ocr.result.mean_confidence * 100)}%). Check figures, ` +
-                      "names, and dates carefully — a high score does not guarantee correctness."
-                    : `Mean confidence ${Math.round(ocr.result.mean_confidence * 100)}% across ` +
-                      `${ocr.result.lines} lines. Always verify figures before analysis.`}
+                    ? format(t.revOcrLowWarn, {
+                        low: String(ocr.result.low_confidence_lines),
+                        lines: String(ocr.result.lines),
+                        mean: String(Math.round(ocr.result.mean_confidence * 100)),
+                      })
+                    : format(t.revOcrLinesOk, {
+                        mean: String(Math.round(ocr.result.mean_confidence * 100)),
+                        lines: String(ocr.result.lines),
+                      })}
                 </StatusLabel>
                 <label htmlFor="ocr-draft" className="block text-sm font-medium">
-                  Extracted text — review and correct
+                  {t.revOcrDraftLabel}
                 </label>
                 <textarea
                   id="ocr-draft"
@@ -792,10 +831,10 @@ export default function ReviewPage() {
                     onClick={handleUseOcrText}
                     disabled={ocr.draft.trim().length === 0}
                   >
-                    Use this text
+                    {t.commonUseThisText}
                   </Button>
                   <Button variant="ghost" onClick={() => dispatchOcr({ type: "reset" })}>
-                    Discard
+                    {t.commonDiscard}
                   </Button>
                 </div>
               </div>
@@ -813,41 +852,36 @@ export default function ReviewPage() {
               !analysisAllowed
             }
           >
-            {running ? "Analyzing…" : "Analyze opportunity"}
+            {running ? t.revAnalyzing : t.revAnalyze}
           </Button>
           {!analysisAllowed && postingText.trim().length > 0 && (
             <p className="mt-2 text-sm text-muted" role="note">
-              {gateState === "INVALIDATED"
-                ? "The text changed since approval — run Privacy Check again before analysis."
-                : "Run Privacy Check below and approve the text before analysis."}
+              {gateState === "INVALIDATED" ? t.revGateInvalidated : t.revGateNeeded}
             </p>
           )}
         </div>
         <p className="mt-2 text-sm text-muted" role="note">
-          {REVIEW_PROCESSING_NOTICE}
+          {getReviewProcessingNotice(language)}
         </p>
         <p aria-live="polite" className="mt-2 text-sm text-muted">
-          {running ? "Reading the posting and preparing your review…" : ""}
+          {running ? t.revAnalyzingStatus : ""}
         </p>
         {runError && (
           <p role="alert" className="mt-2 text-sm leading-6">
-            <span className="font-semibold">Analysis failed:</span> {runError}
+            <span className="font-semibold">{t.revAnalysisFailed}</span> {runError}
           </p>
         )}
       </Card>
 
-      <Card
-        title="Privacy Check"
-        description="Required before analysis: review what looks personal, clean the text, and approve exactly what may be analyzed."
-      >
+      <Card title={t.revPrivacyTitle} description={t.revPrivacyDesc}>
         <div className="flex flex-wrap items-center gap-2">
-          <StatusLabel tone={GATE_STATUS[gateState].tone}>
-            {GATE_STATUS[gateState].label}
+          <StatusLabel tone={gateLabels[gateState].tone}>
+            {gateLabels[gateState].label}
           </StatusLabel>
           {gateState === "APPROVED" && approval && (
             <span className="text-sm text-muted">
-              {approval.redactedCount} redacted · {approval.replacedCount} replaced ·{" "}
-              {approval.retainedCount} kept
+              {approval.redactedCount} {t.revCountRedacted} · {approval.replacedCount}{" "}
+              {t.revCountReplaced} · {approval.retainedCount} {t.revCountKept}
             </span>
           )}
         </div>
@@ -863,12 +897,10 @@ export default function ReviewPage() {
               onClick={openPrivacyCheck}
               disabled={running || postingText.trim().length === 0}
             >
-              {approval ? "Check privacy again" : "Check privacy"}
+              {approval ? t.revCheckAgain : t.commonCheckPrivacy}
             </Button>
             {postingText.trim().length === 0 && (
-              <p className="mt-2 text-sm text-muted">
-                Add posting text above first — paste it, upload a PDF, or upload an image.
-              </p>
+              <p className="mt-2 text-sm text-muted">{t.revAddTextFirst}</p>
             )}
           </div>
         ) : (
@@ -885,45 +917,39 @@ export default function ReviewPage() {
         )}
       </Card>
 
-      <Card title="Review">
+      <Card title={t.revReviewTitle}>
         {!result && (
-          <EmptyState
-            title="No review yet"
-            description="Your structured review — summary, details, concerns, missing information, and next steps — appears here after analysis."
-          />
+          <EmptyState title={t.revNoReviewTitle} description={t.revNoReviewDesc} />
         )}
         {result?.parseError && (
           <p role="alert" className="mb-3 text-sm leading-6">
-            The review came back in an unexpected format. Please run the analysis again.
+            {t.revUnexpectedFormat}
           </p>
         )}
         {result?.data && <AnalysisResults report={result.data} />}
         {result?.data && (
           <p className="mt-2 text-sm text-muted" role="status">
-            {describeActualSource(result.inferenceSource).label}
+            {describeActualSource(result.inferenceSource, language).label}
           </p>
         )}
         {result?.data && (
           <>
           <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-edge pt-4">
             <Button onClick={() => void handleSave()} disabled={saving || savedId !== null}>
-              {saving ? "Saving…" : savedId ? "Saved" : "Save as investigation"}
+              {saving ? t.revSaving : savedId ? t.revSaved : t.revSaveAs}
             </Button>
             {saveMessage && (
               <span className="text-sm" role="status">
                 {saveMessage}{" "}
                 {savedId && (
                   <Link href={`/workspace/investigations/${savedId}`} className="text-brand underline">
-                    Open report
+                    {t.revOpenReport}
                   </Link>
                 )}
               </span>
             )}
           </div>
-          <p className="mt-2 text-sm text-muted">
-            Saves the approved text analyzed above, plus its report. Nothing is saved
-            until you press this button.
-          </p>
+          <p className="mt-2 text-sm text-muted">{t.revSaveNote}</p>
           </>
         )}
       </Card>

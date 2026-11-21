@@ -6,6 +6,10 @@
 // prefer-on-device (cloud fallback allowed only with explicit user
 // consent, collected in the UI). One Schema object per task serves both
 // paths (inCloudParams.responseSchema + onDeviceParams.responseConstraint).
+//
+// Inference-mode info renders in the UI language (default English). The
+// Indonesian variants are WORKING DRAFTS needing native-speaker review —
+// never present them as final.
 
 import {
   getGenerativeModel,
@@ -15,6 +19,7 @@ import {
   type GenerativeModel,
 } from "firebase/ai";
 import type { ContractDocumentText } from "./contractTypes";
+import type { UiLanguage } from "./strings";
 import {
   parseExtractionOutput,
   parsePromiseComparison,
@@ -41,6 +46,31 @@ export const INFERENCE_MODE_INFO: Record<
       "text to the configured cloud model and requires your consent below.",
   },
 };
+
+/** Indonesian working drafts (need native-speaker review). */
+export const INFERENCE_MODE_INFO_ID: Record<
+  CompareInferenceMode,
+  { label: string; dataNote: string }
+> = {
+  "on-device-only": {
+    label: "Khusus di perangkat",
+    dataNote:
+      "Dokumen hanya dianalisis di perangkat ini dan tidak pernah dikirim untuk pemrosesan cloud. " +
+      "Jika analisis di perangkat tidak tersedia, perbandingan tidak dapat berjalan.",
+  },
+  "prefer-on-device": {
+    label: "Utamakan di perangkat, izinkan cloud",
+    dataNote:
+      "Mencoba analisis di perangkat terlebih dahulu, lalu fallback cloud. Pemrosesan cloud mengirim teks " +
+      "dokumen ke model cloud yang dikonfigurasi dan memerlukan persetujuan Anda di bawah.",
+  },
+};
+
+export function getInferenceModeInfo(
+  language: UiLanguage,
+): Record<CompareInferenceMode, { label: string; dataNote: string }> {
+  return language === "id" ? INFERENCE_MODE_INFO_ID : INFERENCE_MODE_INFO;
+}
 
 const CATEGORY_ENUM = [
   "compensation",
