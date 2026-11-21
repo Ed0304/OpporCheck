@@ -2,7 +2,7 @@
 // for evidence investigation. The backend owns the allowlist; this client
 // only ever sends catalog ids and research-question queries, never URLs.
 
-import { apiBase } from "./documents";
+import { apiBase, BACKEND_UNAUTHORIZED_MESSAGE, backendAuthHeaders } from "./documents";
 import type { OfficialSourceCategory } from "./validation";
 
 export interface SourceCatalogEntry {
@@ -110,10 +110,12 @@ function parseRetrievalError(value: unknown): SourceRetrievalError | null {
 
 export async function listOfficialSources(profile = "GB"): Promise<SourceCatalog> {
   const base = apiBase();
+  const headers = await backendAuthHeaders();
   let response: Response;
   try {
     response = await fetch(
       `${base}/api/v1/sources?profile=${encodeURIComponent(profile)}`,
+      { headers },
     );
   } catch {
     throw new Error(serviceHint(base));
@@ -125,6 +127,9 @@ export async function listOfficialSources(profile = "GB"): Promise<SourceCatalog
     throw new Error(`The evidence service returned an unreadable response (${response.status}).`);
   }
   if (!response.ok || !isRecord(data) || !Array.isArray(data["sources"])) {
+    if (response.status === 401) {
+      throw new Error(BACKEND_UNAUTHORIZED_MESSAGE);
+    }
     const detail = isRecord(data) && typeof data["error"] === "string" ? `: ${data["error"]}` : "";
     throw new Error(`The evidence service request failed (${response.status})${detail}.`);
   }
@@ -148,11 +153,15 @@ export async function retrieveOfficialSources(
   profile = "GB",
 ): Promise<RetrievalResult> {
   const base = apiBase();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(await backendAuthHeaders()),
+  };
   let response: Response;
   try {
     response = await fetch(`${base}/api/v1/sources/retrieve`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ source_ids: sourceIds, queries, profile }),
     });
   } catch {
@@ -165,6 +174,9 @@ export async function retrieveOfficialSources(
     throw new Error(`The evidence service returned an unreadable response (${response.status}).`);
   }
   if (!response.ok || !isRecord(data)) {
+    if (response.status === 401) {
+      throw new Error(BACKEND_UNAUTHORIZED_MESSAGE);
+    }
     const detail = isRecord(data) && typeof data["error"] === "string" ? `: ${data["error"]}` : "";
     throw new Error(`The evidence service request failed (${response.status})${detail}.`);
   }

@@ -13,6 +13,7 @@ from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .corridors import (
     DEFAULT_PROFILE,
@@ -29,7 +30,9 @@ from .ocr import (
     extract_image_text,
     sanitize_filename,
 )
+from .auth import FirebaseAuthMiddleware
 from .official_sources import retrieve_sources
+from .security import RateLimitMiddleware, allowed_hosts
 
 FRONTEND_ORIGINS = [
     origin.strip()
@@ -40,12 +43,18 @@ FRONTEND_ORIGINS = [
 ]
 
 app = FastAPI(title="OpporCheck backend")
+# Starlette runs middleware last-added-first, so this reads outer-first:
+# host check, rate limit (floods burn buckets before crypto), Firebase
+# auth, then CORS. Auth rejects 401/503; only /health stays open.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=FRONTEND_ORIGINS,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+app.add_middleware(FirebaseAuthMiddleware)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts())
 
 
 @app.get("/health")
@@ -128,11 +137,13 @@ def retrieve_official_sources(body: RetrieveRequest) -> JSONResponse:
 
 
 @app.post("/api/v1/documents/extract")
-async def extract_document(file: UploadFile = File(...)) -> JSONResponse:
-    """Extract embedded text from an uploaded PDF (stateless, nothing stored)."""
+async def extract_document(
+    file: UploadFile = File(...), language: str = Form(DEFAULT_LANGUAGE)
+) -> JSONResponse:
+    """Hybrid PDF extraction: native text first, OCR fallback per page."""
     filename = file.filename or "upload.pdf"
     content = await file.read(MAX_PDF_BYTES + 1)
-    return extract_response(filename, file.content_type, content)
+    return extract_response(filename, file.content_type, content, language=language)
 
 
 @app.post("/api/v1/documents/ocr")
@@ -173,7 +184,10 @@ def ocr_response(
 
 
 def extract_response(
-    filename: str, content_type: str | None, content: bytes
+    filename: str,
+    content_type: str | None,
+    content: bytes,
+    language: str | None = None,
 ) -> JSONResponse:
     """Validates and extracts upload bytes. Sync core of the extract route."""
     if content_type and content_type != "application/pdf":
@@ -185,8 +199,8 @@ def extract_response(
             },
         )
     try:
-        result = extract_pdf_text(filename, content)
-    except DocumentError as exc:
+        result = extract_pdf_text(filename, content, language=language)
+    except (DocumentError, OCRError) as exc:
         return JSONResponse(status_code=exc.status_code, content={"error": str(exc)})
     return JSONResponse(
         content={
@@ -195,5 +209,25 @@ def extract_response(
             "pages": result.pages,
             "truncated": result.truncated,
             "page_texts": list(result.page_texts),
+            "source": result.source,
+            "language": result.language,
+            "page_results": [
+                {
+                    "page": page.page_number,
+                    "source": page.source,
+                    "text": page.text,
+                    "truncated": page.truncated,
+                    "mean_confidence": (
+                        round(page.mean_confidence, 4)
+                        if page.mean_confidence is not None
+                        else None
+                    ),
+                    "low_confidence_lines": page.low_confidence_lines,
+                    "status": page.status,
+                    "warning": page.warning,
+                    "failure_code": page.failure_code,
+                }
+                for page in result.page_results
+            ],
         }
     )

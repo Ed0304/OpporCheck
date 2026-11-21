@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import type { GenerativeModel } from "firebase/ai";
 import CompareReport, { type ReportDocument } from "@/components/CompareReport";
 import { ContextualNotice } from "@/components/Disclaimer";
+import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import { Button, Card, EmptyState, Field, Spinner, StatusLabel } from "@/components/ui";
 import { UPLOAD_SENSITIVITY_NOTICE } from "@/lib/disclaimer";
 import {
@@ -37,10 +38,24 @@ import type {
 } from "@/lib/contractTypes";
 import {
   analysisGate,
+  approvedPageCount,
+  approvedPagesOrThrow,
+  beginExtractionRun,
   COMPARE_DOC_TYPE_LABELS,
+  completeExtractionRun,
+  emptyDocPrivacy,
+  failedPagesLimitation,
+  failExtractionRun,
+  isDocPrivacyApproved,
+  isPageApproved,
+  recordPageApproval,
   toContractText,
   type CompareDocumentInput,
+  type DocPrivacyState,
 } from "@/lib/compareSession";
+import { failedPageNumbers } from "@/lib/documents";
+import { describeActualSource, type PrivacyApproval } from "@/lib/privacyGate";
+import { mapServiceError } from "@/lib/aiErrors";
 import { apiBase, uploadPdf, validatePdfFile } from "@/lib/documents";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
 
@@ -63,6 +78,15 @@ interface SessionDoc {
   terms: EmploymentClaim[];
   missingCategories: ContractCategory[];
   extractionIssues: string[];
+  privacy: DocPrivacyState;
+  /** Verbatim SDK inference source from extraction, null until a run. */
+  inferenceSource: string | null;
+}
+
+interface PrivacyTarget {
+  docId: string;
+  pageIndex: number;
+  nonce: number;
 }
 
 interface DeviceStatus {
@@ -85,7 +109,7 @@ function friendlyError(err: unknown, mode: CompareInferenceMode): string {
       "or switch to cloud fallback with consent. Nothing was sent anywhere."
     );
   }
-  return message;
+  return mapServiceError(message) ?? message;
 }
 
 export default function ComparePage() {
@@ -110,6 +134,8 @@ export default function ComparePage() {
   const [runError, setRunError] = useState<string | null>(null);
   const [findings, setFindings] = useState<PromiseToPaperFinding[] | null>(null);
   const [droppedCount, setDroppedCount] = useState(0);
+  const [privacyTarget, setPrivacyTarget] = useState<PrivacyTarget | null>(null);
+  const [comparisonSource, setComparisonSource] = useState<string | null>(null);
 
   const idCounter = useRef(0);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -148,6 +174,8 @@ export default function ComparePage() {
         terms: [],
         missingCategories: [],
         extractionIssues: [],
+        privacy: emptyDocPrivacy(input.pages.length),
+        inferenceSource: null,
       },
     ]);
     setFindings(null);
@@ -173,6 +201,7 @@ export default function ComparePage() {
       const pages =
         extracted.page_texts.length > 0 ? extracted.page_texts : [extracted.text];
       const id = makeDocId();
+      const failedPages = failedPageNumbers(extracted);
       const record: CompareDocumentInput = {
         id,
         fileName: extracted.filename,
@@ -186,10 +215,12 @@ export default function ComparePage() {
             fileName: extracted.filename,
             pages,
           }).length > EXTRACTION_MAX_CHARS,
+        failedPages,
       };
       pushDoc(record, extracted.page_texts.length === 0);
       setUploadMessage(
-        `Added ${extracted.filename} (${extracted.pages} page${extracted.pages === 1 ? "" : "s"}).`,
+        `Added ${extracted.filename} (${extracted.pages} page${extracted.pages === 1 ? "" : "s"}` +
+          `${failedPages.length > 0 ? `, pages ${failedPages.join(", ")} failed` : ""}).`,
       );
     } catch (err) {
       setUploadMessage(err instanceof Error ? err.message : String(err));
@@ -219,6 +250,7 @@ export default function ComparePage() {
         fileName: name,
         documentType: nextType,
         source: "pasted",
+        failedPages: [],
         pages,
         wasTrimmed:
           formatDocumentPages({
@@ -238,6 +270,36 @@ export default function ComparePage() {
   const removeDoc = (id: string) => {
     setDocs((prev) => prev.filter((doc) => doc.input.id !== id));
     setFindings(null);
+    setPrivacyTarget((target) => (target && target.docId === id ? null : target));
+  };
+
+  const handlePageApproved = (approval: PrivacyApproval, sanitized: string) => {
+    if (!privacyTarget) {
+      return;
+    }
+    const target = privacyTarget;
+    try {
+      setDocs((prev) =>
+        prev.map((doc) =>
+          doc.input.id !== target.docId
+            ? doc
+            : {
+                ...doc,
+                privacy: recordPageApproval(
+                  doc.privacy,
+                  doc.input.pages.length,
+                  target.pageIndex,
+                  approval,
+                  sanitized,
+                  doc.input.pages[target.pageIndex] ?? "",
+                ),
+              },
+        ),
+      );
+      setPrivacyTarget(null);
+    } catch (err) {
+      setUploadMessage(err instanceof Error ? err.message : String(err));
+    }
   };
 
   const changeDocType = (id: string, documentType: ContractDocumentType) => {
@@ -253,6 +315,7 @@ export default function ComparePage() {
               terms: [],
               missingCategories: [],
               extractionIssues: [],
+              inferenceSource: null,
             },
       ),
     );
@@ -279,6 +342,12 @@ export default function ComparePage() {
   const gate = analysisGate(mode, { consent, deviceReady: device.state === "ready" });
   const pendingDocs = docs.filter((doc) => doc.status === "ready" || doc.status === "error");
   const extractedDocs = docs.filter((doc) => doc.status === "extracted");
+  const pendingPrivacyReady =
+    pendingDocs.length > 0 &&
+    pendingDocs.every((doc) => isDocPrivacyApproved(doc.privacy, doc.input.pages));
+  const privacyTargetDoc = privacyTarget
+    ? (docs.find((doc) => doc.input.id === privacyTarget.docId) ?? null)
+    : null;
 
   const handleExtract = async () => {
     if (extracting || comparing || pendingDocs.length === 0) {
@@ -292,22 +361,25 @@ export default function ComparePage() {
         setStatusMsg(`Extracting terms from ${doc.input.fileName}…`);
         setDocs((prev) =>
           prev.map((entry) =>
-            entry.input.id === doc.input.id
-              ? { ...entry, status: "extracting", error: null }
-              : entry,
+            entry.input.id === doc.input.id ? beginExtractionRun(entry) : entry,
           ),
         );
         try {
           const model = ensureModel("extract");
-          const text = toContractText(doc.input);
+          const pages = approvedPagesOrThrow(
+            doc.privacy,
+            doc.input.pages,
+            doc.input.fileName,
+          );
+          const text = toContractText({ ...doc.input, pages });
           const response = await model.generateContent(buildExtractionPrompt(text));
+          const source = String(response.response.inferenceSource ?? "unknown");
           const parsed = parseExtraction(response.response.text(), text);
           setDocs((prev) =>
             prev.map((entry) =>
               entry.input.id === doc.input.id
                 ? {
-                    ...entry,
-                    status: "extracted",
+                    ...completeExtractionRun(entry, source),
                     terms: parsed.terms,
                     missingCategories: parsed.missingCategories,
                     extractionIssues: parsed.issues,
@@ -316,10 +388,11 @@ export default function ComparePage() {
             ),
           );
           if (parsed.parseError) {
+            const message: string = parsed.parseError;
             setDocs((prev) =>
               prev.map((entry) =>
                 entry.input.id === doc.input.id
-                  ? { ...entry, status: "error", error: parsed.parseError }
+                  ? failExtractionRun(entry, message)
                   : entry,
               ),
             );
@@ -329,7 +402,7 @@ export default function ComparePage() {
           setDocs((prev) =>
             prev.map((entry) =>
               entry.input.id === doc.input.id
-                ? { ...entry, status: "error", error: message }
+                ? failExtractionRun(entry, message)
                 : entry,
             ),
           );
@@ -349,9 +422,18 @@ export default function ComparePage() {
     if (comparing || extracting || extractedDocs.length < 2) {
       return;
     }
+    try {
+      for (const doc of extractedDocs) {
+        approvedPagesOrThrow(doc.privacy, doc.input.pages, doc.input.fileName);
+      }
+    } catch (err) {
+      setRunError(err instanceof Error ? err.message : String(err));
+      return;
+    }
     setRunError(null);
     setFindings(null);
     setDroppedCount(0);
+    setComparisonSource(null);
     setComparing(true);
     setStatusMsg("Comparing terms across documents…");
     try {
@@ -364,6 +446,7 @@ export default function ComparePage() {
       }));
       const texts = extractedDocs.map((doc) => toContractText(doc.input));
       const response = await model.generateContent(buildPromiseComparisonPrompt(inputs));
+      setComparisonSource(String(response.response.inferenceSource ?? "unknown"));
       const parsed = parsePromiseComparisonFindings(response.response.text(), texts);
       if (parsed.parseError) {
         setRunError(parsed.parseError);
@@ -398,6 +481,12 @@ export default function ComparePage() {
   if (extractedDocs.some((doc) => doc.pagesEstimated)) {
     limitations.push("Some page numbers are estimated because the extraction service returned no page breakdown.");
   }
+  for (const doc of extractedDocs) {
+    const note = failedPagesLimitation(doc.input.fileName, doc.input.failedPages);
+    if (note) {
+      limitations.push(note);
+    }
+  }
   const extractionIssueCount = extractedDocs.reduce(
     (count, doc) => count + doc.extractionIssues.length,
     0,
@@ -430,7 +519,7 @@ export default function ComparePage() {
 
       <Card
         title="1. Documents"
-        description={`Add up to ${MAX_DOCS} PDFs or pasted texts, and label each one. Comparison needs at least two documents with extracted terms.`}
+        description={`Add up to ${MAX_DOCS} PDFs or pasted texts, and label each one. Comparison needs at least two documents with extracted terms. Each page needs a Privacy Check before extraction.`}
       >
         <div className="mb-3">
           <ContextualNotice>{UPLOAD_SENSITIVITY_NOTICE}</ContextualNotice>
@@ -453,7 +542,7 @@ export default function ComparePage() {
           <Field
             label="Upload PDF"
             htmlFor="compare-pdf"
-            hint={`PDF up to 10 MB via ${apiBase()}. Scanned PDFs without embedded text are not supported (no OCR).`}
+            hint={`PDF up to 10 MB and 30 pages via ${apiBase()}. Text pages extract directly; scanned pages are OCRed.`}
           >
             <input
               ref={fileRef}
@@ -544,6 +633,38 @@ export default function ComparePage() {
                               : "awaiting extraction"}
                       </StatusLabel>
                     </p>
+                    <p className="mt-1 text-xs text-muted">
+                      Privacy: {approvedPageCount(doc.privacy, doc.input.pages)}/
+                      {doc.input.pages.length} pages approved
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {doc.input.pages.map((_, index) => {
+                        const done = isPageApproved(doc.privacy, doc.input.pages, index);
+                        return (
+                          <Button
+                            key={index}
+                            variant="ghost"
+                            disabled={running}
+                            onClick={() =>
+                              setPrivacyTarget({
+                                docId: doc.input.id,
+                                pageIndex: index,
+                                nonce: Date.now(),
+                              })
+                            }
+                            aria-label={`${done ? "Re-check" : "Check"} privacy for page ${index + 1} of ${doc.input.fileName}`}
+                          >
+                            {`Page ${index + 1}${done ? " ✓" : ""}`}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    {(doc.input.failedPages?.length ?? 0) > 0 && (
+                      <p className="mt-1 text-sm" role="alert">
+                        Pages {(doc.input.failedPages ?? []).join(", ")} failed extraction
+                        and were excluded.
+                      </p>
+                    )}
                     {doc.error && (
                       <p className="mt-1 text-sm" role="alert">
                         {doc.error}
@@ -581,6 +702,21 @@ export default function ComparePage() {
           )}
         </div>
       </Card>
+
+      {privacyTarget && privacyTargetDoc && (
+        <Card
+          title={`Privacy Check — ${privacyTargetDoc.input.fileName}, page ${privacyTarget.pageIndex + 1}`}
+          description="Required before extraction: review what looks personal, clean the page, and approve exactly what may be analyzed."
+        >
+          <PrivacyCheckPanel
+            key={`${privacyTarget.docId}:${privacyTarget.pageIndex}:${privacyTarget.nonce}`}
+            sourceText={privacyTargetDoc.input.pages[privacyTarget.pageIndex] ?? ""}
+            disclosureMode={mode}
+            onApproved={handlePageApproved}
+            onCancel={() => setPrivacyTarget(null)}
+          />
+        </Card>
+      )}
 
       <Card
         title="2. Analysis settings"
@@ -719,6 +855,9 @@ export default function ComparePage() {
                           validation.
                         </p>
                       )}
+                      <p className="mt-1 text-xs text-muted" role="status">
+                        {describeActualSource(doc.inferenceSource).label}
+                      </p>
                     </>
                   ) : (
                     <p className="mt-1 text-sm text-muted">
@@ -733,7 +872,13 @@ export default function ComparePage() {
             <div className="mt-4">
               <Button
                 onClick={() => void handleExtract()}
-                disabled={!configOk || running || !gate.allowed || pendingDocs.length === 0}
+                disabled={
+                  !configOk ||
+                  running ||
+                  !gate.allowed ||
+                  pendingDocs.length === 0 ||
+                  !pendingPrivacyReady
+                }
               >
                 {extracting ? "Extracting…" : "Extract employment terms"}
               </Button>
@@ -741,6 +886,11 @@ export default function ComparePage() {
             {!gate.allowed && (
               <p className="mt-2 text-sm" role="note">
                 {gate.reason}
+              </p>
+            )}
+            {gate.allowed && pendingDocs.length > 0 && !pendingPrivacyReady && (
+              <p className="mt-2 text-sm text-muted" role="note">
+                Approve every page&apos;s Privacy Check above before extraction.
               </p>
             )}
           </>
@@ -789,6 +939,11 @@ export default function ComparePage() {
           </>
         ) : (
           <>
+            {comparisonSource !== null && (
+              <p className="mb-2 text-sm text-muted" role="status">
+                Comparison {describeActualSource(comparisonSource).label.toLowerCase()}
+              </p>
+            )}
             <CompareReport
               documents={reportDocs}
               findings={findings}

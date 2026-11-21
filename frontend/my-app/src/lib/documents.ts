@@ -3,6 +3,23 @@
 
 export const MAX_PDF_BYTES = 10 * 1024 * 1024; // 10 MB, mirrors the backend cap
 
+export type PdfPageSource = "native" | "ocr" | "native_empty" | "failed";
+export type PdfDocumentSource = "native" | "ocr" | "mixed";
+
+export interface PdfPageResult {
+  /** 1-based page number. */
+  page: number;
+  source: PdfPageSource;
+  text: string;
+  truncated: boolean;
+  /** Aggregate OCR confidence; null for non-OCR pages. */
+  mean_confidence: number | null;
+  low_confidence_lines: number;
+  status: "ok" | "empty" | "failed";
+  warning: string | null;
+  failure_code: string | null;
+}
+
 export interface ExtractResult {
   filename: string;
   text: string;
@@ -10,6 +27,10 @@ export interface ExtractResult {
   truncated: boolean;
   /** Per-page text (index + 1 is the page number); [] when unavailable. */
   page_texts: string[];
+  /** Hybrid source breakdown (Phase 2); absent from older responses. */
+  source?: PdfDocumentSource;
+  language?: string;
+  page_results?: PdfPageResult[];
 }
 
 export function apiBase(): string {
@@ -34,44 +55,150 @@ export function validatePdfFile(file: File): string | null {
   return null;
 }
 
+const PDF_PAGE_SOURCES: ReadonlySet<string> = new Set([
+  "native",
+  "ocr",
+  "native_empty",
+  "failed",
+]);
+
+const PDF_DOCUMENT_SOURCES: ReadonlySet<string> = new Set(["native", "ocr", "mixed"]);
+
+function parsePdfPage(raw: unknown): PdfPageResult | null {
+  if (typeof raw !== "object" || raw === null) {
+    return null;
+  }
+  const record = raw as Record<string, unknown>;
+  if (typeof record["page"] !== "number" || typeof record["text"] !== "string") {
+    return null;
+  }
+  const source = record["source"];
+  const status = record["status"];
+  return {
+    page: record["page"],
+    source: typeof source === "string" && PDF_PAGE_SOURCES.has(source) ? (source as PdfPageSource) : "failed",
+    text: record["text"],
+    truncated: record["truncated"] === true,
+    mean_confidence:
+      typeof record["mean_confidence"] === "number" ? record["mean_confidence"] : null,
+    low_confidence_lines:
+      typeof record["low_confidence_lines"] === "number"
+        ? record["low_confidence_lines"]
+        : 0,
+    status: status === "ok" || status === "empty" || status === "failed" ? status : "failed",
+    warning: typeof record["warning"] === "string" ? record["warning"] : null,
+    failure_code:
+      typeof record["failure_code"] === "string" ? record["failure_code"] : null,
+  };
+}
+
+/** Parses an extract response body; returns null when the shape is wrong. Pure and unit-testable. */
+export function parseExtractResponse(data: unknown, fallbackName: string): ExtractResult | null {
+  if (typeof data !== "object" || data === null) {
+    return null;
+  }
+  const record = data as Record<string, unknown>;
+  if (typeof record["text"] !== "string") {
+    return null;
+  }
+  const rawPages = record["page_texts"];
+  const page_texts = Array.isArray(rawPages)
+    ? rawPages.filter((entry): entry is string => typeof entry === "string")
+    : [];
+  const rawResults = record["page_results"];
+  const page_results = Array.isArray(rawResults)
+    ? rawResults
+        .map(parsePdfPage)
+        .filter((entry): entry is PdfPageResult => entry !== null)
+    : undefined;
+  const source = record["source"];
+  return {
+    filename: typeof record["filename"] === "string" ? record["filename"] : fallbackName,
+    text: record["text"],
+    pages: typeof record["pages"] === "number" ? record["pages"] : 0,
+    truncated: record["truncated"] === true,
+    page_texts,
+    source:
+      typeof source === "string" && PDF_DOCUMENT_SOURCES.has(source)
+        ? (source as PdfDocumentSource)
+        : undefined,
+    language: typeof record["language"] === "string" ? record["language"] : undefined,
+    page_results,
+  };
+}
+
+/** 1-based numbers of pages that failed extraction (never silent). */
+export function failedPageNumbers(result: ExtractResult): number[] {
+  return (result.page_results ?? [])
+    .filter((page) => page.status === "failed")
+    .map((page) => page.page);
+}
+
+/** Aggregate OCR confidence across a result's OCR pages, if any. */
+export function ocrConfidenceSummary(result: ExtractResult): {
+  ocrPages: number;
+  meanConfidence: number;
+  lowLines: number;
+} | null {
+  const ocrPages = (result.page_results ?? []).filter((page) => page.source === "ocr");
+  if (ocrPages.length === 0) {
+    return null;
+  }
+  const scored = ocrPages.filter(
+    (page): page is PdfPageResult & { mean_confidence: number } =>
+      typeof page.mean_confidence === "number",
+  );
+  const meanConfidence =
+    scored.length === 0
+      ? 0
+      : scored.reduce((sum, page) => sum + page.mean_confidence, 0) / scored.length;
+  return {
+    ocrPages: ocrPages.length,
+    meanConfidence,
+    lowLines: ocrPages.reduce((sum, page) => sum + page.low_confidence_lines, 0),
+  };
+}
+
 export function uploadPdf(
   file: File,
   onProgress: (fraction: number | null) => void,
+  language?: string,
+  createXhr: () => XhrLike = () => new XMLHttpRequest() as unknown as XhrLike,
 ): Promise<ExtractResult> {
   const base = apiBase();
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
+  return (async () => {
+    const headers = await backendAuthHeaders();
+    return new Promise<ExtractResult>((resolve, reject) => {
+    const xhr = createXhr();
     xhr.open("POST", `${base}/api/v1/documents/extract`);
+    for (const [name, value] of Object.entries(headers)) {
+      xhr.setRequestHeader?.(name, value);
+    }
     xhr.upload.onprogress = (event) => {
       onProgress(event.lengthComputable ? event.loaded / event.total : null);
     };
     xhr.onload = () => {
-      let data: { error?: unknown } & Partial<ExtractResult> = {};
+      let data: unknown = {};
       try {
-        data = JSON.parse(xhr.responseText) as typeof data;
+        data = JSON.parse(xhr.responseText) as unknown;
       } catch {
         reject(new Error(`The document service returned an unreadable response (${xhr.status}).`));
         return;
       }
-      if (xhr.status >= 200 && xhr.status < 300 && typeof data.text === "string") {
-        const rawPages = (data as { page_texts?: unknown }).page_texts;
-        const page_texts = Array.isArray(rawPages)
-          ? rawPages.filter((entry): entry is string => typeof entry === "string")
-          : [];
-        resolve({
-          filename: typeof data.filename === "string" ? data.filename : file.name,
-          text: data.text,
-          pages: typeof data.pages === "number" ? data.pages : 0,
-          truncated: data.truncated === true,
-          page_texts,
-        });
-      } else {
-        reject(
-          new Error(
-            typeof data.error === "string" ? data.error : `Upload failed (${xhr.status}).`,
-          ),
-        );
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const parsed = parseExtractResponse(data, file.name);
+        if (parsed) {
+          resolve(parsed);
+          return;
+        }
       }
+      const message =
+        typeof data === "object" && data !== null
+          ? (data as Record<string, unknown>)["error"]
+          : undefined;
+      reject(
+        new Error(backendErrorMessage(xhr.status, message, `Upload failed (${xhr.status}).`)),
+      );
     };
     xhr.onerror = () => {
       reject(
@@ -83,9 +210,13 @@ export function uploadPdf(
     };
     const form = new FormData();
     form.append("file", file, file.name);
+    if (language !== undefined && language !== "") {
+      form.append("language", language);
+    }
     onProgress(0);
     xhr.send(form);
-  });
+    });
+  })();
 }
 
 // ---------------------------------------------------------------------------
@@ -185,9 +316,52 @@ export function parseOcrResponse(data: unknown, fallbackName: string): OcrResult
   };
 }
 
-/** Minimal XHR surface used by uploadImage; injectable so unit tests can drive it. */
+/**
+ * Firebase ID-token provider for backend calls, registered by the Firebase
+ * client module at browser runtime. Resolving per request keeps tokens
+ * fresh (SDK-cached, auto-refreshed) and never stored anywhere.
+ */
+type BackendTokenProvider = () => Promise<string | null>;
+
+let backendTokenProvider: BackendTokenProvider | null = null;
+
+/** Registers (or clears, with null) the backend token provider. */
+export function registerBackendTokenProvider(provider: BackendTokenProvider | null): void {
+  backendTokenProvider = provider;
+}
+
+/** Authorization header for backend calls; {} when signed out or failing. */
+export async function backendAuthHeaders(): Promise<Record<string, string>> {
+  if (!backendTokenProvider) {
+    return {};
+  }
+  try {
+    const token = await backendTokenProvider();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
+export const BACKEND_UNAUTHORIZED_MESSAGE =
+  "Your sign-in expired. Please sign in again, then retry.";
+
+/** Maps backend failures to user copy; 401 always means re-sign-in. */
+export function backendErrorMessage(
+  status: number | null,
+  serverMessage: unknown,
+  fallback: string,
+): string {
+  if (status === 401) {
+    return BACKEND_UNAUTHORIZED_MESSAGE;
+  }
+  return typeof serverMessage === "string" ? serverMessage : fallback;
+}
+
+/** Minimal XHR surface used by uploads; injectable so unit tests can drive it. */
 export interface XhrLike {
   open(method: string, url: string): void;
+  setRequestHeader?: (name: string, value: string) => void;
   send(body: unknown): void;
   upload: {
     onprogress:
@@ -207,9 +381,14 @@ export function uploadImage(
   createXhr: () => XhrLike = () => new XMLHttpRequest() as unknown as XhrLike,
 ): Promise<OcrResult> {
   const base = apiBase();
-  return new Promise((resolve, reject) => {
+  return (async () => {
+    const headers = await backendAuthHeaders();
+    return new Promise<OcrResult>((resolve, reject) => {
     const xhr = createXhr();
     xhr.open("POST", `${base}/api/v1/documents/ocr`);
+    for (const [name, value] of Object.entries(headers)) {
+      xhr.setRequestHeader?.(name, value);
+    }
     xhr.upload.onprogress = (event) => {
       onProgress(event.lengthComputable ? event.loaded / event.total : null);
     };
@@ -233,9 +412,7 @@ export function uploadImage(
           ? (data as Record<string, unknown>)["error"]
           : undefined;
       reject(
-        new Error(
-          typeof message === "string" ? message : `Upload failed (${xhr.status}).`,
-        ),
+        new Error(backendErrorMessage(xhr.status, message, `Upload failed (${xhr.status}).`)),
       );
     };
     xhr.onerror = () => {
@@ -251,5 +428,6 @@ export function uploadImage(
     form.append("language", language);
     onProgress(0);
     xhr.send(form);
-  });
+    });
+  })();
 }

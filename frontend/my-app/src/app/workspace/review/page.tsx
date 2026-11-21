@@ -5,7 +5,7 @@
 // Plain-language UI: no model IDs, inference modes, latency, or raw JSON.
 
 import Link from "next/link";
-import { useReducer, useRef, useState } from "react";
+import { useCallback, useReducer, useRef, useState } from "react";
 import {
   getGenerativeModel,
   InferenceMode,
@@ -14,17 +14,21 @@ import {
 } from "firebase/ai";
 import AnalysisResults from "@/components/AnalysisResults";
 import { ContextualNotice } from "@/components/Disclaimer";
+import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import { Button, Card, EmptyState, Field, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { REVIEW_PROCESSING_NOTICE, UPLOAD_SENSITIVITY_NOTICE } from "@/lib/disclaimer";
 import {
   OCR_LANGUAGES,
   apiBase,
+  failedPageNumbers,
+  ocrConfidenceSummary,
   shouldWarnLowConfidence,
   uploadImage,
   uploadPdf,
   validateImageFile,
   validatePdfFile,
+  type ExtractResult,
   type OcrLanguage,
 } from "@/lib/documents";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
@@ -40,6 +44,17 @@ import {
   saveInvestigation,
 } from "@/lib/investigations";
 import { initialOcrState, ocrReducer } from "@/lib/ocrReview";
+import {
+  approvalCovers,
+  assertAnalysisAllowed,
+  computeGateState,
+  describeActualSource,
+  hashContent,
+  resolveSavePayload,
+  type PrivacyApproval,
+  type PrivacyGateState,
+} from "@/lib/privacyGate";
+import { mapServiceError } from "@/lib/aiErrors";
 
 type InputTab = "paste" | "pdf" | "image";
 
@@ -53,6 +68,19 @@ interface PdfStatus {
   phase: "idle" | "uploading" | "ready" | "error";
   progress: number | null;
   message: string;
+  result: ExtractResult | null;
+}
+
+function pdfSourceCounts(result: ExtractResult): { native: number; ocr: number; failed: number } {
+  const pages = result.page_results ?? [];
+  if (pages.length === 0) {
+    return { native: result.pages, ocr: 0, failed: 0 };
+  }
+  return {
+    native: pages.filter((page) => page.source === "native").length,
+    ocr: pages.filter((page) => page.source === "ocr").length,
+    failed: failedPageNumbers(result).length,
+  };
 }
 
 interface AnalysisResult {
@@ -78,6 +106,18 @@ function createAnalyzer(ai: AI, cloudModel: string): GenerativeModel {
   });
 }
 
+const GATE_STATUS: Record<
+  PrivacyGateState,
+  { tone: "ok" | "bad" | "info" | "idle"; label: string }
+> = {
+  NOT_STARTED: { tone: "idle", label: "Not checked" },
+  SCANNING: { tone: "info", label: "Scanning…" },
+  REVIEW_REQUIRED: { tone: "info", label: "Review in progress" },
+  READY_FOR_APPROVAL: { tone: "info", label: "Ready to approve" },
+  APPROVED: { tone: "ok", label: "Approved for analysis" },
+  INVALIDATED: { tone: "bad", label: "Approval expired — text changed" },
+};
+
 function friendlyError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err);
   if (/403|App Check|app-check/i.test(message)) {
@@ -86,7 +126,7 @@ function friendlyError(err: unknown): string {
       "(see the model playground guide) and try again."
     );
   }
-  return message;
+  return mapServiceError(message) ?? message;
 }
 
 export default function ReviewPage() {
@@ -100,7 +140,9 @@ export default function ReviewPage() {
   });
   const [tab, setTab] = useState<InputTab>("paste");
   const [postingText, setPostingText] = useState(SAMPLE_POSTING);
-  const [pdf, setPdf] = useState<PdfStatus>({ phase: "idle", progress: null, message: "" });
+  const [pdf, setPdf] = useState<PdfStatus>({ phase: "idle", progress: null, message: "", result: null });
+  const [pdfLanguage, setPdfLanguage] = useState<OcrLanguage>("en");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [ocr, dispatchOcr] = useReducer(ocrReducer, undefined, initialOcrState);
   const [running, setRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
@@ -108,12 +150,40 @@ export default function ReviewPage() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [privacyNonce, setPrivacyNonce] = useState(0);
+  const [privacySource, setPrivacySource] = useState("");
+  const [privacyProgress, setPrivacyProgress] = useState<{
+    reviewed: number;
+    total: number;
+  } | null>(null);
+  const [approval, setApproval] = useState<PrivacyApproval | null>(null);
+  const [analysisSnapshot, setAnalysisSnapshot] = useState<{ textHash: string } | null>(
+    null,
+  );
+  const [privacyError, setPrivacyError] = useState<string | null>(null);
 
   const modelRef = useRef<GenerativeModel | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const imageRef = useRef<HTMLInputElement | null>(null);
 
   const configOk = envProbe.missingConfigKeys.length === 0;
+
+  const gateState: PrivacyGateState = computeGateState({
+    hasSource: postingText.trim().length > 0,
+    scanning: false,
+    review: privacyOpen
+      ? {
+          allReviewed:
+            privacyProgress !== null &&
+            (privacyProgress.total === 0 ||
+              privacyProgress.reviewed >= privacyProgress.total),
+        }
+      : null,
+    approval,
+    currentText: postingText,
+  });
+  const analysisAllowed = approvalCovers(approval, postingText);
 
   // Lazily created on first user action so Firebase initializes in event
   // handlers, never in a mount effect.
@@ -151,36 +221,62 @@ export default function ReviewPage() {
   };
 
   const handleFile = async (file: File | undefined) => {
-    if (!file) {
+    if (!file || pdf.phase === "uploading") {
       return;
     }
     const invalid = validatePdfFile(file);
     if (invalid) {
-      setPdf({ phase: "error", progress: null, message: invalid });
+      setPdf({ phase: "error", progress: null, message: invalid, result: null });
       return;
     }
-    setPdf({ phase: "uploading", progress: 0, message: `Uploading ${file.name}…` });
+    setPdfFile(file);
+    setPdf({ phase: "uploading", progress: 0, message: `Uploading ${file.name}…`, result: null });
     try {
-      const extracted = await uploadPdf(file, (fraction) => {
-        setPdf((prev) => ({ ...prev, progress: fraction }));
-      });
-      setPostingText(extracted.text);
-      setTab("paste");
+      const extracted = await uploadPdf(
+        file,
+        (fraction) => {
+          setPdf((prev) => ({ ...prev, progress: fraction }));
+        },
+        pdfLanguage,
+      );
+      const counts = pdfSourceCounts(extracted);
+      const failed = failedPageNumbers(extracted);
       setPdf({
         phase: "ready",
         progress: 1,
         message:
           `Extracted ${extracted.pages} page${extracted.pages === 1 ? "" : "s"} from ` +
-          `${extracted.filename}${extracted.truncated ? " (trimmed to fit)" : ""}. ` +
-          "Review the text below, then analyze.",
+          `${extracted.filename}${extracted.truncated ? " (trimmed to fit)" : ""}: ` +
+          `${counts.native} native, ${counts.ocr} OCR` +
+          (failed.length > 0 ? `, pages ${failed.join(", ")} failed` : "") +
+          ". Review below, then use the text.",
+        result: extracted,
       });
     } catch (err) {
       setPdf({
         phase: "error",
         progress: null,
         message: err instanceof Error ? err.message : String(err),
+        result: null,
       });
+    } finally {
+      if (fileRef.current) {
+        fileRef.current.value = "";
+      }
     }
+  };
+
+  const handleAdoptPdf = () => {
+    if (pdf.phase !== "ready" || !pdf.result || pdf.result.text.trim().length === 0) {
+      return;
+    }
+    setPostingText(pdf.result.text);
+    setTab("paste");
+  };
+
+  const handleDiscardPdf = () => {
+    setPdfFile(null);
+    setPdf({ phase: "idle", progress: null, message: "", result: null });
   };
 
   const handleImageFile = async (file: File | undefined) => {
@@ -218,7 +314,45 @@ export default function ReviewPage() {
     setTab("paste");
   };
 
+  const handlePrivacyProgress = useCallback((reviewed: number, total: number) => {
+    setPrivacyProgress((prev) =>
+      prev && prev.reviewed === reviewed && prev.total === total
+        ? prev
+        : { reviewed, total },
+    );
+  }, []);
+
+  const openPrivacyCheck = () => {
+    if (postingText.trim().length === 0 || running) {
+      return;
+    }
+    setPrivacySource(postingText);
+    setPrivacyProgress(null);
+    setPrivacyError(null);
+    setPrivacyNonce((nonce) => nonce + 1);
+    setPrivacyOpen(true);
+  };
+
+  const handlePrivacyApproved = (next: PrivacyApproval, sanitized: string) => {
+    if (hashContent(postingText) !== hashContent(privacySource)) {
+      setPrivacyError(
+        'The text changed while you were reviewing. Press "Check privacy" again on the current text.',
+      );
+      return;
+    }
+    setApproval(next);
+    setPostingText(sanitized);
+    setPrivacyOpen(false);
+    setPrivacyError(null);
+  };
+
   const handleAnalyze = async () => {
+    try {
+      assertAnalysisAllowed(approval, postingText);
+    } catch (err) {
+      setRunError(err instanceof Error ? err.message : String(err));
+      return;
+    }
     const model = ensureModel();
     if (!model || running) {
       return;
@@ -226,6 +360,7 @@ export default function ReviewPage() {
     setRunning(true);
     setRunError(null);
     setResult(null);
+    setAnalysisSnapshot(null);
     setSaveMessage(null);
     setSavedId(null);
     const started = performance.now();
@@ -236,6 +371,7 @@ export default function ReviewPage() {
       const inferenceSource = String(response.response.inferenceSource ?? "unknown");
       const { data, parseError } = parseReport(rawText);
       setResult({ data, parseError, inferenceSource, latencyMs });
+      setAnalysisSnapshot({ textHash: hashContent(postingText) });
     } catch (err) {
       setRunError(friendlyError(err));
     } finally {
@@ -245,6 +381,15 @@ export default function ReviewPage() {
 
   const handleSave = async () => {
     if (!user || !result?.data || saving) {
+      return;
+    }
+    const resolution = resolveSavePayload({
+      currentText: postingText,
+      approval,
+      analysis: analysisSnapshot,
+    });
+    if (!resolution.ok) {
+      setSaveMessage(resolution.reason);
       return;
     }
     setSaving(true);
@@ -261,7 +406,9 @@ export default function ReviewPage() {
         ownerId: user.uid,
         title,
         status: "reviewed",
-        postingText: postingText.trim(),
+        // Sanitized by construction: resolution only succeeds for the
+        // approved text the report was generated from.
+        postingText: resolution.postingText.trim(),
         report: result.data,
         inferenceSource: result.inferenceSource,
         latencyMs: Math.round(result.latencyMs),
@@ -404,21 +551,40 @@ export default function ReviewPage() {
             <div className="mb-3">
               <ContextualNotice>{UPLOAD_SENSITIVITY_NOTICE}</ContextualNotice>
             </div>
-            <Field
-              label="PDF offer document"
-              htmlFor="pdf-file"
-              hint={`PDF up to 10 MB. Text is extracted by the document service at ${apiBase()}. Scanned PDFs without embedded text are not supported.`}
-              error={pdf.phase === "error" ? pdf.message : null}
-            >
-              <input
-                ref={fileRef}
-                id="pdf-file"
-                type="file"
-                accept=".pdf,application/pdf"
-                onChange={(event) => void handleFile(event.target.files?.[0])}
-                className="w-full text-sm"
-              />
-            </Field>
+            <div className="flex flex-wrap items-end gap-3">
+              <Field label="Document language" htmlFor="pdf-language">
+                <select
+                  id="pdf-language"
+                  value={pdfLanguage}
+                  onChange={(event) =>
+                    setPdfLanguage(event.target.value as OcrLanguage)
+                  }
+                  disabled={pdf.phase === "uploading"}
+                  className="h-10 rounded-md border border-edge bg-card px-3 text-sm"
+                >
+                  {OCR_LANGUAGES.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field
+                label="PDF offer document"
+                htmlFor="pdf-file"
+                hint={`PDF up to 10 MB and 30 pages. Text pages extract directly; scanned pages are OCRed by the document service at ${apiBase()}. Thai and Vietnamese are not supported.`}
+                error={pdf.phase === "error" ? pdf.message : null}
+              >
+                <input
+                  ref={fileRef}
+                  id="pdf-file"
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={(event) => void handleFile(event.target.files?.[0])}
+                  className="w-full text-sm"
+                />
+              </Field>
+            </div>
             {pdf.phase === "uploading" && (
               <div
                 className="mt-2 h-1.5 w-full rounded-full bg-brand-soft"
@@ -438,6 +604,91 @@ export default function ReviewPage() {
               <p className="mt-2 text-sm" role="status">
                 {pdf.message}
               </p>
+            )}
+            {pdf.phase === "ready" && pdf.result && (
+              <div className="mt-3 flex flex-col gap-2">
+                {(() => {
+                  const summary = ocrConfidenceSummary(pdf.result);
+                  if (!summary) {
+                    return null;
+                  }
+                  const warn =
+                    summary.meanConfidence < 0.9 || summary.lowLines > 0;
+                  return (
+                    <StatusLabel tone={warn ? "bad" : "ok"}>
+                      {warn
+                        ? `OCR on ${summary.ocrPages} page${summary.ocrPages === 1 ? "" : "s"} ` +
+                          `(mean ${Math.round(summary.meanConfidence * 100)}%, ` +
+                          `${summary.lowLines} low-confidence lines). Check figures carefully — ` +
+                          "a high score does not guarantee correctness."
+                        : `OCR mean confidence ${Math.round(summary.meanConfidence * 100)}% ` +
+                          `across ${summary.ocrPages} page${summary.ocrPages === 1 ? "" : "s"}. ` +
+                          "Always verify figures before analysis."}
+                    </StatusLabel>
+                  );
+                })()}
+                {failedPageNumbers(pdf.result).length > 0 && (
+                  <p role="alert" className="text-sm leading-6">
+                    <span className="font-semibold">Pages {failedPageNumbers(pdf.result).join(", ")} failed
+                    extraction and were excluded.</span>{" "}
+                    You can retry, or continue with the available pages.
+                  </p>
+                )}
+                {(pdf.result.page_results ?? []).length > 0 && (
+                  <ul className="flex max-h-44 flex-col gap-1 overflow-auto" aria-label="Per-page extraction results">
+                    {(pdf.result.page_results ?? []).map((page) => (
+                      <li key={page.page} className="flex flex-wrap items-center gap-2 text-sm">
+                        <StatusLabel
+                          tone={
+                            page.status === "failed"
+                              ? "bad"
+                              : page.source === "ocr"
+                                ? "info"
+                                : page.source === "native_empty"
+                                  ? "idle"
+                                  : "ok"
+                          }
+                        >
+                          {`Page ${page.page}: ${page.source === "native" ? "Text" : page.source === "ocr" ? `OCR${page.mean_confidence !== null ? ` ${Math.round(page.mean_confidence * 100)}%` : ""}` : page.source === "native_empty" ? "Blank" : "Failed"}`}
+                        </StatusLabel>
+                        {page.warning && <span className="text-xs text-muted">{page.warning}</span>}
+                        {page.status === "failed" && page.failure_code && (
+                          <span className="text-xs text-muted">({page.failure_code})</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={handleAdoptPdf}
+                    disabled={pdf.result.text.trim().length === 0}
+                  >
+                    Use this text
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => void handleFile(pdfFile ?? undefined)}
+                    disabled={!pdfFile}
+                  >
+                    Retry
+                  </Button>
+                  <Button variant="ghost" onClick={handleDiscardPdf}>
+                    Discard
+                  </Button>
+                </div>
+              </div>
+            )}
+            {pdf.phase === "error" && pdfFile && (
+              <div className="mt-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => void handleFile(pdfFile ?? undefined)}
+                >
+                  Retry
+                </Button>
+              </div>
             )}
           </div>
         )}
@@ -553,9 +804,24 @@ export default function ReviewPage() {
         )}
 
         <div className="mt-4">
-          <Button onClick={() => void handleAnalyze()} disabled={!configOk || running || postingText.trim().length === 0}>
+          <Button
+            onClick={() => void handleAnalyze()}
+            disabled={
+              !configOk ||
+              running ||
+              postingText.trim().length === 0 ||
+              !analysisAllowed
+            }
+          >
             {running ? "Analyzing…" : "Analyze opportunity"}
           </Button>
+          {!analysisAllowed && postingText.trim().length > 0 && (
+            <p className="mt-2 text-sm text-muted" role="note">
+              {gateState === "INVALIDATED"
+                ? "The text changed since approval — run Privacy Check again before analysis."
+                : "Run Privacy Check below and approve the text before analysis."}
+            </p>
+          )}
         </div>
         <p className="mt-2 text-sm text-muted" role="note">
           {REVIEW_PROCESSING_NOTICE}
@@ -567,6 +833,55 @@ export default function ReviewPage() {
           <p role="alert" className="mt-2 text-sm leading-6">
             <span className="font-semibold">Analysis failed:</span> {runError}
           </p>
+        )}
+      </Card>
+
+      <Card
+        title="Privacy Check"
+        description="Required before analysis: review what looks personal, clean the text, and approve exactly what may be analyzed."
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusLabel tone={GATE_STATUS[gateState].tone}>
+            {GATE_STATUS[gateState].label}
+          </StatusLabel>
+          {gateState === "APPROVED" && approval && (
+            <span className="text-sm text-muted">
+              {approval.redactedCount} redacted · {approval.replacedCount} replaced ·{" "}
+              {approval.retainedCount} kept
+            </span>
+          )}
+        </div>
+        {privacyError && (
+          <p role="alert" className="mt-2 text-sm leading-6">
+            {privacyError}
+          </p>
+        )}
+        {!privacyOpen ? (
+          <div className="mt-3">
+            <Button
+              variant="secondary"
+              onClick={openPrivacyCheck}
+              disabled={running || postingText.trim().length === 0}
+            >
+              {approval ? "Check privacy again" : "Check privacy"}
+            </Button>
+            {postingText.trim().length === 0 && (
+              <p className="mt-2 text-sm text-muted">
+                Add posting text above first — paste it, upload a PDF, or upload an image.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="mt-3">
+            <PrivacyCheckPanel
+              key={privacyNonce}
+              sourceText={privacySource}
+              disclosureMode="prefer-on-device"
+              onApproved={handlePrivacyApproved}
+              onCancel={() => setPrivacyOpen(false)}
+              onProgress={handlePrivacyProgress}
+            />
+          </div>
         )}
       </Card>
 
@@ -584,6 +899,12 @@ export default function ReviewPage() {
         )}
         {result?.data && <AnalysisResults report={result.data} />}
         {result?.data && (
+          <p className="mt-2 text-sm text-muted" role="status">
+            {describeActualSource(result.inferenceSource).label}
+          </p>
+        )}
+        {result?.data && (
+          <>
           <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-edge pt-4">
             <Button onClick={() => void handleSave()} disabled={saving || savedId !== null}>
               {saving ? "Saving…" : savedId ? "Saved" : "Save as investigation"}
@@ -599,6 +920,11 @@ export default function ReviewPage() {
               </span>
             )}
           </div>
+          <p className="mt-2 text-sm text-muted">
+            Saves the approved text analyzed above, plus its report. Nothing is saved
+            until you press this button.
+          </p>
+          </>
         )}
       </Card>
     </div>

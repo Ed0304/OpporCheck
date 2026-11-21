@@ -1,4 +1,4 @@
-"""Direct image OCR for opportunity review uploads (Phase 1).
+"""Direct image OCR for opportunity review uploads (Phase 1 + Phase 2).
 
 Stateless request handling over process-wide lazy OCR engines: validates
 the upload, decodes the image in memory, runs PaddleOCR 3.x CPU
@@ -6,8 +6,11 @@ inference, and returns text plus aggregate confidence. Nothing is stored,
 no document-derived files are written, and no debug image/JSON output is
 ever enabled.
 
-Explicitly NOT supported: scanned-PDF OCR (no page rendering here),
-Thai, and Vietnamese (no suitable tested model; rejected with 400).
+Phase 2 reuses the engine singleton, single-flight slot, and bounded
+prediction below for hybrid scanned-PDF pages (see documents.py).
+
+Explicitly NOT supported: Thai and Vietnamese (no suitable tested model;
+rejected with 400).
 """
 
 from __future__ import annotations
@@ -172,6 +175,11 @@ def _ensure_cache_dir() -> None:
         ) from exc
 
 
+def get_engine(det_model: str, rec_model: str) -> object:
+    """Public engine accessor for hybrid PDF pages (see documents.py)."""
+    return _load_engine(det_model, rec_model)
+
+
 def _load_engine(det_model: str, rec_model: str) -> object:
     """Returns the cached engine for one model pair, loading it on demand."""
     key = (det_model, rec_model)
@@ -228,6 +236,47 @@ def _check_mime_and_extension(
         raise OCRError("The file was sent as PNG but is not PNG data.")
 
 
+def run_ocr_job(job_fn, timeout: float):
+    """Runs one OCR job (single image or a PDF's OCR pages) under the slot.
+
+    The job function runs on a daemon worker: at most one OCR job executes
+    at a time (extras fail fast with 429) and the join deadline bounds
+    total work (504 on expiry). A timed-out straggler keeps the slot until
+    it finishes. Engine exceptions are mapped to user-safe OCRErrors.
+    """
+    if not _OCR_SLOT.acquire(blocking=False):
+        raise OCRError(
+            "Another OCR request is still running. Please wait and try again.",
+            status_code=429,
+        )
+    box: dict[str, object] = {}
+
+    def _work() -> None:
+        try:
+            box["result"] = job_fn()
+        except OCRError as exc:
+            box["error"] = exc
+        except Exception as exc:  # never leak engine internals to callers
+            box["error"] = OCRError("OCR processing failed. Please try again.", 500)
+            box["cause"] = exc
+        finally:
+            _OCR_SLOT.release()
+
+    worker = threading.Thread(target=_work, daemon=True)
+    worker.start()
+    worker.join(timeout)
+    if worker.is_alive():
+        # The straggler keeps the slot until it finishes, so further
+        # requests fail fast with 429 instead of piling on.
+        raise OCRError(
+            "OCR processing timed out. Please try again with a smaller file.",
+            status_code=504,
+        )
+    if "error" in box:
+        raise box["error"]  # type: ignore[misc]
+    return box["result"]
+
+
 def extract_image_text(
     filename: str,
     content: bytes,
@@ -250,36 +299,10 @@ def extract_image_text(
     det_model, rec_model = MODEL_BY_LANGUAGE[chosen]
     engine = _load_engine(det_model, rec_model)
 
-    if not _OCR_SLOT.acquire(blocking=False):
-        raise OCRError(
-            "Another OCR request is still running. Please wait and try again.",
-            status_code=429,
-        )
-    box: dict[str, object] = {}
-
-    def _work() -> None:
-        try:
-            box["result"] = _run_predict(engine, image)
-        except OCRError as exc:
-            box["error"] = exc
-        except Exception as exc:  # never leak engine internals to callers
-            box["error"] = OCRError("OCR processing failed. Please try again.", 500)
-            box["cause"] = exc
-        finally:
-            _OCR_SLOT.release()
-
-    worker = threading.Thread(target=_work, daemon=True)
-    worker.start()
-    worker.join(timeout if timeout is not None else OCR_TIMEOUT_SECONDS)
-    if worker.is_alive():
-        # The straggler keeps the slot until it finishes, so further
-        # requests fail fast with 429 instead of piling on.
-        raise OCRError(
-            "OCR processing timed out. Please try a smaller image.", status_code=504
-        )
-    if "error" in box:
-        raise box["error"]  # type: ignore[misc]
-    texts, scores = box["result"]  # type: ignore[misc]
+    texts, scores = run_ocr_job(
+        lambda: _run_predict(engine, image),
+        timeout if timeout is not None else OCR_TIMEOUT_SECONDS,
+    )
 
     lines = [line for line in (t.strip() for t in texts) if line]
     text = "\n".join(lines).strip()

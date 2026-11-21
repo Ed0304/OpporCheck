@@ -13,6 +13,7 @@ import {
   OCR_LANGUAGES,
   apiBase,
   parseOcrResponse,
+  registerBackendTokenProvider,
   shouldWarnLowConfidence,
   uploadImage,
   uploadPdf,
@@ -31,6 +32,16 @@ function realFile(name: string, type: string, size: number): File {
   return new File([new Uint8Array(size)], name, { type });
 }
 
+/**
+ * Lets async upload setup (token resolution, XHR wiring) finish before the
+ * test drives the fake XHR. Real behavior is async; tests must wait for it.
+ */
+async function settled(): Promise<void> {
+  for (let i = 0; i < 50; i += 1) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+}
+
 class FakeXhr implements XhrLike {
   upload: XhrLike["upload"] = { onprogress: null };
   onload: (() => void) | null = null;
@@ -39,9 +50,14 @@ class FakeXhr implements XhrLike {
   responseText = "";
   opened: Array<[string, string]> = [];
   sent: unknown[] = [];
+  headers: Record<string, string> = {};
 
   open(method: string, url: string): void {
     this.opened.push([method, url]);
+  }
+
+  setRequestHeader(name: string, value: string): void {
+    this.headers[name] = value;
   }
 
   send(body: unknown): void {
@@ -155,6 +171,7 @@ test("uploadImage posts to the OCR endpoint and resolves parsed results", async 
   const seen: Array<number | null> = [];
   const file = realFile("scan.png", "image/png", 500);
   const pending = uploadImage(file, "ms", (fraction) => seen.push(fraction), () => xhr);
+  await settled();
   xhr.progress(250, 500);
   xhr.respond(200, JSON.stringify(ocrPayload({ language: "ms" })));
   const result = await pending;
@@ -173,6 +190,7 @@ test("uploadImage rejects with the server error message", async () => {
     () => {},
     () => xhr,
   );
+  await settled();
   xhr.respond(400, JSON.stringify({ error: "Thai is not supported for OCR." }));
   await assert.rejects(pending, /Thai is not supported/);
 });
@@ -185,6 +203,7 @@ test("uploadImage rejects unreadable responses and network failures", async () =
     () => {},
     () => bad,
   );
+  await settled();
   bad.respond(200, "not json{{{");
   await assert.rejects(pendingBad, /unreadable response/);
 
@@ -195,8 +214,72 @@ test("uploadImage rejects unreadable responses and network failures", async () =
     () => {},
     () => offline,
   );
+  await settled();
   offline.fail();
   await assert.rejects(pendingOffline, /Cannot reach the document service/);
+});
+
+test("uploads attach the Firebase ID token when signed in", async () => {
+  try {
+    registerBackendTokenProvider(async () => "tok-upload");
+    const imageXhr = new FakeXhr();
+    const imagePending = uploadImage(
+      realFile("scan.png", "image/png", 500),
+      "en",
+      () => {},
+      () => imageXhr,
+    );
+    await settled();
+    imageXhr.respond(200, JSON.stringify(ocrPayload()));
+    await imagePending;
+    assert.equal(imageXhr.headers["Authorization"], "Bearer tok-upload");
+
+    const pdfXhr = new FakeXhr();
+    const pdfPending = uploadPdf(
+      realFile("doc.pdf", "application/pdf", 500),
+      () => {},
+      undefined,
+      () => pdfXhr,
+    );
+    await settled();
+    pdfXhr.respond(
+      200,
+      JSON.stringify({ text: "x", pages: 1, truncated: false, page_texts: ["x"] }),
+    );
+    await pdfPending;
+    assert.equal(pdfXhr.headers["Authorization"], "Bearer tok-upload");
+  } finally {
+    registerBackendTokenProvider(null);
+  }
+});
+
+test("upload 401 surfaces the re-sign-in message", async () => {
+  registerBackendTokenProvider(null);
+  const xhr = new FakeXhr();
+  const pending = uploadImage(
+    realFile("scan.png", "image/png", 500),
+    "en",
+    () => {},
+    () => xhr,
+  );
+  await settled();
+  xhr.respond(401, JSON.stringify({ error: "Missing or malformed Authorization header." }));
+  await assert.rejects(pending, /sign in again/);
+});
+
+test("uploads omit the header when signed out", async () => {
+  registerBackendTokenProvider(null);
+  const xhr = new FakeXhr();
+  const pending = uploadImage(
+    realFile("scan.png", "image/png", 500),
+    "en",
+    () => {},
+    () => xhr,
+  );
+  await settled();
+  xhr.respond(200, JSON.stringify(ocrPayload()));
+  await pending;
+  assert.equal(xhr.headers["Authorization"], undefined);
 });
 
 test("PDF workflow regression: validation and client entry points intact", () => {

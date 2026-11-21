@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
+    "build:turbopack": "next build",
     "start": "next start",
     "lint": "eslint",
     "test:rules": "npx -y firebase-tools@latest emulators:exec --config ../../firebase.json --only firestore \"node --test test/rules/firestore.rules.test.mjs\"",

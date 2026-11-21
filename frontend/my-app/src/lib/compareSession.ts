@@ -8,6 +8,12 @@ import type {
   ContractDocumentType,
   PromiseToPaperFinding,
 } from "./contractTypes";
+import {
+  PrivacyGateError,
+  approvalCovers,
+  hashContent,
+  type PrivacyApproval,
+} from "./privacyGate";
 
 export type CompareDocSource = "pdf" | "pasted";
 
@@ -20,6 +26,24 @@ export interface CompareDocumentInput {
   pages: string[];
   /** True when extraction input was trimmed to fit model limits. */
   wasTrimmed: boolean;
+  /** 1-based numbers of PDF pages that failed extraction (empty when none). */
+  failedPages?: number[];
+}
+
+/** Limitation line for a document with failed pages, or null when none failed. */
+export function failedPagesLimitation(
+  fileName: string,
+  failedPages: number[] | undefined,
+): string | null {
+  if (!failedPages || failedPages.length === 0) {
+    return null;
+  }
+  const list = [...failedPages].sort((a, b) => a - b).join(", ");
+  const singular = failedPages.length === 1;
+  return (
+    `${fileName}: page${singular ? "" : "s"} ${list} could not ` +
+    `be extracted and ${singular ? "was" : "were"} excluded from comparison.`
+  );
 }
 
 export function toContractText(input: CompareDocumentInput): ContractDocumentText {
@@ -29,6 +53,143 @@ export function toContractText(input: CompareDocumentInput): ContractDocumentTex
     fileName: input.fileName,
     pages: input.pages,
   };
+}
+
+/** Minimal shape for per-document extraction source tracking. */
+export interface ExtractionRunState {
+  status: "ready" | "extracting" | "extracted" | "error";
+  inferenceSource: string | null;
+  error: string | null;
+}
+
+/** Starts a run: clears any source left by an earlier run (no stale display). */
+export function beginExtractionRun<T extends ExtractionRunState>(doc: T): T {
+  return { ...doc, status: "extracting", inferenceSource: null, error: null };
+}
+
+/** Records a finished run with the verbatim SDK-reported source. */
+export function completeExtractionRun<T extends ExtractionRunState>(
+  doc: T,
+  source: unknown,
+): T {
+  return {
+    ...doc,
+    status: "extracted",
+    inferenceSource: typeof source === "string" ? source : "unknown",
+  };
+}
+
+/** Records a failed run; the source stays null so nothing stale shows. */
+export function failExtractionRun<T extends ExtractionRunState>(
+  doc: T,
+  message: string,
+): T {
+  return { ...doc, status: "error", inferenceSource: null, error: message };
+}
+
+/** Per-page privacy state, parallel to CompareDocumentInput.pages. */
+export interface DocPrivacyState {
+  approvals: Array<PrivacyApproval | null>;
+  sanitized: string[];
+  /** Hash of each page's source text at approval time (staleness check). */
+  sourceHashes: string[];
+}
+
+export function emptyDocPrivacy(pageCount: number): DocPrivacyState {
+  return {
+    approvals: Array.from({ length: pageCount }, () => null),
+    sanitized: [],
+    sourceHashes: [],
+  };
+}
+
+/**
+ * Records one page approval. The approval must cover the sanitized text
+ * and the source snapshot must match the page being approved.
+ */
+export function recordPageApproval(
+  privacy: DocPrivacyState,
+  pageCount: number,
+  index: number,
+  approval: PrivacyApproval,
+  sanitizedText: string,
+  sourceText: string,
+): DocPrivacyState {
+  if (index < 0 || index >= pageCount) {
+    throw new PrivacyGateError("malformed", "Page index is out of range.");
+  }
+  if (!approvalCovers(approval, sanitizedText)) {
+    throw new PrivacyGateError("mismatch", "Approval does not match the cleaned text.");
+  }
+  const approvals = [...privacy.approvals];
+  while (approvals.length < pageCount) {
+    approvals.push(null);
+  }
+  approvals[index] = approval;
+  const sanitized = [...privacy.sanitized];
+  sanitized[index] = sanitizedText;
+  const sourceHashes = [...privacy.sourceHashes];
+  sourceHashes[index] = hashContent(sourceText);
+  return { approvals, sanitized, sourceHashes };
+}
+
+/** One page is live when its snapshot matches and its approval covers its sanitized text. */
+export function isPageApproved(
+  privacy: DocPrivacyState,
+  pages: string[],
+  index: number,
+): boolean {
+  const page = pages[index];
+  if (page === undefined) {
+    return false;
+  }
+  return (
+    privacy.sourceHashes[index] === hashContent(page) &&
+    index < privacy.sanitized.length &&
+    approvalCovers(privacy.approvals[index] ?? null, privacy.sanitized[index] ?? "")
+  );
+}
+
+/**
+ * Pages whose approval is live: the page still matches its approval-time
+ * snapshot AND the stored approval covers the stored sanitized text.
+ */
+export function approvedPageCount(
+  privacy: DocPrivacyState,
+  pages: string[],
+): number {
+  let count = 0;
+  for (let index = 0; index < pages.length; index += 1) {
+    if (isPageApproved(privacy, pages, index)) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+export function isDocPrivacyApproved(
+  privacy: DocPrivacyState,
+  pages: string[],
+): boolean {
+  return pages.length > 0 && approvedPageCount(privacy, pages) === pages.length;
+}
+
+/**
+ * Returns the sanitized pages for AI input. Throws PrivacyGateError unless
+ * every page carries an approval covering its exact current text.
+ */
+export function approvedPagesOrThrow(
+  privacy: DocPrivacyState,
+  pages: string[],
+  fileName: string,
+): string[] {
+  if (!isDocPrivacyApproved(privacy, pages)) {
+    throw new PrivacyGateError(
+      "missing",
+      `Privacy Check is incomplete for ${fileName}: approve every page first.`,
+    );
+  }
+  return privacy.sanitized.slice(0, pages.length);
 }
 
 export interface FindingSummary {

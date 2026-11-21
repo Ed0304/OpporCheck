@@ -11,6 +11,14 @@ import { useMemo, useState } from "react";
 import { Button, Card, EmptyState, Spinner, StatusLabel } from "@/components/ui";
 import Disclaimer, { ContextualNotice } from "@/components/Disclaimer";
 import LanguageToggle from "@/components/LanguageToggle";
+import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
+import {
+  approvalCovers,
+  describeActualSource,
+  hashContent,
+  type PrivacyApproval,
+} from "@/lib/privacyGate";
+import { mapServiceError } from "@/lib/aiErrors";
 import { useLang } from "@/lib/lang";
 import { format, getStrings } from "@/lib/strings";
 import { INVESTIGATION_CONTEXT_NOTICE } from "@/lib/disclaimer";
@@ -128,7 +136,7 @@ function friendlyError(err: unknown): string {
       "(see the model playground guide) and try again."
     );
   }
-  return message;
+  return mapServiceError(message) ?? message;
 }
 
 export default function EvidenceInvestigation({
@@ -158,8 +166,38 @@ export default function EvidenceInvestigation({
   const [findingIssues, setFindingIssues] = useState<string[]>([]);
   const [uncovered, setUncovered] = useState<OfficialSourceCategory[]>([]);
   const [runError, setRunError] = useState<string | null>(null);
+  const [inferenceSource, setInferenceSource] = useState<string | null>(null);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [privacyNonce, setPrivacyNonce] = useState(0);
+  const [privacySource, setPrivacySource] = useState("");
+  const [approval, setApproval] = useState<PrivacyApproval | null>(null);
+  const [sanitizedPosting, setSanitizedPosting] = useState<string | null>(null);
+  const [privacySourceHash, setPrivacySourceHash] = useState<string | null>(null);
 
   const running = phase === "retrieving" || phase === "comparing";
+
+  // The run is allowed only on approved cleaned text whose source snapshot
+  // still matches the stored posting. Displayed questions stay derived
+  // from the stored text (local display of the user's own data); everything
+  // transmitted (retrieval questions, comparison prompt) uses the run plan.
+  const effectiveSanitized =
+    sanitizedPosting !== null &&
+    privacySourceHash === hashContent(postingText) &&
+    approval !== null &&
+    approvalCovers(approval, sanitizedPosting)
+      ? sanitizedPosting
+      : null;
+
+  const handlePrivacyApproved = (next: PrivacyApproval, sanitized: string) => {
+    if (hashContent(postingText) !== hashContent(privacySource)) {
+      setRunError("The posting changed while you were reviewing. Check privacy again.");
+      return;
+    }
+    setApproval(next);
+    setSanitizedPosting(sanitized);
+    setPrivacySourceHash(hashContent(privacySource));
+    setPrivacyOpen(false);
+  };
 
   const changeCorridor = (code: CorridorCode) => {
     setCorridorCode(code);
@@ -173,7 +211,26 @@ export default function EvidenceInvestigation({
   };
 
   const handleRun = async () => {
-    if (running || plan.items.length === 0) {
+    if (running) {
+      return;
+    }
+    if (effectiveSanitized === null) {
+      setPhase("error");
+      setStatus("");
+      setRunError("Approve the Privacy Check for this posting before running the evidence check.");
+      return;
+    }
+    const runPlan = buildInvestigationPlan(
+      report,
+      effectiveSanitized,
+      undefined,
+      undefined,
+      corridorCode,
+    );
+    if (runPlan.items.length === 0) {
+      setPhase("error");
+      setStatus("");
+      setRunError("The approved text produced no investigation questions to check.");
       return;
     }
     setRunError(null);
@@ -181,12 +238,13 @@ export default function EvidenceInvestigation({
     setFindings([]);
     setFindingIssues([]);
     setUncovered([]);
+    setInferenceSource(null);
     setPhase("retrieving");
     setStatus("Contacting official sources…");
     try {
       const catalog = await listOfficialSources(corridorCode);
-      const categories = [...new Set(plan.items.map((item) => item.source_category))];
-      const questions = plan.items.map((item) => item.research_question);
+      const categories = [...new Set(runPlan.items.map((item) => item.source_category))];
+      const questions = runPlan.items.map((item) => item.research_question);
       const matched = sourceIdsForCategories(catalog, categories);
       // Origin-country context: categories the destination catalog does not
       // cover (such as origin-protection) resolve against the Indonesian
@@ -234,7 +292,8 @@ export default function EvidenceInvestigation({
       setStatus("Comparing the posting's claims against the retrieved excerpts…");
       const client = getFirebaseClient();
       const model = createComparisonModel(client.ai, client.cloudModelName);
-      const response = await model.generateContent(buildComparisonPrompt(plan.items, merged.sources));
+      const response = await model.generateContent(buildComparisonPrompt(runPlan.items, merged.sources));
+      setInferenceSource(String(response.response.inferenceSource ?? "unknown"));
       const parsed = parseEvidenceComparison(response.response.text(), merged.sources);
       setFindings(parsed.findings);
       setFindingIssues(parsed.issues);
@@ -348,8 +407,47 @@ export default function EvidenceInvestigation({
               </li>
             ))}
           </ul>
+          <div className="mt-4 rounded-md border border-edge p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusLabel tone={effectiveSanitized !== null ? "ok" : "idle"}>
+                {effectiveSanitized !== null ? "Privacy approved" : "Privacy check required"}
+              </StatusLabel>
+            </div>
+            {!privacyOpen ? (
+              <div className="mt-2">
+                <Button
+                  variant="secondary"
+                  disabled={running}
+                  onClick={() => {
+                    setPrivacySource(postingText);
+                    setPrivacyNonce((nonce) => nonce + 1);
+                    setPrivacyOpen(true);
+                  }}
+                >
+                  Check privacy
+                </Button>
+                <p className="mt-2 text-sm text-muted">
+                  The evidence check sends posting quotes to AI. Approve the cleaned
+                  text first; the check runs on that text only.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-2">
+                <PrivacyCheckPanel
+                  key={privacyNonce}
+                  sourceText={privacySource}
+                  disclosureMode="prefer-on-device"
+                  onApproved={handlePrivacyApproved}
+                  onCancel={() => setPrivacyOpen(false)}
+                />
+              </div>
+            )}
+          </div>
           <div className="mt-4">
-            <Button onClick={() => void handleRun()} disabled={!configOk || running}>
+            <Button
+              onClick={() => void handleRun()}
+              disabled={!configOk || running || effectiveSanitized === null}
+            >
               {running ? "Investigating…" : phase === "idle" ? "Run evidence check" : "Run again"}
             </Button>
           </div>
@@ -425,6 +523,11 @@ export default function EvidenceInvestigation({
               <h3 id="oc-findings" className="font-semibold">
                 Findings ({findings.length})
               </h3>
+              {inferenceSource !== null && (
+                <p className="mt-1 text-sm text-muted" role="status">
+                  Comparison {describeActualSource(inferenceSource).label.toLowerCase()}
+                </p>
+              )}
               <p className="mt-1 text-sm leading-6 text-muted">
                 Quotes are copied from the retrieved pages; each assessment is an AI-generated
                 interpretation of one quote, not a verdict on the offer.

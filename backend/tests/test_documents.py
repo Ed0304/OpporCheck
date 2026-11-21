@@ -140,11 +140,12 @@ class PageExtractionTests(unittest.TestCase):
             extract_pdf_text("scanned.pdf", make_pdf(["", ""]))
         self.assertEqual(ctx.exception.status_code, 422)
 
-    def test_scanned_image_only_pdfs_are_reported_as_unsupported(self):
-        # A blank page carries no text: same signal as a scanned image.
-        # OCR is NOT implemented; the error must say how to proceed.
+    def test_truly_empty_pdfs_are_rejected_with_guidance(self):
+        # Blank pages with no images are native_empty (no OCR attempted);
+        # with nothing usable anywhere, the error must say how to proceed.
+        # Scanned-image behavior moved to test_hybrid_pdf.py (Phase 2).
         with self.assertRaises(DocumentError) as ctx:
-            extract_pdf_text("scan.pdf", make_pdf([""]))
+            extract_pdf_text("blank.pdf", make_pdf([""]))
         message = str(ctx.exception).lower()
         self.assertIn("no extractable text", message)
         self.assertIn("paste the text", message)

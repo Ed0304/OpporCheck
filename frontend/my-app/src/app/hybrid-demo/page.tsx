@@ -21,6 +21,14 @@ import {
   opportunitySchema,
   type OpportunityAnalysis,
 } from "@/lib/opportunityAnalysis";
+import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
+import {
+  approvalCovers,
+  assertAnalysisAllowed,
+  hashContent,
+  type PrivacyApproval,
+} from "@/lib/privacyGate";
+import { mapServiceError } from "@/lib/aiErrors";
 
 type DemoMode = "prefer-on-device" | "only-in-cloud";
 type DeviceState = "idle" | "initializing" | "ready" | "error";
@@ -124,7 +132,7 @@ function friendlyError(err: unknown): string {
       "Register a debug token for localhost (see README section below) or check the reCAPTCHA Enterprise key."
     );
   }
-  return message;
+  return mapServiceError(message) ?? message;
 }
 
 function StatusDot({ tone }: { tone: "ok" | "warn" | "bad" | "idle" }) {
@@ -174,6 +182,10 @@ export default function HybridDemoPage() {
   const [running, setRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
   const [result, setResult] = useState<RunResult | null>(null);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [privacyNonce, setPrivacyNonce] = useState(0);
+  const [privacySource, setPrivacySource] = useState("");
+  const [approval, setApproval] = useState<PrivacyApproval | null>(null);
 
   const hybridRef = useRef<GenerativeModel | null>(null);
   const cloudRef = useRef<GenerativeModel | null>(null);
@@ -227,7 +239,23 @@ export default function HybridDemoPage() {
     }
   };
 
+  const handlePrivacyApproved = (next: PrivacyApproval, sanitized: string) => {
+    if (hashContent(opportunityText) !== hashContent(privacySource)) {
+      setRunError("The text changed while you were reviewing. Check privacy again.");
+      return;
+    }
+    setApproval(next);
+    setOpportunityText(sanitized);
+    setPrivacyOpen(false);
+  };
+
   const handleAnalyze = async () => {
+    try {
+      assertAnalysisAllowed(approval, opportunityText);
+    } catch (err) {
+      setRunError(err instanceof Error ? err.message : String(err));
+      return;
+    }
     const model = mode === "prefer-on-device" ? hybridRef.current : cloudRef.current;
     if (!model || running) {
       return;
@@ -435,10 +463,47 @@ export default function HybridDemoPage() {
             rows={8}
             className="mt-1 w-full rounded-md border border-zinc-300 bg-white p-3 font-mono text-sm leading-6 dark:border-zinc-700 dark:bg-zinc-900"
           />
+          <div className="mt-3 rounded-md border border-zinc-300 p-3 dark:border-zinc-700">
+            <p className="text-sm font-medium">
+              Privacy Check{" "}
+              <span className="font-normal text-zinc-600 dark:text-zinc-400">
+                {approvalCovers(approval, opportunityText) ? "(approved)" : "(required)"}
+              </span>
+            </p>
+            {!privacyOpen ? (
+              <button
+                type="button"
+                disabled={running || opportunityText.trim().length === 0}
+                onClick={() => {
+                  setPrivacySource(opportunityText);
+                  setPrivacyNonce((nonce) => nonce + 1);
+                  setPrivacyOpen(true);
+                }}
+                className="mt-2 h-9 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+              >
+                Check privacy
+              </button>
+            ) : (
+              <div className="mt-2">
+                <PrivacyCheckPanel
+                  key={privacyNonce}
+                  sourceText={privacySource}
+                  disclosureMode={mode}
+                  onApproved={handlePrivacyApproved}
+                  onCancel={() => setPrivacyOpen(false)}
+                />
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={handleAnalyze}
-            disabled={!clientReady || running || opportunityText.trim().length === 0}
+            disabled={
+              !clientReady ||
+              running ||
+              opportunityText.trim().length === 0 ||
+              !approvalCovers(approval, opportunityText)
+            }
             className="mt-3 h-10 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
           >
             {running ? "Analyzing…" : `Analyze (${MODE_LABEL[mode]})`}

@@ -8,6 +8,7 @@ import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import { getAI, GoogleAIBackend, type AI } from "firebase/ai";
 import { getAuth, type Auth } from "firebase/auth";
+import { registerBackendTokenProvider } from "./documents";
 
 export type AppCheckStatus = "configured" | "missing-site-key";
 
@@ -120,3 +121,27 @@ export function probeFirebaseConfig(): { missingConfigKeys: string[]; cloudModel
   const { missing, cloudModelName } = readEnv();
   return { missingConfigKeys: missing, cloudModelName };
 }
+
+/**
+ * Resolves the current user's Firebase ID token for backend calls, or null
+ * when signed out, unconfigured, or failing. Never throws, never stores.
+ * The SDK caches the token and refreshes it on expiry — no forced refresh.
+ */
+function currentUserIdToken(): Promise<string | null> {
+  try {
+    const user = getFirebaseAuth().currentUser;
+    if (!user) {
+      return Promise.resolve(null);
+    }
+    return user.getIdToken().then(
+      (token) => token || null,
+      () => null,
+    );
+  } catch {
+    return Promise.resolve(null);
+  }
+}
+
+// Browser runtime wiring (this module never loads in node unit tests):
+// backend document/source clients resolve the token per request.
+registerBackendTokenProvider(currentUserIdToken);

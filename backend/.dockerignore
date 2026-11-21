@@ -1,0 +1,13 @@
+# Keep the production image lean and secret-free.
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+tests/
+.pytest_cache/
+.mypy_cache/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
