@@ -1,15 +1,18 @@
-// Shared UI primitives: restrained cards, buttons, form fields, and
-// status labels. Status is always text, never color alone.
+// Shared UI primitives: restrained cards, buttons, form fields,
+// evidence quotes, and status labels. Status is always text, never
+// color alone.
 
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 const BUTTON_STYLES: Record<ButtonVariant, string> = {
-  primary: "bg-brand text-white hover:bg-brand-strong",
+  primary: "bg-brand text-on-action hover:bg-brand-strong",
   secondary: "border border-edge bg-card text-ink hover:bg-brand-soft",
   ghost: "text-ink hover:bg-brand-soft",
-  danger: "border border-red-300 text-red-700 hover:bg-red-50",
+  danger:
+    "border border-red-300 text-red-700 hover:bg-red-50 " +
+    "dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/50",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -57,6 +60,15 @@ export function Card({
   );
 }
 
+/** Quoted evidence: document excerpts and retrieved source quotes. */
+export function EvidenceQuote({ children }: { children: ReactNode }) {
+  return (
+    <blockquote className="mt-2 border-l-2 border-evidence/70 pl-3 text-sm italic leading-6">
+      {children}
+    </blockquote>
+  );
+}
+
 export function Field({
   label,
   htmlFor,
@@ -78,7 +90,7 @@ export function Field({
       <div className="mt-1">{children}</div>
       {hint && !error && <p className="mt-1 text-sm text-muted">{hint}</p>}
       {error && (
-        <p role="alert" className="mt-1 text-sm font-medium text-red-700">
+        <p role="alert" className="mt-1 text-sm font-medium text-red-700 dark:text-red-300">
           {error}
         </p>
       )}
@@ -95,7 +107,7 @@ export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
   );
 }
 
-export type StatusTone = "ok" | "warn" | "bad" | "info" | "idle";
+export type StatusTone = "ok" | "warn" | "bad" | "info" | "idle" | "evidence";
 
 const DOT: Record<StatusTone, string> = {
   ok: "bg-emerald-600",
@@ -103,6 +115,7 @@ const DOT: Record<StatusTone, string> = {
   bad: "bg-red-600",
   info: "bg-brand",
   idle: "bg-zinc-400",
+  evidence: "bg-evidence",
 };
 
 /** Text status label with a supporting dot (color is decorative). */

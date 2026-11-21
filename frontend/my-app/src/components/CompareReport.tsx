@@ -6,7 +6,7 @@
 // never generated.
 
 import Disclaimer, { ContextualNotice } from "@/components/Disclaimer";
-import { StatusLabel } from "@/components/ui";
+import { EvidenceQuote, StatusLabel } from "@/components/ui";
 import { COMPARISON_CONTEXT_NOTICE } from "@/lib/disclaimer";
 import type {
   ContractDocumentType,
@@ -54,15 +54,19 @@ function ClaimBlock({
     source === "pdf" && ref.pageNumber !== undefined
       ? `p. ${ref.pageNumber}`
       : "pasted text";
+  // Written employment terms read as document excerpts; spoken or
+  // advertised promises stay neutral so the two are easy to tell apart.
+  const isWrittenTerms =
+    ref.documentType === "employment_contract" || ref.documentType === "offer_letter";
   return (
-    <div className="rounded-md border border-edge p-3">
+    <div
+      className={`rounded-md border border-edge p-3 ${isWrittenTerms ? "bg-evidence-soft/40" : ""}`}
+    >
       <p className="text-sm">
         <span className="font-semibold">{label}: </span>
         {claim.claim}
       </p>
-      <blockquote className="mt-1 border-l-2 border-edge pl-3 text-sm italic leading-6">
-        &ldquo;{claim.sourceExcerpt}&rdquo;
-      </blockquote>
+      <EvidenceQuote>&ldquo;{claim.sourceExcerpt}&rdquo;</EvidenceQuote>
       <p className="mt-1 text-xs text-muted">
         {COMPARE_DOC_TYPE_LABELS[ref.documentType]} · {ref.fileName} · {location}
       </p>
@@ -83,7 +87,7 @@ function FindingCard({
     { label: "Written clause", claim: finding.contractClause },
   ];
   return (
-    <li className="rounded-md border border-edge p-4">
+    <li className="border-t border-edge pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">{COMPARE_CATEGORY_LABELS[finding.category]}</p>
         <StatusLabel tone={toneForStatus(finding.status)}>
@@ -184,7 +188,7 @@ export default function CompareReport({
                 <h3 id={`oc-${group.key}`} className="font-semibold">
                   {group.title} ({summary[group.key]})
                 </h3>
-                <ul className="mt-2 flex flex-col gap-3">
+                <ul className="mt-2 flex flex-col gap-6">
                   {findings
                     .filter((finding) => finding.status === group.key)
                     .map((finding, index) => (

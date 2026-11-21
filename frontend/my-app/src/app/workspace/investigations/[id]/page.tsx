@@ -9,7 +9,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AnalysisResults from "@/components/AnalysisResults";
 import EvidenceInvestigation from "@/components/EvidenceInvestigation";
-import { Button, Card, Spinner, StatusLabel } from "@/components/ui";
+import { Button, Card, EvidenceQuote, Spinner, StatusLabel } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { localeForCountryName } from "@/lib/corridors";
 import { getFirebaseClient } from "@/lib/firebaseClient";
@@ -51,21 +51,19 @@ function AssessmentLabel({ value }: { value: string }) {
 
 function FindingCard({ finding }: { finding: InvestigationFinding }) {
   return (
-    <li className="rounded-md border border-edge p-4">
+    <li className="py-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">{finding.claim}</p>
         <AssessmentLabel value={finding.assessment} />
       </div>
-      <blockquote className="mt-2 border-l-2 border-edge pl-3 text-sm italic leading-6">
-        &ldquo;{finding.excerpt}&rdquo;
-      </blockquote>
+      <EvidenceQuote>&ldquo;{finding.excerpt}&rdquo;</EvidenceQuote>
       <p className="mt-2 text-sm">
         Source:{" "}
         <a
           href={finding.source_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
+          className="font-medium text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
         >
           {finding.source_title} (opens in a new tab)
         </a>
@@ -230,7 +228,7 @@ export default function InvestigationReportPage() {
 
       <Card title="Official-source findings">
         {findings.length > 0 ? (
-          <ul className="flex flex-col gap-3">
+          <ul className="divide-y divide-edge">
             {findings.map((finding, index) => (
               <FindingCard
                 key={`${finding.source_url}-${finding.claim}-${index}`}

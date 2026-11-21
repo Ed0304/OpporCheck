@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PublicShell from "@/components/PublicShell";
-import { Card } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "How it works — OpporCheck",
@@ -9,19 +8,23 @@ export const metadata: Metadata = {
 
 const STEPS = [
   {
-    title: "1. Share the opportunity",
+    n: "1",
+    title: "Share the opportunity",
     text: "Paste the job description or upload the offer as a PDF. OpporCheck reads the text and keeps it in your private workspace.",
   },
   {
-    title: "2. Review the analysis",
+    n: "2",
+    title: "Review the analysis",
     text: "You get an opportunity summary, extracted employment details, potential concerns with quoted evidence, a missing-information checklist, and a recommended next action.",
   },
   {
-    title: "3. Investigate with sources",
+    n: "3",
+    title: "Investigate with sources",
     text: "Save the review as an investigation and compare its claims against curated official guidance, with each finding labelled as supported, conflicting, or insufficient evidence.",
   },
   {
-    title: "4. Decide with evidence",
+    n: "4",
+    title: "Decide with evidence",
     text: "Bring the report — facts, gaps, concerns, and follow-up questions — to your decision or your adviser.",
   },
 ];
@@ -35,19 +38,32 @@ export default function HowItWorksPage() {
           Four steps from a raw posting to an evidence-backed investigation report.
         </p>
       </div>
-      <ol className="mt-6 grid gap-4 md:grid-cols-2">
-        {STEPS.map((step) => (
-          <li key={step.title}>
-            <Card title={step.title}>
-              <p className="text-sm leading-6 text-muted">{step.text}</p>
-            </Card>
+      <ol className="mt-8 flex max-w-3xl flex-col">
+        {STEPS.map((step, index) => (
+          <li key={step.title} className="relative flex gap-4 pb-8 last:pb-0">
+            {index < STEPS.length - 1 && (
+              <span
+                aria-hidden="true"
+                className="absolute left-[17px] top-10 h-[calc(100%-2.5rem)] w-px bg-edge"
+              />
+            )}
+            <span
+              aria-hidden="true"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-edge bg-card text-sm font-bold text-brand"
+            >
+              {step.n}
+            </span>
+            <div className="pt-1.5">
+              <h2 className="font-semibold">{step.title}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted">{step.text}</p>
+            </div>
           </li>
         ))}
       </ol>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href="/register"
-          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-white hover:bg-brand-strong"
+          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action hover:bg-brand-strong"
         >
           Get started
         </Link>

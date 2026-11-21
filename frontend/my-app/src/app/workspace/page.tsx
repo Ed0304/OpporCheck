@@ -84,7 +84,7 @@ export default function WorkspaceOverviewPage() {
         <div className="mt-4">
           <Link
             href="/workspace/review"
-            className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-white hover:bg-brand-strong"
+            className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action hover:bg-brand-strong"
           >
             Review an opportunity
           </Link>
@@ -119,7 +119,7 @@ export default function WorkspaceOverviewPage() {
             action={
               <Link
                 href="/workspace/review"
-                className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-white hover:bg-brand-strong"
+                className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
               >
                 Review an opportunity
               </Link>

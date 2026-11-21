@@ -16,7 +16,7 @@ export default function ResourcesPage() {
           with verified links only — more are added as their sources are verified.
         </p>
       </div>
-      <div className="mt-6 max-w-3xl">
+      <div className="mt-6">
         <CorridorResources />
       </div>
     </PublicShell>

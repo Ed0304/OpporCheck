@@ -8,7 +8,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button, Card, EmptyState, Spinner, StatusLabel } from "@/components/ui";
+import { Button, Card, EmptyState, EvidenceQuote, Spinner, StatusLabel } from "@/components/ui";
 import Disclaimer, { ContextualNotice } from "@/components/Disclaimer";
 import LanguageToggle from "@/components/LanguageToggle";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
@@ -99,21 +99,19 @@ function AssessmentLabel({ value }: { value: string }) {
 
 function TransientFindingCard({ finding }: { finding: InvestigationFinding }) {
   return (
-    <li className="rounded-md border border-edge p-4">
+    <li className="py-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">{finding.claim}</p>
         <AssessmentLabel value={finding.assessment} />
       </div>
-      <blockquote className="mt-2 border-l-2 border-edge pl-3 text-sm italic leading-6">
-        &ldquo;{finding.excerpt}&rdquo;
-      </blockquote>
+      <EvidenceQuote>&ldquo;{finding.excerpt}&rdquo;</EvidenceQuote>
       <p className="mt-2 text-sm">
         Source:{" "}
         <a
           href={finding.source_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
+          className="font-medium text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
         >
           {finding.source_title} (opens in a new tab)
         </a>
@@ -390,9 +388,9 @@ export default function EvidenceInvestigation({
           <h3 id="oc-plan" className="font-semibold">
             Investigation questions ({plan.items.length})
           </h3>
-          <ul className="mt-2 flex flex-col gap-3">
+          <ul className="mt-2 divide-y divide-edge">
             {plan.items.map((item) => (
-              <li key={item.research_question} className="rounded-md border border-edge p-4">
+              <li key={item.research_question} className="py-4">
                 <p className="font-medium leading-6">{item.research_question}</p>
                 <p className="mt-1 text-sm leading-6 text-muted">{item.why_it_matters}</p>
                 <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -482,7 +480,7 @@ export default function EvidenceInvestigation({
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
+                      className="font-medium text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
                     >
                       {source.title} (opens in a new tab)
                     </a>{" "}
@@ -496,15 +494,12 @@ export default function EvidenceInvestigation({
                       </summary>
                       <div className="mt-1 flex flex-col gap-2">
                         {source.excerpts.map((excerpt, index) => (
-                          <blockquote
-                            key={`${source.source_id}-${index}`}
-                            className="border-l-2 border-edge pl-3 text-sm italic leading-6"
-                          >
+                          <EvidenceQuote key={`${source.source_id}-${index}`}>
                             &ldquo;{excerpt.text}&rdquo;
                             {excerpt.truncated && (
                               <span className="text-muted"> (trimmed)</span>
                             )}
-                          </blockquote>
+                          </EvidenceQuote>
                         ))}
                       </div>
                     </details>
@@ -555,7 +550,7 @@ export default function EvidenceInvestigation({
                           <h4 className="text-sm font-semibold">
                             {label} ({grouped[key]!.length})
                           </h4>
-                          <ul className="mt-2 flex flex-col gap-3">
+                          <ul className="mt-2 divide-y divide-edge">
                             {grouped[key]!.map((finding, index) => (
                               <TransientFindingCard
                                 key={`${finding.source_url}-${finding.claim}-${index}`}

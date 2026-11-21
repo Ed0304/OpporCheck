@@ -67,7 +67,7 @@ export default function WorkspaceSidebar({
               aria-current={active ? "page" : undefined}
               title={slim ? item.label : undefined}
               className={`block rounded-md px-3 py-2 text-sm font-medium ${
-                active ? "bg-brand-soft text-navy" : "hover:bg-brand-soft"
+                active ? "bg-brand-soft font-semibold text-navy" : "hover:bg-brand-soft"
               } ${slim ? "text-center" : ""}`}
             >
               {slim ? <span aria-hidden>{item.short}</span> : item.label}

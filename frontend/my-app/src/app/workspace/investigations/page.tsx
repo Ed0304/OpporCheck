@@ -146,7 +146,7 @@ export default function InvestigationsPage() {
         </div>
         <Link
           href="/workspace/review"
-          className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-white hover:bg-brand-strong"
+          className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
         >
           Review new opportunity
         </Link>
@@ -166,7 +166,7 @@ export default function InvestigationsPage() {
             action={
               <Link
                 href="/workspace/review"
-                className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-white hover:bg-brand-strong"
+                className="inline-flex h-10 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
               >
                 Review an opportunity
               </Link>
@@ -245,7 +245,7 @@ export default function InvestigationsPage() {
                             type="button"
                             onClick={() => void handleDelete(item.id)}
                             disabled={busyId === item.id}
-                            className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline disabled:opacity-50"
+                            className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline disabled:opacity-50 dark:text-red-300"
                           >
                             Confirm delete
                           </button>
@@ -264,7 +264,7 @@ export default function InvestigationsPage() {
                             setConfirmingDeleteId(item.id);
                             setRenamingId(null);
                           }}
-                          className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline"
+                          className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline dark:text-red-300"
                         >
                           Delete
                         </button>

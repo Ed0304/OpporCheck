@@ -533,7 +533,7 @@ export default function ReviewPage() {
               onChange={(event) => setPostingText(event.target.value)}
               rows={10}
               maxLength={60000}
-              className="mt-1 w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
+              className="mt-1 w-full rounded-md border border-edge bg-card p-3 text-sm leading-7"
             />
             <div className="mt-2 flex flex-wrap gap-2">
               <Button variant="secondary" onClick={() => setPostingText(SAMPLE_POSTING)}>
@@ -635,7 +635,7 @@ export default function ReviewPage() {
                   </p>
                 )}
                 {(pdf.result.page_results ?? []).length > 0 && (
-                  <ul className="flex max-h-44 flex-col gap-1 overflow-auto" aria-label="Per-page extraction results">
+                  <ul className="flex max-h-44 flex-col gap-1 overflow-auto tabular-nums" aria-label="Per-page extraction results">
                     {(pdf.result.page_results ?? []).map((page) => (
                       <li key={page.page} className="flex flex-wrap items-center gap-2 text-sm">
                         <StatusLabel
@@ -784,7 +784,7 @@ export default function ReviewPage() {
                   }
                   rows={10}
                   maxLength={60000}
-                  className="w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
+                  className="w-full rounded-md border border-edge bg-card p-3 text-sm leading-7"
                 />
                 <div className="flex flex-wrap gap-2">
                   <Button

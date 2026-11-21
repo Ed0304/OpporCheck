@@ -2,9 +2,14 @@
 
 // Global top navigation: brand wordmark, section links, theme switcher,
 // account menu (or sign-in link). Mobile menu opens a navigation drawer.
+//
+// The pathname hook lives in Suspense-isolated nav components (with static
+// fallbacks) so statically prerendered pages keep building: URL data is
+// runtime-only and must never run during prerender.
 
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTheme, type ThemeChoice } from "@/lib/theme";
 
@@ -43,7 +48,7 @@ function AccountMenu() {
     return (
       <Link
         href="/login"
-        className="inline-flex h-9 items-center rounded-md bg-brand px-4 text-sm font-medium text-white hover:bg-brand-strong"
+        className="inline-flex h-9 items-center rounded-md bg-brand px-4 text-sm font-medium text-on-action hover:bg-brand-strong"
       >
         Sign in
       </Link>
@@ -81,8 +86,81 @@ function AccountMenu() {
   );
 }
 
+function isActiveLink(pathname: string, href: string): boolean {
+  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function DesktopLinks({ links, pathname }: { links: NavLink[]; pathname: string | null }) {
+  return (
+    <>
+      {links.map((link) => {
+        const active = pathname !== null && isActiveLink(pathname, link.href);
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            aria-current={active ? "page" : undefined}
+            className={`rounded-md px-3 py-2 text-sm font-medium ${
+              active ? "bg-brand-soft font-semibold text-navy" : "hover:bg-brand-soft"
+            }`}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
+
+function DesktopNav({ links }: { links: NavLink[] }) {
+  const pathname = usePathname();
+  return (
+    <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
+      <DesktopLinks links={links} pathname={pathname} />
+    </nav>
+  );
+}
+
+function MobileLinks({
+  links,
+  pathname,
+  onNavigate,
+}: {
+  links: NavLink[];
+  pathname: string | null;
+  onNavigate: () => void;
+}) {
+  return (
+    <ul className="flex flex-col gap-1">
+      {links.map((link) => {
+        const active = pathname !== null && isActiveLink(pathname, link.href);
+        return (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              className={`block rounded-md px-3 py-2 text-sm font-medium ${
+                active ? "bg-brand-soft font-semibold text-navy" : "hover:bg-brand-soft"
+              }`}
+            >
+              {link.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function MobileNav({ links, onNavigate }: { links: NavLink[]; onNavigate: () => void }) {
+  const pathname = usePathname();
+  return <MobileLinks links={links} pathname={pathname} onNavigate={onNavigate} />;
+}
+
 export default function AppHeader({ links }: { links: NavLink[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-card">
       <a href="#main-content" className="skip-link">
@@ -96,17 +174,15 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
         >
           OpporCheck
         </Link>
-        <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="rounded-md px-3 py-2 text-sm font-medium hover:bg-brand-soft"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <Suspense
+          fallback={
+            <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
+              <DesktopLinks links={links} pathname={null} />
+            </nav>
+          }
+        >
+          <DesktopNav links={links} />
+        </Suspense>
         <div className="hidden items-center gap-2 md:flex">
           <ThemeSwitcher />
           <AccountMenu />
@@ -129,19 +205,9 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
           aria-label="Mobile"
           className="border-t border-edge bg-card px-4 py-3 md:hidden"
         >
-          <ul className="flex flex-col gap-1">
-            {links.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-brand-soft"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <Suspense fallback={<MobileLinks links={links} pathname={null} onNavigate={closeMenu} />}>
+            <MobileNav links={links} onNavigate={closeMenu} />
+          </Suspense>
           <div className="mt-2 flex items-center gap-2 border-t border-edge pt-3">
             <ThemeSwitcher />
             <AccountMenu />

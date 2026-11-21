@@ -8,8 +8,10 @@
 // Without this file, `@import "tailwindcss"` in globals.css is never
 // processed under webpack and the production site ships unstyled.
 
-export default {
+const config = {
   plugins: {
     "@tailwindcss/postcss": {},
   },
 };
+
+export default config;

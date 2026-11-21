@@ -4,6 +4,7 @@
 // guidance; confidence is shown as information, never as proof of fraud.
 
 import { ContextualNotice } from "@/components/Disclaimer";
+import { EvidenceQuote } from "@/components/ui";
 import {
   DEFAULT_CORRIDOR_CODE,
   resolveCorridorCode,
@@ -177,17 +178,12 @@ export default function AnalysisResults({
           Potential concerns
         </h3>
         {concerns.length > 0 ? (
-          <ul className="mt-2 flex flex-col gap-3">
+          <ul className="mt-2 divide-y divide-edge">
             {concerns.map((item, index) => (
-              <li
-                key={`${item.concern}-${index}`}
-                className="rounded-md border border-edge bg-card p-4"
-              >
+              <li key={`${item.concern}-${index}`} className="py-4">
                 <p className="font-semibold">{item.concern}</p>
                 <p className="mt-1 text-sm leading-6 text-muted">{guidanceFor(item, corridorCode)}</p>
-                <blockquote className="mt-2 border-l-2 border-edge pl-3 text-sm italic leading-6">
-                  &ldquo;{item.evidence}&rdquo;
-                </blockquote>
+                <EvidenceQuote>&ldquo;{item.evidence}&rdquo;</EvidenceQuote>
                 <p className="mt-2">
                   <ConfidenceNote value={item.confidence} />
                 </p>

@@ -2,32 +2,42 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* OpporCheck design tokens (Blueprint v1.0) */
+/* OpporCheck design tokens — The Evidence Desk.
+   Teal marks evidence/sources; periwinkle marks actions/selected states.
+   Every text pair below clears WCAG AA (ratios verified 2026-11-21);
+   hairline borders stay decorative while the 2px focus ring carries
+   interactive-element contrast. */
 :root {
-  --oc-blue: #2459a6;
-  --oc-blue-strong: #1c4685;
-  --oc-navy: #173b70;
-  --oc-soft: #eaf1fa;
+  --oc-blue: #3d55b4;
+  --oc-blue-strong: #2e4391;
+  --oc-navy: #1a2b4d;
+  --oc-soft: #e8edf9;
   --oc-canvas: #f5f7fa;
   --oc-card: #ffffff;
   --oc-border: #d9e1ec;
   --oc-ink: #16233a;
   --oc-muted: #4f5f78;
-  --oc-focus: #2459a6;
+  --oc-focus: #3d55b4;
+  --oc-evidence: #0b7a6e;
+  --oc-evidence-soft: #e0f0ed;
+  --oc-on-action: #ffffff;
   color-scheme: light;
 }
 
 .dark {
-  --oc-blue: #7aa7ee;
-  --oc-blue-strong: #9cc0f5;
-  --oc-navy: #d7e5fb;
-  --oc-soft: #16283f;
-  --oc-canvas: #0d1526;
-  --oc-card: #131e33;
-  --oc-border: #26344d;
-  --oc-ink: #e8eef7;
-  --oc-muted: #a3b1c7;
-  --oc-focus: #9cc0f5;
+  --oc-blue: #a8bfff;
+  --oc-blue-strong: #c3d2ff;
+  --oc-navy: #e7edf7;
+  --oc-soft: #222f4c;
+  --oc-canvas: #0d1424;
+  --oc-card: #182238;
+  --oc-border: #2e3d5c;
+  --oc-ink: #e7edf7;
+  --oc-muted: #91a2be;
+  --oc-focus: #a8bfff;
+  --oc-evidence: #69d3c2;
+  --oc-evidence-soft: #143b37;
+  --oc-on-action: #0d1424;
   color-scheme: dark;
 }
 
@@ -41,6 +51,9 @@
   --color-edge: var(--oc-border);
   --color-ink: var(--oc-ink);
   --color-muted: var(--oc-muted);
+  --color-evidence: var(--oc-evidence);
+  --color-evidence-soft: var(--oc-evidence-soft);
+  --color-on-action: var(--oc-on-action);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Arial, sans-serif;
 }

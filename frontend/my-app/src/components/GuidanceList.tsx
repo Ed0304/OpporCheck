@@ -6,7 +6,7 @@ import { UK_GUIDANCE, type GuidanceEntry } from "@/lib/guidance";
 export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] }) {
   const list = entries ?? UK_GUIDANCE;
   return (
-    <ul className="flex flex-col gap-4">
+    <ul className="grid gap-4 md:grid-cols-2">
       {list.map((entry) => (
         <li
           key={entry.url}
@@ -16,7 +16,7 @@ export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] })
             href={entry.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand"
+            className="font-semibold text-evidence underline decoration-evidence/40 underline-offset-2 hover:decoration-evidence"
           >
             {entry.title} <span aria-hidden>(opens in a new tab)</span>
           </a>

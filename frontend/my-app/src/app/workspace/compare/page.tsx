@@ -13,7 +13,7 @@ import type { GenerativeModel } from "firebase/ai";
 import CompareReport, { type ReportDocument } from "@/components/CompareReport";
 import { ContextualNotice } from "@/components/Disclaimer";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
-import { Button, Card, EmptyState, Field, Spinner, StatusLabel } from "@/components/ui";
+import { Button, Card, EmptyState, EvidenceQuote, Field, Spinner, StatusLabel } from "@/components/ui";
 import { UPLOAD_SENSITIVITY_NOTICE } from "@/lib/disclaimer";
 import {
   createExtractionModel,
@@ -565,7 +565,7 @@ export default function ComparePage() {
               rows={5}
               maxLength={PASTE_MAX_CHARS}
               placeholder="Paste a recruiter message, ad, offer, or contract clause…"
-              className="w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
+              className="w-full rounded-md border border-edge bg-card p-3 text-sm leading-7"
             />
           </Field>
           <div className="flex flex-wrap items-end gap-3">
@@ -823,16 +823,14 @@ export default function ComparePage() {
                           No employment terms were found in this document.
                         </p>
                       ) : (
-                        <ul className="mt-2 flex flex-col gap-2">
+                        <ul className="mt-2 divide-y divide-edge">
                           {doc.terms.map((term, index) => (
-                            <li key={`${term.category}-${index}`} className="rounded-md border border-edge p-3">
+                            <li key={`${term.category}-${index}`} className="py-3">
                               <p className="text-sm">
                                 <span className="font-semibold">{term.category}: </span>
                                 {term.claim}
                               </p>
-                              <blockquote className="mt-1 border-l-2 border-edge pl-3 text-sm italic leading-6">
-                                &ldquo;{term.sourceExcerpt}&rdquo;
-                              </blockquote>
+                              <EvidenceQuote>&ldquo;{term.sourceExcerpt}&rdquo;</EvidenceQuote>
                               <p className="mt-1 text-xs text-muted">
                                 {doc.input.source === "pdf"
                                   ? `p. ${term.documentReference.pageNumber}`
