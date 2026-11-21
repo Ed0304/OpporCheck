@@ -1,7 +1,7 @@
-// Landing page: centered welcome with a clear primary action and
-// fictional sample documents below. Client component so copy follows
-// the UI language preference; the server page keeps its metadata
-// export and renders this.
+// Landing page: centered welcome with a clear primary action, a hero
+// product composition (HeroComposition), and fictional sample documents
+// below. Client component so copy follows the UI language preference;
+// the server page keeps its metadata export and renders this.
 //
 // Page chrome uses theme tokens (canvas/card/ink/muted) so light mode
 // renders light and dark mode renders black. The sample previews are
@@ -18,6 +18,7 @@
 "use client";
 
 import Link from "next/link";
+import HeroComposition from "@/components/HeroComposition";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { getConciseNotice } from "@/lib/disclaimer";
 import { useAuth } from "@/lib/auth";
@@ -171,6 +172,10 @@ export default function LandingContent() {
             </p>
           </StaggerItem>
         </Stagger>
+
+        <div className="mx-auto mt-14 max-w-5xl">
+          <HeroComposition />
+        </div>
 
         <Reveal className="mt-20">
           <section aria-labelledby="samples">
