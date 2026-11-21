@@ -5,11 +5,20 @@ firestore-debug.log
 .firebase/
 
 # Phase 0/1 OCR benchmark: ignore regenerable weight/cache/runtime dirs.
-# Keep scripts, samples, results JSON, freeze files, and reports.
+# Keep scripts, samples, results JSON, and freeze files (reports ignored below).
 benchmarks/*/.venv/
 benchmarks/*/home/
 benchmarks/*/tmp/
 benchmarks/*/samples/multipage3.pdf
+
+# Milestone/audit reports and demo scenario: local working notes, not
+# project source. Kept out of the repo; they remain available locally.
+# (backend/README.md references some Phase reports by name.)
+/*_REPORT.md
+/*_AUDIT.md
+/DEMO_SCENARIO_HACKATHON.md
+/benchmarks/*/*_BENCHMARK.md
+/benchmarks/*/*_REPORT.md
 
 # Agent/tool scratch (personal, not project source; .agents/skills stays tracked)
 .claude/
