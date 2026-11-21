@@ -29,11 +29,26 @@ export default function HowItWorksContent() {
   ];
   return (
     <>
-      <Enter className="max-w-3xl">
+      <Enter className="mx-auto max-w-3xl">
         <h1 className="text-3xl font-bold tracking-tight text-navy">{t.howTitle}</h1>
         <p className="mt-3 leading-7 text-muted">{t.howSubtitle}</p>
       </Enter>
-      <Reveal className="mt-8 max-w-3xl" delay={0.05}>
+      <div aria-hidden className="mx-auto mt-8 hidden max-w-3xl items-start sm:flex">
+        {steps.map((step, index) => (
+          <div key={step.title} className="flex flex-1 items-start last:flex-none">
+            <div className="flex w-24 flex-col items-center gap-2 text-center">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-paper-edge bg-paper text-sm font-bold text-brand shadow-[0_2px_10px_var(--oc-paper-shadow)]">
+                {step.n}
+              </span>
+              <span className="text-xs leading-4 font-medium text-muted">{step.title}</span>
+            </div>
+            {index < steps.length - 1 && (
+              <span className="mx-1 mt-[17px] h-px flex-1 bg-paper-edge" />
+            )}
+          </div>
+        ))}
+      </div>
+      <Reveal className="mx-auto mt-8 max-w-3xl" delay={0.05}>
       <ol className="flex flex-col">
         {steps.map((step, index) => (
           <li key={step.title} className="relative flex gap-4 pb-8 last:pb-0">
@@ -57,28 +72,30 @@ export default function HowItWorksContent() {
         ))}
       </ol>
       </Reveal>
-      <Reveal className="mt-12 max-w-3xl">
+      <Reveal className="mx-auto mt-12 max-w-3xl">
         <section aria-labelledby="finding-labels">
           <h2 id="finding-labels" className="text-2xl font-semibold tracking-tight text-navy">
             {t.howGlossaryTitle}
           </h2>
           <p className="mt-2 leading-7 text-muted">{t.howGlossaryIntro}</p>
-          <ul className="mt-4 grid gap-4 sm:grid-cols-3">
+          <ul className="mt-4 flex flex-col gap-4">
             {glossary.map((item) => (
               <li
                 key={item.assessment}
-                className="oc-shadow-card rounded-xl border border-edge bg-card p-4"
+                className="oc-shadow-card rounded-xl border border-edge bg-card p-4 sm:flex sm:items-start sm:gap-4"
               >
-                <StatusLabel tone={ASSESSMENT_TONES[item.assessment]}>
-                  {labels[item.assessment]}
-                </StatusLabel>
-                <p className="mt-2 text-sm leading-6">{item.meaning}</p>
+                <div className="sm:w-64 sm:shrink-0">
+                  <StatusLabel tone={ASSESSMENT_TONES[item.assessment]} wrap>
+                    {labels[item.assessment]}
+                  </StatusLabel>
+                </div>
+                <p className="mt-2 text-sm leading-6 sm:mt-0.5">{item.meaning}</p>
               </li>
             ))}
           </ul>
         </section>
       </Reveal>
-      <div className="mt-8 flex flex-wrap gap-3">
+      <div className="mx-auto mt-8 flex max-w-3xl flex-wrap gap-3">
         <Link
           href="/register"
           className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong"

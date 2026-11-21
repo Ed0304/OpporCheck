@@ -166,10 +166,19 @@ const DOT: Record<StatusTone, string> = {
  * Restrained status chip: words first, color decorative. Tones describe
  * workflow state (complete, ready, needs review), never a safety verdict.
  */
-export function StatusLabel({ tone, children }: { tone: StatusTone; children: ReactNode }) {
+export function StatusLabel({
+  tone,
+  children,
+  wrap = false,
+}: {
+  tone: StatusTone;
+  children: ReactNode;
+  /** Allow long labels to wrap instead of overflowing narrow containers. */
+  wrap?: boolean;
+}) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[13px] font-medium whitespace-nowrap ${CHIP[tone]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[13px] font-medium ${wrap ? "whitespace-normal" : "whitespace-nowrap"} ${CHIP[tone]}`}
     >
       <span aria-hidden className={`inline-block h-1.5 w-1.5 rounded-full ${DOT[tone]}`} />
       <span>{children}</span>
