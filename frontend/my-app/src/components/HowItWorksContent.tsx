@@ -6,7 +6,10 @@
 
 import Link from "next/link";
 import { Enter, Reveal } from "@/components/motion";
+import { StatusLabel } from "@/components/ui";
+import type { FindingAssessment } from "@/lib/investigations";
 import { useLang } from "@/lib/lang";
+import { ASSESSMENT_TONES, getAssessmentLabels } from "@/lib/reportLanguage";
 import { getStrings } from "@/lib/strings";
 
 export default function HowItWorksContent() {
@@ -17,6 +20,12 @@ export default function HowItWorksContent() {
     { n: "2", title: t.howStep2Title, text: t.howStep2Text },
     { n: "3", title: t.howStep3Title, text: t.howStep3Text },
     { n: "4", title: t.howStep4Title, text: t.howStep4Text },
+  ];
+  const labels = getAssessmentLabels(language);
+  const glossary: Array<{ assessment: FindingAssessment; meaning: string }> = [
+    { assessment: "supported", meaning: t.howGlossarySupportedText },
+    { assessment: "conflicting", meaning: t.howGlossaryConflictingText },
+    { assessment: "insufficient-evidence", meaning: t.howGlossaryInsufficientText },
   ];
   return (
     <>
@@ -42,11 +51,32 @@ export default function HowItWorksContent() {
             </span>
             <div className="flex-1 rounded-lg border border-paper-edge bg-paper p-4 shadow-[0_2px_10px_var(--oc-paper-shadow)]">
               <h2 className="font-semibold">{step.title}</h2>
-              <p className="mt-1 text-sm leading-6 text-muted">{step.text}</p>
+              <p className="mt-1 text-sm leading-6">{step.text}</p>
             </div>
           </li>
         ))}
       </ol>
+      </Reveal>
+      <Reveal className="mt-12 max-w-3xl">
+        <section aria-labelledby="finding-labels">
+          <h2 id="finding-labels" className="text-2xl font-semibold tracking-tight text-navy">
+            {t.howGlossaryTitle}
+          </h2>
+          <p className="mt-2 leading-7 text-muted">{t.howGlossaryIntro}</p>
+          <ul className="mt-4 grid gap-4 sm:grid-cols-3">
+            {glossary.map((item) => (
+              <li
+                key={item.assessment}
+                className="oc-shadow-card rounded-xl border border-edge bg-card p-4"
+              >
+                <StatusLabel tone={ASSESSMENT_TONES[item.assessment]}>
+                  {labels[item.assessment]}
+                </StatusLabel>
+                <p className="mt-2 text-sm leading-6">{item.meaning}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
       </Reveal>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link

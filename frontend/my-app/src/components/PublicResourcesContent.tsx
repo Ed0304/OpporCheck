@@ -4,8 +4,9 @@
 
 "use client";
 
+import Link from "next/link";
 import CorridorResources from "@/components/CorridorResources";
-import { Enter } from "@/components/motion";
+import { Enter, Reveal } from "@/components/motion";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
 
@@ -19,8 +20,19 @@ export default function PublicResourcesContent() {
         <p className="mt-3 leading-7 text-muted">{t.resourcesSubtitle}</p>
       </Enter>
       <div className="mt-6">
-        <CorridorResources />
+        <CorridorResources showCoverageStrip />
       </div>
+      <Reveal className="mt-10 max-w-3xl">
+        <p className="leading-7">
+          {t.resourcesClosing}{" "}
+          <Link
+            href="/register"
+            className="font-medium text-brand underline decoration-brand/40 underline-offset-2 transition-colors hover:decoration-brand"
+          >
+            {t.landingGetStarted}
+          </Link>
+        </p>
+      </Reveal>
     </>
   );
 }

@@ -191,6 +191,9 @@ const EN = {
   landingCap4Text:
     "Your investigations belong to your account. Analysis can run on your device when supported, with cloud fallback.",
   landingTransparency: "Transparency and limitations",
+  landingWorkflowIntro: "Three steps from a raw posting to confident questions.",
+  landingCapabilitiesIntro: "What the workspace gives you for every opportunity.",
+  landingClosingTitle: "Bring your opportunity to the desk.",
   landingTransparencyText:
     "OpporCheck works only from the text you provide and the official sources it links " +
     "to. It cannot confirm that an employer is genuine, check registration numbers, or " +
@@ -249,11 +252,22 @@ const EN = {
   howStep4Text:
     "Bring the report — facts, gaps, concerns, and follow-up questions — to your decision or your adviser.",
   howBrowse: "Browse guidance",
+  howGlossaryTitle: "Reading your findings",
+  howGlossaryIntro: "Every evidence finding carries one of three labels:",
+  howGlossarySupportedText: "The official excerpt agrees with the claim.",
+  howGlossaryConflictingText:
+    "The official excerpt says something different — a reason to ask questions, not proof of fraud.",
+  howGlossaryInsufficientText: "The available sources say too little to judge either way.",
   // ---- Public resources page ----
   resourcesTitle: "Employment guidance",
   resourcesSubtitle:
     "Curated official guidance for overseas employment. Destinations appear " +
     "with verified links only — more are added as their sources are verified.",
+  resourcesCoverageTitle: "Destination coverage",
+  resourcesCoverageSummary:
+    "{verified} of {total} destinations have verified sources; {partial} have partial coverage.",
+  resourcesCoverageHint: "Select a destination to browse its links.",
+  resourcesClosing: "Have an opportunity to check?",
   // ---- Workspace resources page ----
   wsResourcesTitle: "Resources",
   wsResourcesSubtitle:
@@ -998,6 +1012,9 @@ const ID: UiStrings = {
   landingCap4Title: "Privat sejak awal",
   landingCap4Text:
     "Investigasi Anda milik akun Anda. Analisis dapat berjalan di perangkat Anda bila didukung, dengan fallback cloud.",
+  landingWorkflowIntro: "Tiga langkah dari lowongan mentah menjadi pertanyaan yang meyakinkan.",
+  landingCapabilitiesIntro: "Apa yang diberikan ruang kerja untuk setiap peluang.",
+  landingClosingTitle: "Bawa peluang Anda ke meja.",
   landingTransparency: "Transparansi dan batasan",
   landingTransparencyText:
     "OpporCheck hanya bekerja dari teks yang Anda berikan dan sumber resmi yang ditautkannya. " +
@@ -1054,10 +1071,21 @@ const ID: UiStrings = {
   howStep4Text:
     "Bawa laporan — fakta, celah, masalah, dan pertanyaan lanjutan — ke keputusan Anda atau penasihat Anda.",
   howBrowse: "Jelajahi panduan",
+  howGlossaryTitle: "Membaca temuan Anda",
+  howGlossaryIntro: "Setiap temuan bukti memiliki satu dari tiga label:",
+  howGlossarySupportedText: "Kutipan resmi sesuai dengan klaim.",
+  howGlossaryConflictingText:
+    "Kutipan resmi menyatakan hal yang berbeda — alasan untuk bertanya, bukan bukti penipuan.",
+  howGlossaryInsufficientText: "Sumber yang tersedia terlalu sedikit untuk menilai.",
   resourcesTitle: "Panduan ketenagakerjaan",
   resourcesSubtitle:
     "Panduan resmi yang dikurasi untuk pekerjaan luar negeri. Destinasi muncul " +
     "hanya dengan tautan terverifikasi — destinasi lain ditambahkan setelah sumbernya terverifikasi.",
+  resourcesCoverageTitle: "Cakupan destinasi",
+  resourcesCoverageSummary:
+    "{verified} dari {total} destinasi memiliki sumber terverifikasi; {partial} berstatus cakupan sebagian.",
+  resourcesCoverageHint: "Pilih destinasi untuk menelusuri tautannya.",
+  resourcesClosing: "Punya peluang untuk diperiksa?",
   wsResourcesTitle: "Sumber daya",
   wsResourcesSubtitle:
     "Panduan resmi yang layak diperiksa terhadap peluang apa pun. Pilih " +

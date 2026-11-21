@@ -229,6 +229,7 @@ export default function LandingContent() {
             <h2 id="workflow" className="text-2xl font-semibold tracking-tight text-navy">
               {t.landingWorkflow}
             </h2>
+            <p className="mt-2 text-muted">{t.landingWorkflowIntro}</p>
             <ol className="mt-5 grid gap-4 md:grid-cols-3">
               {workflow.map((item) => (
                 <li
@@ -251,6 +252,7 @@ export default function LandingContent() {
             <h2 id="capabilities" className="text-2xl font-semibold tracking-tight text-navy">
               {t.landingCapabilities}
             </h2>
+            <p className="mt-2 text-muted">{t.landingCapabilitiesIntro}</p>
             <dl className="mt-4 grid gap-x-10 md:grid-cols-2">
               {capabilities.map((item) => (
                 <div key={item.title} className="border-t border-edge py-4">
@@ -267,13 +269,38 @@ export default function LandingContent() {
             <h2 id="transparency" className="text-2xl font-semibold tracking-tight text-navy">
               {t.landingTransparency}
             </h2>
-            <div className="mt-4 leading-7 text-muted">
+            <div className="mt-4 leading-7 text-ink">
               <p>{t.landingTransparencyText}</p>
               <ul className="mt-2 list-disc pl-5">
                 <li>{t.landingLimit1}</li>
                 <li>{t.landingLimit2}</li>
                 <li>{t.landingLimit3}</li>
               </ul>
+            </div>
+          </section>
+        </Reveal>
+
+        <Reveal className="mx-auto mt-16 max-w-3xl text-center">
+          <section aria-labelledby="closing">
+            <h2
+              id="closing"
+              className="text-2xl font-semibold tracking-tight text-balance text-navy"
+            >
+              {t.landingClosingTitle}
+            </h2>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <Link
+                href={primaryHref}
+                className="inline-flex min-h-12 items-center rounded-lg bg-brand px-7 text-base font-medium text-on-action transition-colors hover:bg-brand-strong"
+              >
+                {t.landingGetStarted}
+              </Link>
+              <Link
+                href="/how-it-works"
+                className="inline-flex min-h-12 items-center rounded-lg border border-edge px-7 text-base font-medium text-ink transition-colors hover:bg-brand-soft"
+              >
+                {t.landingHowItWorks}
+              </Link>
             </div>
           </section>
         </Reveal>
