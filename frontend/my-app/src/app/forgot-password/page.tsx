@@ -6,6 +6,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import PublicShell from "@/components/PublicShell";
+import { AuthArt } from "@/components/spot";
 import { Button, Card, Field, TextInput } from "@/components/ui";
 import { friendlyAuthError, useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
@@ -36,8 +37,10 @@ export default function ForgotPasswordPage() {
 
   return (
     <PublicShell>
-      <div className="mx-auto w-full max-w-md">
-        <h1 className="text-3xl font-semibold tracking-tight text-navy">{t.authResetTitle}</h1>
+      <div className="mx-auto grid w-full max-w-4xl items-center gap-10 lg:grid-cols-2">
+        <AuthArt />
+        <div className="mx-auto w-full max-w-md">
+          <h1 className="text-3xl font-semibold tracking-tight text-navy">{t.authResetTitle}</h1>
         <div className="mt-5">
           <Card>
             {sent ? (
@@ -81,6 +84,7 @@ export default function ForgotPasswordPage() {
               </form>
             )}
           </Card>
+          </div>
         </div>
       </div>
     </PublicShell>

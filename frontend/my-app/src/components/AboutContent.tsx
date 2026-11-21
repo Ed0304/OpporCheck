@@ -10,6 +10,7 @@
 import Link from "next/link";
 import { ContextualNotice } from "@/components/Disclaimer";
 import { Enter, Reveal } from "@/components/motion";
+import { DeskArt } from "@/components/spot";
 import { getConciseNotice } from "@/lib/disclaimer";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
@@ -27,7 +28,8 @@ export default function AboutContent() {
   return (
     <>
       <Enter className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-bold tracking-tight text-navy">{t.aboutTitle}</h1>
+        <DeskArt className="mx-auto h-36 w-auto" />
+        <h1 className="mt-6 text-3xl font-bold tracking-tight text-navy">{t.aboutTitle}</h1>
         <p className="mt-4 text-lg leading-8">{t.aboutP1}</p>
         <p className="mt-4 leading-7">{t.aboutP2}</p>
       </Enter>

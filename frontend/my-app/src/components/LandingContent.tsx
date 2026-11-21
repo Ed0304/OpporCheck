@@ -21,6 +21,7 @@
 import Link from "next/link";
 import HeroComposition from "@/components/HeroComposition";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
+import { SpotBook, SpotDocLens, SpotUpload } from "@/components/spot";
 import { getConciseNotice } from "@/lib/disclaimer";
 import { useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
@@ -121,9 +122,9 @@ export default function LandingContent() {
   // before — this only picks the sensible one.
   const primaryHref = user ? "/workspace/review" : "/register";
   const workflow = [
-    { n: "01", title: t.landingStep1Title, text: t.landingStep1Text },
-    { n: "02", title: t.landingStep2Title, text: t.landingStep2Text },
-    { n: "03", title: t.landingStep3Title, text: t.landingStep3Text },
+    { n: "01", title: t.landingStep1Title, text: t.landingStep1Text, Art: SpotUpload },
+    { n: "02", title: t.landingStep2Title, text: t.landingStep2Text, Art: SpotDocLens },
+    { n: "03", title: t.landingStep3Title, text: t.landingStep3Text, Art: SpotBook },
   ];
   const capabilities = [
     { title: t.landingCap1Title, text: t.landingCap1Text },
@@ -237,10 +238,18 @@ export default function LandingContent() {
                   key={item.title}
                   className="oc-shadow-card rounded-xl border border-edge bg-card p-5"
                 >
-                  <p aria-hidden="true" className="oc-tnum text-sm font-bold text-evidence">
-                    {item.n}
-                  </p>
-                  <h3 className="mt-2 font-semibold tracking-tight text-ink">{item.title}</h3>
+                  <div className="flex items-center justify-between gap-3">
+                    <span
+                      aria-hidden
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-soft text-brand"
+                    >
+                      <item.Art size={18} />
+                    </span>
+                    <p aria-hidden="true" className="oc-tnum text-sm font-bold text-evidence">
+                      {item.n}
+                    </p>
+                  </div>
+                  <h3 className="mt-3 font-semibold tracking-tight text-ink">{item.title}</h3>
                   <p className="mt-1 text-sm leading-6 text-muted">{item.text}</p>
                 </li>
               ))}

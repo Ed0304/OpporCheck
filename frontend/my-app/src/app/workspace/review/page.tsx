@@ -16,6 +16,7 @@ import AnalysisResults from "@/components/AnalysisResults";
 import { ContextualNotice } from "@/components/Disclaimer";
 import { ActivePill, Crossfade, Enter, ProgressBar } from "@/components/motion";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
+import { SpotImage, SpotPdf, SpotText } from "@/components/spot";
 import { Button, Card, EmptyState, Field, PageHeader, StatusLabel, Stepper } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { getReviewProcessingNotice, getUploadSensitivityNotice } from "@/lib/disclaimer";
@@ -546,7 +547,10 @@ export default function ReviewPage() {
             }`}
           >
             {tab === "paste" && <ActivePill pillId="oc-review-tabs" />}
-            <span className="relative">{t.revTabPaste}</span>
+            <span className="relative inline-flex items-center gap-1.5">
+              <SpotText size={15} />
+              {t.revTabPaste}
+            </span>
           </button>
           <button
             type="button"
@@ -558,7 +562,10 @@ export default function ReviewPage() {
             }`}
           >
             {tab === "pdf" && <ActivePill pillId="oc-review-tabs" />}
-            <span className="relative">{t.revTabPdf}</span>
+            <span className="relative inline-flex items-center gap-1.5">
+              <SpotPdf size={15} />
+              {t.revTabPdf}
+            </span>
           </button>
           <button
             type="button"
@@ -570,7 +577,10 @@ export default function ReviewPage() {
             }`}
           >
             {tab === "image" && <ActivePill pillId="oc-review-tabs" />}
-            <span className="relative">{t.revTabImage}</span>
+            <span className="relative inline-flex items-center gap-1.5">
+              <SpotImage size={15} />
+              {t.revTabImage}
+            </span>
           </button>
         </div>
 

@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { SpotBook, SpotCompare, SpotDocLens } from "@/components/spot";
 import {
   Card,
   EmptyState,
@@ -92,42 +93,9 @@ export default function WorkspaceOverviewPage() {
   // appear on their own pages, and the sidebar covers navigation. The
   // review action is visually primary to match the header CTA.
   const quickActions = [
-    {
-      href: "/workspace/review",
-      title: t.wsNavReview,
-      primary: true,
-      art: (
-        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="4" y="3" width="11" height="14" rx="2" />
-          <path d="M7 7.5h5M7 10.5h5" />
-          <circle cx="16.5" cy="16.5" r="3.2" />
-          <path d="M18.8 18.8 21 21" />
-        </svg>
-      ),
-    },
-    {
-      href: "/workspace/compare",
-      title: t.wsNavCompare,
-      primary: false,
-      art: (
-        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="5" width="8" height="14" rx="2" />
-          <rect x="13" y="5" width="8" height="14" rx="2" />
-          <path d="M6 9h2M6 12h2M16 9h2M16 12h2" />
-        </svg>
-      ),
-    },
-    {
-      href: "/workspace/resources",
-      title: t.wsNavResources,
-      primary: false,
-      art: (
-        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 6C10 4.5 7 4 4 4v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2Z" />
-          <path d="M12 6v12" />
-        </svg>
-      ),
-    },
+    { href: "/workspace/review", title: t.wsNavReview, primary: true, Art: SpotDocLens },
+    { href: "/workspace/compare", title: t.wsNavCompare, primary: false, Art: SpotCompare },
+    { href: "/workspace/resources", title: t.wsNavResources, primary: false, Art: SpotBook },
   ];
 
   return (
@@ -164,7 +132,7 @@ export default function WorkspaceOverviewPage() {
                 action.primary ? "bg-brand text-on-action" : "bg-brand-soft text-brand"
               }`}
             >
-              {action.art}
+              <action.Art />
             </span>
             <span className="min-w-0 font-semibold tracking-tight">
               {action.title}{" "}
