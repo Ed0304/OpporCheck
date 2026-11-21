@@ -17,9 +17,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /srv
 
-# PaddlePaddle's OpenMP runtime (the one system library the wheels need).
+# System libraries the wheels need: PaddlePaddle's OpenMP runtime, plus the
+# GL/glib libraries required by the cv2 build PaddleX pulls in (a transitive
+# dep installs full cv2 over the headless pin, and full cv2 needs libGL).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libgomp1 \
+    && apt-get install -y --no-install-recommends libgomp1 libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements-ocr.txt ./
