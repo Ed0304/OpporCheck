@@ -60,7 +60,7 @@ export default function RegisterPage() {
       <div className="mx-auto grid w-full max-w-4xl items-center gap-10 lg:grid-cols-2">
         <AuthArt />
         <div className="mx-auto w-full max-w-md">
-          <h1 className="text-3xl font-semibold tracking-tight text-navy">{t.authCreateAccount}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-navy">{t.authCreateAccount}</h1>
         <div className="mt-5">
           <Card>
                 {setupError && (

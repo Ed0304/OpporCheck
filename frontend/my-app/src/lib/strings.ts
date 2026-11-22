@@ -784,7 +784,7 @@ const EN = {
   stThemeDarkHint: "Always use the dark theme.",
   stThemeSystemHint: "Follow your device setting.",
   // ---- Hybrid demo (model playground) ----
-  hdEyebrow: "OpporCheck · Milestone 1",
+  hdEyebrow: "Technical demo · separate from the workspace",
   hdTitle: "Hybrid inference demo",
   hdSubtitle:
     "Analyzes an employment opportunity into structured JSON using Firebase AI Logic in the " +
@@ -1603,7 +1603,7 @@ const ID: UiStrings = {
   stThemeLightHint: "Selalu gunakan tema terang.",
   stThemeDarkHint: "Selalu gunakan tema gelap.",
   stThemeSystemHint: "Ikuti pengaturan perangkat.",
-  hdEyebrow: "OpporCheck · Tonggak 1",
+  hdEyebrow: "Demo teknis · terpisah dari ruang kerja",
   hdTitle: "Demo inferensi hibrida",
   hdSubtitle:
     "Menganalisis peluang kerja menjadi JSON terstruktur menggunakan Firebase AI Logic di " +

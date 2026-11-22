@@ -39,17 +39,17 @@ export default function AboutContent() {
           <h2 id="about-limits" className="text-xl font-semibold text-ink">
             {t.aboutNotTitle}
           </h2>
-          <ul className="mt-3 flex flex-col gap-2">
+          <ul className="mt-3 divide-y divide-edge rounded-xl border border-edge bg-card">
             {limits.map((limit) => (
               <li
                 key={limit.slice(0, 24)}
-                className="flex items-start gap-3 rounded-lg border border-edge bg-card px-4 py-3 leading-7"
+                className="flex items-start gap-3 px-4 py-3 leading-7"
               >
                 <span
                   aria-hidden
                   className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand"
                 >
-                  <SpotSlash size={15} />
+                  <SpotSlash size={16} />
                 </span>
                 <span>{limit}</span>
               </li>

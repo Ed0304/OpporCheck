@@ -45,7 +45,7 @@ export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] })
           <div className="p-5">
           <div className="flex items-start gap-2.5">
             <span aria-hidden className="mt-0.5 shrink-0 text-evidence">
-              <SpotBook size={17} />
+              <SpotBook size={16} />
             </span>
             <a
               href={entry.url}

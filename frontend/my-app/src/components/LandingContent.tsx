@@ -5,7 +5,7 @@
 //
 // Page chrome uses theme tokens (canvas/card/ink/muted) so light mode
 // renders light and dark mode renders black. The sample previews are
-// deliberately theme-independent: fixed white paper with near-black
+// deliberately theme-independent: fixed warm paper with near-black
 // content in both modes, with no dark: overrides anywhere inside.
 // Each Bar carries exactly one background class — stacking two bg-*
 // utilities on one element resolves unpredictably.
@@ -33,7 +33,7 @@ function Bar({ className }: { className: string }) {
 
 function ReceiptPreview() {
   return (
-    <div className="flex h-full flex-col items-center bg-white px-6 pt-10 pb-5 [color-scheme:light]">
+    <div className="flex h-full flex-col items-center bg-[#f6f2e9] px-6 pt-10 pb-5 [color-scheme:light]">
       <Bar className="h-2 w-16 bg-zinc-900" />
       <Bar className="mt-2 h-1.5 w-24 bg-zinc-300" />
       <div aria-hidden className="my-3 w-full border-t border-dashed border-zinc-400" />
@@ -50,7 +50,7 @@ function ReceiptPreview() {
 
 function InvoicePreview() {
   return (
-    <div className="flex h-full flex-col bg-white px-5 pt-10 pb-5 [color-scheme:light]">
+    <div className="flex h-full flex-col bg-[#f6f2e9] px-5 pt-10 pb-5 [color-scheme:light]">
       <div className="flex items-center justify-between">
         <Bar className="h-2.5 w-20 bg-zinc-900" />
         <p aria-hidden className="text-[9px] font-bold tracking-widest text-zinc-900">
@@ -74,7 +74,7 @@ function InvoicePreview() {
 
 function ContractPreview() {
   return (
-    <div className="flex h-full flex-col bg-white px-5 pt-10 pb-5 [color-scheme:light]">
+    <div className="flex h-full flex-col bg-[#f6f2e9] px-5 pt-10 pb-5 [color-scheme:light]">
       <Bar className="h-2.5 w-3/4 bg-zinc-900" />
       <Bar className="mt-2 h-1.5 w-full bg-zinc-300" />
       <Bar className="mt-1.5 h-1.5 w-full bg-zinc-300" />
@@ -93,7 +93,7 @@ function ContractPreview() {
 
 function ListingPreview() {
   return (
-    <div className="flex h-full flex-col bg-white px-5 pt-10 pb-5 [color-scheme:light]">
+    <div className="flex h-full flex-col bg-[#f6f2e9] px-5 pt-10 pb-5 [color-scheme:light]">
       <span
         aria-hidden
         className="inline-flex w-fit rounded-full bg-zinc-900 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white"

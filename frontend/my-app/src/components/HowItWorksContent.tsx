@@ -35,17 +35,17 @@ export default function HowItWorksContent() {
         <h1 className="mt-6 text-3xl font-bold tracking-tight text-navy">{t.howTitle}</h1>
         <p className="mt-3 leading-7 text-muted">{t.howSubtitle}</p>
       </Enter>
-      <div aria-hidden className="mx-auto mt-8 hidden max-w-3xl items-start sm:flex">
+      <div aria-hidden className="mx-auto mt-8 hidden max-w-3xl items-start md:flex">
         {steps.map((step, index) => (
-          <div key={step.title} className="flex flex-1 items-start last:flex-none">
-            <div className="flex w-24 flex-col items-center gap-2 text-center">
+          <div key={step.title} className="flex min-w-0 flex-1 items-start last:flex-none">
+            <div className="flex w-24 shrink-0 flex-col items-center gap-2 text-center">
               <span className="flex h-9 w-9 items-center justify-center rounded-full border border-paper-edge bg-paper text-sm font-bold text-brand shadow-[0_2px_10px_var(--oc-paper-shadow)]">
                 {step.n}
               </span>
               <span className="text-xs leading-4 font-medium text-muted">{step.title}</span>
             </div>
             {index < steps.length - 1 && (
-              <span className="mx-1 mt-[17px] h-px flex-1 bg-paper-edge" />
+              <span className="mx-2 mt-[17px] h-px min-w-6 flex-1 bg-paper-edge" />
             )}
           </div>
         ))}

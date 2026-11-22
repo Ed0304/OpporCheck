@@ -548,7 +548,7 @@ export default function ReviewPage() {
           >
             {tab === "paste" && <ActivePill pillId="oc-review-tabs" />}
             <span className="relative inline-flex items-center gap-1.5">
-              <SpotText size={15} />
+              <SpotText size={16} />
               {t.revTabPaste}
             </span>
           </button>
@@ -563,7 +563,7 @@ export default function ReviewPage() {
           >
             {tab === "pdf" && <ActivePill pillId="oc-review-tabs" />}
             <span className="relative inline-flex items-center gap-1.5">
-              <SpotPdf size={15} />
+              <SpotPdf size={16} />
               {t.revTabPdf}
             </span>
           </button>
@@ -578,7 +578,7 @@ export default function ReviewPage() {
           >
             {tab === "image" && <ActivePill pillId="oc-review-tabs" />}
             <span className="relative inline-flex items-center gap-1.5">
-              <SpotImage size={15} />
+              <SpotImage size={16} />
               {t.revTabImage}
             </span>
           </button>
