@@ -4,8 +4,9 @@
 
 "use client";
 
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, Ref } from "react";
 import { motion } from "motion/react";
+import { SpotUpload } from "@/components/spot";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
 import { Enter, OC_DURATION, OC_EASE } from "@/components/motion";
@@ -220,6 +221,59 @@ export function EmptyState({
       <p className="text-[15px] font-semibold tracking-tight">{title}</p>
       <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted">{description}</p>
       {action && <div className="mt-4 flex justify-center">{action}</div>}
+    </div>
+  );
+}
+
+/**
+ * Styled file picker: the native input stays (screen-reader and keyboard
+ * operable) while a button-styled label and a filename readout replace
+ * the browser's unstyled control. Focus rings through peer-focus-visible.
+ */
+export function FilePicker({
+  id,
+  accept,
+  disabled = false,
+  onSelect,
+  fileName,
+  chooseLabel,
+  noFileLabel,
+  inputRef,
+}: {
+  id: string;
+  accept: string;
+  disabled?: boolean;
+  onSelect: (file: File | undefined) => void;
+  /** Last selected file name, or null when nothing is chosen. */
+  fileName: string | null;
+  chooseLabel: string;
+  noFileLabel: string;
+  inputRef?: Ref<HTMLInputElement>;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <input
+        ref={inputRef}
+        id={id}
+        type="file"
+        accept={accept}
+        disabled={disabled}
+        onChange={(event) => onSelect(event.target.files?.[0])}
+        className="peer sr-only"
+      />
+      <label
+        htmlFor={id}
+        aria-disabled={disabled}
+        className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg border border-edge bg-card px-4 text-sm font-medium shadow-sm transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-card ${
+          disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-brand-soft"
+        }`}
+      >
+        <SpotUpload size={16} />
+        {chooseLabel}
+      </label>
+      <span role="status" className="min-w-0 flex-1 basis-40 truncate text-sm text-muted">
+        {fileName ?? noFileLabel}
+      </span>
     </div>
   );
 }

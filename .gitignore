@@ -37,3 +37,10 @@ Thumbs.db
 *.pem
 serviceAccount*.json
 **/*firebase-adminsdk*.json
+benchmarks/01_sample_job_listing.pdf
+benchmarks/02_recruiter_promise_note.pdf
+benchmarks/03_sample_employment_contract.pdf
+benchmarks/04_synthetic_fee_invoice.pdf
+benchmarks/05_clean_offer_control.pdf
+benchmarks/hiccup-5.jpg
+benchmarks/hiccup-6.jpg

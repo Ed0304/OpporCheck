@@ -16,7 +16,7 @@ import CompareReport, { type ReportDocument } from "@/components/CompareReport";
 import { ContextualNotice } from "@/components/Disclaimer";
 import { Crossfade, Enter, ProgressBar } from "@/components/motion";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
-import { Button, Card, EmptyState, EvidenceQuote, Field, PageHeader, Spinner, StatusLabel, Stepper } from "@/components/ui";
+import { Button, Card, EmptyState, EvidenceQuote, Field, FilePicker, PageHeader, Spinner, StatusLabel, Stepper } from "@/components/ui";
 import { getUploadSensitivityNotice } from "@/lib/disclaimer";
 import {
   createExtractionModel,
@@ -128,6 +128,7 @@ export default function ComparePage() {
   const [pasteName, setPasteName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [pdfName, setPdfName] = useState<string | null>(null);
   const [mode, setMode] = useState<CompareInferenceMode>("on-device-only");
   const [consent, setConsent] = useState(false);
   const [device, setDevice] = useState<DeviceStatus>({
@@ -218,6 +219,7 @@ export default function ComparePage() {
       setUploadMessage(invalid);
       return;
     }
+    setPdfName(file.name);
     setUploading(true);
     setUploadMessage(format(t.cmpUploadingFile, { name: file.name }));
     try {
@@ -617,14 +619,15 @@ export default function ComparePage() {
             htmlFor="compare-pdf"
             hint={format(t.cmpUploadPdfHint, { base: apiBase() })}
           >
-            <input
-              ref={fileRef}
+            <FilePicker
               id="compare-pdf"
-              type="file"
               accept=".pdf,application/pdf"
               disabled={uploading || running}
-              onChange={(event) => void handlePdf(event.target.files?.[0])}
-              className="text-sm"
+              onSelect={(file) => void handlePdf(file)}
+              fileName={pdfName}
+              chooseLabel={t.commonChooseFile}
+              noFileLabel={t.commonNoFile}
+              inputRef={fileRef}
             />
           </Field>
         </div>

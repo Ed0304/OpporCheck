@@ -10,6 +10,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import AppHeader from "@/components/AppHeader";
+import { getPublicLinks } from "@/components/PublicShell";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { Spinner } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
@@ -35,13 +36,17 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // The public links stay visible in every workspace state so the
+  // header never loses its navigation once the user signs in.
+  const publicLinks = getPublicLinks(language);
+
   if (loading || !user) {
     return (
       <div className="flex min-h-full flex-1 flex-col">
         <Suspense fallback={null}>
           <LoginRedirect user={user} loading={loading} />
         </Suspense>
-        <AppHeader links={[]} />
+        <AppHeader links={publicLinks} />
         <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-16 sm:px-6">
           <Spinner label={loading ? t.wsCheckingSignIn : t.wsRedirecting} />
         </div>
@@ -54,7 +59,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
       <Suspense fallback={null}>
         <LoginRedirect user={user} loading={loading} />
       </Suspense>
-      <AppHeader links={[]} />
+      <AppHeader links={publicLinks} />
       <div className="mx-auto w-full max-w-7xl flex-1 px-4 pt-4 sm:px-6 lg:hidden">
         <button
           type="button"

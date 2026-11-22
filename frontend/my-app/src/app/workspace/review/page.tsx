@@ -17,7 +17,7 @@ import { ContextualNotice } from "@/components/Disclaimer";
 import { ActivePill, Crossfade, Enter, ProgressBar } from "@/components/motion";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import { SpotImage, SpotPdf, SpotText } from "@/components/spot";
-import { Button, Card, EmptyState, Field, PageHeader, StatusLabel, Stepper } from "@/components/ui";
+import { Button, Card, EmptyState, Field, FilePicker, PageHeader, StatusLabel, Stepper } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { getReviewProcessingNotice, getUploadSensitivityNotice } from "@/lib/disclaimer";
 import {
@@ -152,6 +152,7 @@ export default function ReviewPage() {
   const [pdf, setPdf] = useState<PdfStatus>({ phase: "idle", progress: null, message: "", result: null });
   const [pdfLanguage, setPdfLanguage] = useState<OcrLanguage>("en");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [imageFileName, setImageFileName] = useState<string | null>(null);
   const [ocr, dispatchOcr] = useReducer(ocrReducer, undefined, initialOcrState);
   const [running, setRunning] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
@@ -315,6 +316,7 @@ export default function ReviewPage() {
       dispatchOcr({ type: "invalidate", message: invalid });
       return;
     }
+    setImageFileName(file.name);
     dispatchOcr({ type: "select", fileName: file.name, language });
     try {
       const extracted = await uploadImage(
@@ -672,13 +674,14 @@ export default function ReviewPage() {
                 hint={format(t.revPdfHint, { base: apiBase() })}
                 error={pdf.phase === "error" ? pdf.message : null}
               >
-                <input
-                  ref={fileRef}
+                <FilePicker
                   id="pdf-file"
-                  type="file"
                   accept=".pdf,application/pdf"
-                  onChange={(event) => void handleFile(event.target.files?.[0])}
-                  className="w-full text-sm"
+                  onSelect={(file) => void handleFile(file)}
+                  fileName={pdfFile?.name ?? null}
+                  chooseLabel={t.commonChooseFile}
+                  noFileLabel={t.commonNoFile}
+                  inputRef={fileRef}
                 />
               </Field>
             </div>
@@ -819,13 +822,14 @@ export default function ReviewPage() {
                   ocr.phase === "invalid" || ocr.phase === "error" ? ocr.message : null
                 }
               >
-                <input
-                  ref={imageRef}
+                <FilePicker
                   id="ocr-file"
-                  type="file"
                   accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                  onChange={(event) => void handleImageFile(event.target.files?.[0])}
-                  className="w-full text-sm"
+                  onSelect={(file) => void handleImageFile(file)}
+                  fileName={imageFileName}
+                  chooseLabel={t.commonChooseFile}
+                  noFileLabel={t.commonNoFile}
+                  inputRef={imageRef}
                 />
               </Field>
             </div>
@@ -874,7 +878,13 @@ export default function ReviewPage() {
                   >
                     {t.commonUseThisText}
                   </Button>
-                  <Button variant="ghost" onClick={() => dispatchOcr({ type: "reset" })}>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setImageFileName(null);
+                      dispatchOcr({ type: "reset" });
+                    }}
+                  >
                     {t.commonDiscard}
                   </Button>
                 </div>
