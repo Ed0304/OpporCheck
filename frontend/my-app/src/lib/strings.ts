@@ -664,6 +664,8 @@ const EN = {
   cmpWere: "were",
   cmpDroppedDuring: "dropped during validation.",
   cmpDroppedDetails: "Why items were dropped",
+  cmpNeedPromiseSide:
+    "Every document is labeled as a written agreement, so promises have nothing valid to compare against. Set the job advertisement or recruiter message to its type (each document card has a type selector), re-extract it, then compare again.",
   cmpAwaitingLine: "Awaiting extraction.",
   cmpUnknownError: "unknown error",
   cmpExtractionFailedLine: "Extraction failed: {error}",
@@ -1502,6 +1504,8 @@ const ID: UiStrings = {
   cmpWere: "telah",
   cmpDroppedDuring: "dibuang selama validasi.",
   cmpDroppedDetails: "Alasan item dibuang",
+  cmpNeedPromiseSide:
+    "Semua dokumen berlabel perjanjian tertulis, sehingga janji tidak ada bandingannya yang valid. Atur iklan lowongan atau pesan perekrut ke jenisnya (setiap kartu dokumen memiliki pemilih jenis), ekstraksi ulang, lalu bandingkan lagi.",
   cmpAwaitingLine: "Menunggu ekstraksi.",
   cmpUnknownError: "kesalahan tidak diketahui",
   cmpExtractionFailedLine: "Ekstraksi gagal: {error}",

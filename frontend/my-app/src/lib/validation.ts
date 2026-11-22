@@ -508,7 +508,7 @@ export const CONTRACT_CATEGORIES: readonly ContractCategory[] = [
 ];
 
 /** Promise-side slots (advertisements, recruiter messages) vs written terms. */
-const PROMISE_SIDE_TYPES: readonly ContractDocumentType[] = [
+export const PROMISE_SIDE_TYPES: readonly ContractDocumentType[] = [
   "job_advertisement",
   "recruiter_communication",
 ];
@@ -643,7 +643,12 @@ function checkFindingStructure(
     const spec = FINDING_SLOTS.find((entry) => entry.key === slot);
     const allowed = spec ? (spec.types as readonly string[]) : [];
     if (!allowed.includes(claim.documentReference.documentType)) {
-      return `finding.${slot} must cite a ${spec?.label ?? slot} document`;
+      const ref = claim.documentReference;
+      return (
+        `finding.${slot} cites '${ref.fileName}' (${ref.documentType}) ` +
+        `but must cite a ${spec?.label ?? slot} document — ` +
+        "check each document's assigned type"
+      );
     }
   }
   const distinctDocs = new Set(claims.map(({ claim }) => claim.documentReference.documentId));
@@ -890,6 +895,8 @@ export function parseExtractionOutput(
 export interface ParsedPromiseComparison {
   findings: PromiseToPaperFinding[];
   issues: string[];
+  /** Findings attempted minus findings kept (issues may outnumber drops). */
+  dropped: number;
   /** Present when the model output was not a parseable findings list. */
   parseError: string | null;
 }
@@ -917,6 +924,7 @@ export function parsePromiseComparison(
     return {
       findings: [],
       issues: [],
+      dropped: 0,
       parseError: "Model output was not valid JSON. Please run the comparison again.",
     };
   }
@@ -924,6 +932,7 @@ export function parsePromiseComparison(
     return {
       findings: [],
       issues: [],
+      dropped: 0,
       parseError: "Model output was not a findings list. Please run the comparison again.",
     };
   }
@@ -1088,7 +1097,7 @@ export function parsePromiseComparison(
       followUpQuestion: (item["followUpQuestion"] as string).trim(),
     });
   });
-  return { findings, issues, parseError: null };
+  return { findings, issues, dropped: rawItems.length - findings.length, parseError: null };
 }
 
 /** Titles must be non-empty after trimming; overlong titles are rejected, not cut. */

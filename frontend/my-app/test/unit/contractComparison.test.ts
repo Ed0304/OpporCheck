@@ -536,6 +536,29 @@ test("standalone finding validator skips malformed slots", () => {
   assert.ok(result.issues.length > 0, "skipped slots stay recorded");
 });
 
+test("comparison counts dropped findings separately from issue lines", () => {
+  const bad = {
+    ...comparisonFinding(),
+    recruiterStatement: {
+      documentId: "doc-nope",
+      claim: "x",
+      sourceExcerpt: "yyyy",
+    },
+    contractClause: {
+      documentId: "doc-nope",
+      claim: "x",
+      sourceExcerpt: "yyyy",
+    },
+  };
+  const parsed = parsePromiseComparison(
+    JSON.stringify([comparisonFinding(), bad]),
+    DOCS,
+  );
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(parsed.dropped, 1);
+  assert.ok(parsed.issues.length >= 1);
+});
+
 test("locateExcerptPage tolerates quoted page markers but never trusts them", () => {
   assert.equal(
     locateExcerptPage(CONTRACT.pages, "[Page 1] Base salary is £12.50 per hour."),

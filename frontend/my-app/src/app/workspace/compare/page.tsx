@@ -59,6 +59,7 @@ import {
 } from "@/lib/compareSession";
 import { failedPageNumbers } from "@/lib/documents";
 import { describeActualSource, type PrivacyApproval } from "@/lib/privacyGate";
+import { PROMISE_SIDE_TYPES } from "@/lib/validation";
 import { useLang } from "@/lib/lang";
 import { format, getStrings, type UiLanguage } from "@/lib/strings";
 import { useReducedMotion } from "@/lib/useReducedMotion";
@@ -142,6 +143,7 @@ export default function ComparePage() {
   const [runError, setRunError] = useState<string | null>(null);
   const [findings, setFindings] = useState<PromiseToPaperFinding[] | null>(null);
   const [droppedIssues, setDroppedIssues] = useState<string[]>([]);
+  const [droppedCount, setDroppedCount] = useState(0);
   const [privacyTarget, setPrivacyTarget] = useState<PrivacyTarget | null>(null);
   const [comparisonSource, setComparisonSource] = useState<string | null>(null);
 
@@ -453,6 +455,18 @@ export default function ComparePage() {
     if (comparing || extracting || extractedDocs.length < 2) {
       return;
     }
+    // Promise-to-Paper compares promised terms against written terms: without
+    // at least one promise-side document the model's recruiter/advertisement
+    // evidence has nowhere valid to go and every finding drops. Fail fast
+    // with the fix instead of a mystifying empty report.
+    if (
+      !extractedDocs.some((doc) =>
+        (PROMISE_SIDE_TYPES as readonly string[]).includes(doc.input.documentType),
+      )
+    ) {
+      setRunError(t.cmpNeedPromiseSide);
+      return;
+    }
     try {
       for (const doc of extractedDocs) {
         approvedPagesOrThrow(doc.privacy, doc.input.pages, doc.input.fileName, language);
@@ -464,6 +478,7 @@ export default function ComparePage() {
     setRunError(null);
     setFindings(null);
     setDroppedIssues([]);
+    setDroppedCount(0);
     setComparisonSource(null);
     setComparing(true);
     setStatusMsg(t.cmpComparingStatus);
@@ -495,6 +510,7 @@ export default function ComparePage() {
       }
       setFindings(parsed.findings);
       setDroppedIssues(parsed.issues);
+      setDroppedCount(parsed.dropped);
     } catch (err) {
       setRunError(friendlyError(err, mode, language));
     } finally {
@@ -1070,6 +1086,7 @@ export default function ComparePage() {
             <CompareReport
               documents={reportDocs}
               findings={findings}
+              droppedCount={droppedCount}
               droppedIssues={droppedIssues}
               limitations={limitations}
             />

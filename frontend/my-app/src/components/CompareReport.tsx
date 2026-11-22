@@ -133,11 +133,13 @@ function FindingCard({
 export default function CompareReport({
   documents,
   findings,
+  droppedCount,
   droppedIssues,
   limitations,
 }: {
   documents: ReportDocument[];
   findings: PromiseToPaperFinding[];
+  droppedCount: number;
   droppedIssues: string[];
   limitations: string[];
 }) {
@@ -146,7 +148,6 @@ export default function CompareReport({
   const docTypeLabels = getCompareDocTypeLabels(language);
   const summary = summarizeFindings(findings);
   const questions = collectQuestions(findings);
-  const droppedCount = droppedIssues.length;
   const sourceById = new Map(documents.map((doc) => [doc.id, doc.source]));
   const groups = [
     { key: "consistent", title: t.crGroupConsistent },
