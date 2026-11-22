@@ -7,8 +7,6 @@ Run (from the backend/ directory, fresh shell):
 
 from __future__ import annotations
 
-import os
-
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -32,15 +30,11 @@ from .ocr import (
 )
 from .auth import FirebaseAuthMiddleware
 from .official_sources import retrieve_sources
-from .security import RateLimitMiddleware, allowed_hosts
+from .security import RateLimitMiddleware, allowed_hosts, frontend_origins
 
-FRONTEND_ORIGINS = [
-    origin.strip()
-    for origin in os.environ.get(
-        "FRONTEND_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
-    ).split(",")
-    if origin.strip()
-]
+# Shared with cors_error_headers so short-circuit error responses echo
+# exactly the origins CORSMiddleware itself allows.
+FRONTEND_ORIGINS = frontend_origins()
 
 app = FastAPI(title="OpporCheck backend")
 # Starlette runs middleware last-added-first, so this reads outer-first:

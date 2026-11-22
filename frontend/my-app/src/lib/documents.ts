@@ -40,7 +40,11 @@ export interface ExtractResult {
 }
 
 export function apiBase(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:8000";
+  // Strip trailing slashes: callers append "/api/..." themselves, and a
+  // configured "https://host/" would otherwise produce "//api/..." URLs
+  // the backend router does not match.
+  const raw = process.env.NEXT_PUBLIC_API_BASE_URL?.trim().replace(/\/+$/, "");
+  return raw && raw.length > 0 ? raw : "http://localhost:8000";
 }
 
 /** Client-side validation; the backend re-validates everything. Returns an error or null. */

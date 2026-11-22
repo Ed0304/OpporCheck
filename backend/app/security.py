@@ -47,6 +47,37 @@ def rate_limit_per_minute() -> int:
     return value if value > 0 else 0
 
 
+def frontend_origins() -> list[str]:
+    """Browser origins allowed to call the API (localhost by default)."""
+    raw = os.environ.get(
+        "FRONTEND_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+    )
+    return [part.strip() for part in raw.split(",") if part.strip()]
+
+
+def cors_error_headers(
+    headers: list[tuple[bytes, bytes]],
+) -> list[tuple[bytes, bytes]]:
+    """CORS headers for short-circuit error responses (401/429/503).
+
+    Middlewares outside Starlette's CORSMiddleware answer some requests
+    themselves; without an explicit Access-Control-Allow-Origin the browser
+    hides even the status code, so the UI can only report a network
+    failure. The request Origin is echoed only when allowlisted.
+    """
+    origin: str | None = None
+    for key, value in headers:
+        if key.decode("latin-1").lower() == "origin":
+            origin = value.decode("latin-1").strip()
+            break
+    if origin and origin in frontend_origins():
+        return [
+            (b"access-control-allow-origin", origin.encode("latin-1")),
+            (b"vary", b"Origin"),
+        ]
+    return []
+
+
 def trust_proxy_headers() -> bool:
     """True only when the operator asserts a trusted edge proxy.
 
@@ -134,7 +165,10 @@ class RateLimitMiddleware:
             {
                 "type": "http.response.start",
                 "status": 429,
-                "headers": [(b"content-type", b"application/json")],
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    *cors_error_headers(list(scope.get("headers", []))),
+                ],
             }
         )
         await send({"type": "http.response.body", "body": body})

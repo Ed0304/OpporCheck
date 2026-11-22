@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import os
 
+from .security import cors_error_headers
+
 FIREBASE_PROJECT_ENV = "FIREBASE_PROJECT_ID"
 
 # Paths that never require authentication. /health exists so platforms
@@ -112,12 +114,20 @@ class FirebaseAuthMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope.get("type") != "http" or scope.get("path") in OPEN_PATHS:
+        if (
+            scope.get("type") != "http"
+            or scope.get("path") in OPEN_PATHS
+            # CORS preflights carry no credentials by design; the inner
+            # CORSMiddleware answers them. Rejecting them here would block
+            # every cross-origin browser call before it starts.
+            or scope.get("method") == "OPTIONS"
+        ):
             await self.app(scope, receive, send)
             return
+        raw_headers = list(scope.get("headers", []))
         headers = {
             key.decode("latin-1").lower(): value.decode("latin-1")
-            for key, value in scope.get("headers", [])
+            for key, value in raw_headers
         }
         try:
             verified = verify_bearer_token(headers.get("authorization"))
@@ -127,7 +137,10 @@ class FirebaseAuthMiddleware:
                 {
                     "type": "http.response.start",
                     "status": exc.status_code,
-                    "headers": [(b"content-type", b"application/json")],
+                    "headers": [
+                        (b"content-type", b"application/json"),
+                        *cors_error_headers(raw_headers),
+                    ],
                 }
             )
             await send({"type": "http.response.body", "body": body})

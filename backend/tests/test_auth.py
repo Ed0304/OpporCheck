@@ -25,8 +25,16 @@ from app.auth import (
 PROJECT = "opporcheck-test"
 
 
-def run_middleware(middleware_cls, path="/api/v1/documents/extract", headers=None):
+def run_middleware(middleware_cls, path="/api/v1/documents/extract", headers=None, method="GET"):
     """Drives one request through middleware; returns (status, body, scope)."""
+    status, body, _, scope = run_middleware_full(
+        middleware_cls, path=path, headers=headers, method=method
+    )
+    return status, body, scope
+
+
+def run_middleware_full(middleware_cls, path="/api/v1/documents/extract", headers=None, method="GET"):
+    """Drives one request through middleware; returns (status, body, headers, scope)."""
     messages: list[dict] = []
 
     async def receive():
@@ -44,7 +52,7 @@ def run_middleware(middleware_cls, path="/api/v1/documents/extract", headers=Non
     scope: dict = {
         "type": "http",
         "http_version": "1.1",
-        "method": "GET",
+        "method": method,
         "path": path,
         "headers": headers or [],
         "client": ("10.0.0.9", 1111),
@@ -56,7 +64,7 @@ def run_middleware(middleware_cls, path="/api/v1/documents/extract", headers=Non
         pass
     start = next(m for m in messages if m["type"] == "http.response.start")
     body = b"".join(m.get("body", b"") for m in messages if m["type"] == "http.response.body")
-    return start["status"], body, scope
+    return start["status"], body, list(start.get("headers", [])), scope
 
 
 def valid_claims():
@@ -240,6 +248,45 @@ class AuthMiddlewareTests(unittest.TestCase):
         start = next(m for m in messages if m["type"] == "http.response.start")
         self.assertEqual(start["status"], 204)
         self.assertEqual(scope.get("state", {}).get("firebase_uid"), "user-123")
+
+    def test_options_preflight_passes_through_without_token(self):
+        # CORS preflights carry no credentials by design; rejecting them
+        # would block every cross-origin browser call before it starts.
+        status, _, _ = run_middleware(
+            FirebaseAuthMiddleware, method="OPTIONS", headers=[]
+        )
+        self.assertEqual(status, 200)
+
+    def test_401_echoes_allowlisted_origin(self):
+        origin = "https://app.example"
+        with mock.patch.dict(
+            os.environ,
+            {"FIREBASE_PROJECT_ID": PROJECT, "FRONTEND_ORIGINS": origin},
+        ):
+            status, _, headers, _ = run_middleware_full(
+                FirebaseAuthMiddleware,
+                headers=[(b"origin", origin.encode("ascii"))],
+            )
+        self.assertEqual(status, 401)
+        self.assertIn(
+            (b"access-control-allow-origin", origin.encode("ascii")), headers
+        )
+
+    def test_401_omits_disallowed_origin(self):
+        with mock.patch.dict(
+            os.environ,
+            {
+                "FIREBASE_PROJECT_ID": PROJECT,
+                "FRONTEND_ORIGINS": "https://app.example",
+            },
+        ):
+            status, _, headers, _ = run_middleware_full(
+                FirebaseAuthMiddleware,
+                headers=[(b"origin", b"https://evil.example")],
+            )
+        self.assertEqual(status, 401)
+        names = [name for name, _ in headers]
+        self.assertNotIn(b"access-control-allow-origin", names)
 
 
 if __name__ == "__main__":

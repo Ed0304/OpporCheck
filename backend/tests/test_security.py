@@ -142,6 +142,48 @@ class RateLimitTests(unittest.TestCase):
             os.environ.pop("OPPORCHECK_RATE_LIMIT_PER_MINUTE", None)
             self.assertEqual(rate_limit_per_minute(), DEFAULT_RATE_LIMIT_PER_MINUTE)
 
+    def test_429_carries_cors_headers_for_allowlisted_origin(self):
+        messages: list[dict] = []
+
+        async def receive():
+            return {"type": "http.request", "body": b""}
+
+        async def send(message):
+            messages.append(message)
+
+        async def downstream(scope, receive, send):
+            await send(
+                {"type": "http.response.start", "status": 200, "headers": []}
+            )
+            await send({"type": "http.response.body", "body": b"ok"})
+
+        origin = "https://app.example"
+        scope: dict = {
+            "type": "http",
+            "method": "GET",
+            "path": "/api/v1/documents/extract",
+            "headers": [
+                (b"host", b"127.0.0.1"),
+                (b"origin", origin.encode("ascii")),
+            ],
+            "client": ("10.9.8.7", 1),
+        }
+        limited = RateLimitMiddleware(downstream, per_minute=1)
+        with mock.patch.dict(os.environ, {"FRONTEND_ORIGINS": origin}):
+            for _ in range(2):
+                messages.clear()
+                coro = limited(scope, receive, send)
+                try:
+                    coro.send(None)
+                except StopIteration:
+                    pass
+        start = next(m for m in messages if m["type"] == "http.response.start")
+        self.assertEqual(start["status"], 429)
+        self.assertIn(
+            (b"access-control-allow-origin", origin.encode("ascii")),
+            list(start.get("headers", [])),
+        )
+
 
 def run_limited(app, host="127.0.0.1", headers=None, client=("10.9.8.7", 1)):
     """Drives one GET through a middleware; returns the status code."""
