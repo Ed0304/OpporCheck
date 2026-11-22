@@ -942,12 +942,26 @@ export function parsePromiseComparison(
       issues.push(`${label}.${slotKey} must be an object`);
       return null;
     }
-    const documentId = raw["documentId"];
-    if (typeof documentId !== "string" || !byId.has(documentId.trim())) {
+    // Small models often cite the human-meaningful file name shown beside
+    // the id, or wrap the id in quotes. Resolve leniently: exact id first,
+    // then a unique file-name match. Ambiguous or unknown references still
+    // fail rather than guess.
+    const rawId = raw["documentId"];
+    const cleanedId =
+      typeof rawId === "string" ? rawId.trim().replace(/^["']+|["']+$/g, "").trim() : "";
+    let doc = cleanedId !== "" ? byId.get(cleanedId) : undefined;
+    if (!doc && cleanedId !== "") {
+      const matches = docs.filter(
+        (entry) => entry.fileName.toLowerCase() === cleanedId.toLowerCase(),
+      );
+      if (matches.length === 1) {
+        doc = matches[0];
+      }
+    }
+    if (!doc) {
       issues.push(`${label}.${slotKey}.documentId does not match a compared document`);
       return null;
     }
-    const doc = byId.get(documentId.trim()) as ContractDocumentText;
     if (
       typeof raw["claim"] !== "string" ||
       raw["claim"].trim().length === 0 ||

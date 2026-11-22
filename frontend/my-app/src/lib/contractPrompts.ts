@@ -154,7 +154,7 @@ export function buildPromiseComparisonPrompt(
     "Rules:\n" +
     comparisonLanguageRule(language) +
     "- Every sourceExcerpt MUST be copied verbatim from the excerpts below. Never paraphrase, shorten, or invent quotations.\n" +
-    "- Every documentId MUST be copied exactly from the document list.\n" +
+    "- Every documentId MUST be copied character-for-character from the term list (the code after the word 'document', e.g. doc-abc123-1). Never substitute the file name, and never invent an id.\n" +
     "- Status 'consistent': the documents agree on the term.\n" +
     "- Status 'discrepancy': the documents state different terms. Example: recruiter says accommodation is free, " +
     'the contract deducts an accommodation fee — category deductions, status discrepancy.\n' +

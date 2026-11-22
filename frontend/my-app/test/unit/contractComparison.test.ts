@@ -415,6 +415,40 @@ test("locateExcerptPage finds normalized pages and rejects short excerpts", () =
   assert.equal(locateExcerptPage([], "Base salary is £12.50 per hour."), null);
 });
 
+test("comparison resolves file names and quoted ids to compared documents", () => {
+  const byName = comparisonFinding();
+  byName.recruiterStatement!.documentId = "message.txt";
+  byName.contractClause!.documentId = '"contract.pdf"';
+  const parsed = parsePromiseComparison(JSON.stringify([byName]), DOCS);
+  assert.deepEqual(parsed.issues, []);
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(
+    parsed.findings[0]?.recruiterStatement?.documentReference.documentId,
+    "doc-msg",
+  );
+  assert.equal(
+    parsed.findings[0]?.contractClause?.documentReference.documentId,
+    "doc-contract",
+  );
+});
+
+test("comparison still rejects unknown and ambiguous document references", () => {
+  const unknown = comparisonFinding();
+  unknown.recruiterStatement!.documentId = "doc-nope-9";
+  assert.equal(parsePromiseComparison(JSON.stringify([unknown]), DOCS).findings.length, 0);
+  const ambiguousDocs: ContractDocumentText[] = [
+    { ...RECRUITER, documentId: "doc-a", fileName: "same.pdf" },
+    { ...CONTRACT, documentId: "doc-b", fileName: "same.pdf" },
+  ];
+  const ambiguous = comparisonFinding();
+  ambiguous.recruiterStatement!.documentId = "same.pdf";
+  ambiguous.contractClause!.documentId = "doc-b";
+  assert.equal(
+    parsePromiseComparison(JSON.stringify([ambiguous]), ambiguousDocs).findings.length,
+    0,
+  );
+});
+
 test("locateExcerptPage tolerates quoted page markers but never trusts them", () => {
   assert.equal(
     locateExcerptPage(CONTRACT.pages, "[Page 1] Base salary is £12.50 per hour."),
