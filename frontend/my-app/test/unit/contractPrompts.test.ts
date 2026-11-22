@@ -75,7 +75,7 @@ test("extraction prompt truncates long documents with a marker", () => {
   assert.ok(body.length < EXTRACTION_MAX_CHARS + 500, "extraction input is bounded");
 });
 
-test("comparison prompt embeds terms, ids, statuses, and the worked example", () => {
+test("comparison prompt embeds terms, document labels, statuses, and the worked example", () => {
   const inputs: ComparisonInput[] = [
     { documentId: "doc-1", documentType: "employment_contract", fileName: "c.pdf", terms: [claim()] },
     {
@@ -98,8 +98,12 @@ test("comparison prompt embeds terms, ids, statuses, and the worked example", ()
     },
   ];
   const prompt = buildPromiseComparisonPrompt(inputs);
-  assert.ok(prompt.includes("doc-1"));
-  assert.ok(prompt.includes("doc-2"));
+  assert.ok(prompt.includes("Document 1"));
+  assert.ok(prompt.includes("Document 2"));
+  assert.ok(
+    prompt.includes("cite documents ONLY as 'Document 1', 'Document 2', etc."),
+    "ordinals are the requested citation scheme",
+  );
   assert.ok(prompt.includes("Base salary is £12.50 per hour, paid monthly into the worker bank account."));
   assert.ok(prompt.includes("Accommodation is completely free for every worker."));
   for (const status of ["consistent", "discrepancy", "not_addressed", "needs_clarification"]) {

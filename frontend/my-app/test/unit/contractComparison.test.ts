@@ -449,6 +449,38 @@ test("comparison still rejects unknown and ambiguous document references", () =>
   );
 });
 
+test("comparison resolves ordinal document labels in input order", () => {
+  // DOCS order is [AD, RECRUITER, CONTRACT].
+  const ordinal = comparisonFinding();
+  ordinal.recruiterStatement!.documentId = "Document 2";
+  ordinal.contractClause!.documentId = "document 3";
+  const parsed = parsePromiseComparison(JSON.stringify([ordinal]), DOCS);
+  assert.deepEqual(parsed.issues, []);
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(
+    parsed.findings[0]?.recruiterStatement?.documentReference.documentId,
+    "doc-msg",
+  );
+  assert.equal(
+    parsed.findings[0]?.contractClause?.documentReference.documentId,
+    "doc-contract",
+  );
+  const outOfRange = comparisonFinding();
+  outOfRange.recruiterStatement!.documentId = "Document 9";
+  assert.equal(
+    parsePromiseComparison(JSON.stringify([outOfRange]), DOCS).findings.length,
+    0,
+  );
+});
+
+test("comparison normalizes case variants of category and status", () => {
+  const varied = { ...comparisonFinding(), category: "Deductions", status: "Discrepancy " };
+  const parsed = parsePromiseComparison(JSON.stringify([varied]), DOCS);
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(parsed.findings[0]?.category, "deductions");
+  assert.equal(parsed.findings[0]?.status, "discrepancy");
+});
+
 test("locateExcerptPage tolerates quoted page markers but never trusts them", () => {
   assert.equal(
     locateExcerptPage(CONTRACT.pages, "[Page 1] Base salary is £12.50 per hour."),

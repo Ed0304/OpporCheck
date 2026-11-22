@@ -958,6 +958,15 @@ export function parsePromiseComparison(
         doc = matches[0];
       }
     }
+    if (!doc && cleanedId !== "") {
+      // Ordinal labels assigned by the comparison prompt ("Document 1"),
+      // resolved in the same input order the prompt lists them.
+      const ordinal = cleanedId.match(/^documents?\s+(\d+)$/i);
+      const index = ordinal?.[1] !== undefined ? Number.parseInt(ordinal[1], 10) - 1 : -1;
+      if (index >= 0 && index < docs.length) {
+        doc = docs[index];
+      }
+    }
     if (!doc) {
       issues.push(`${label}.${slotKey}.documentId does not match a compared document`);
       return null;
@@ -1006,17 +1015,17 @@ export function parsePromiseComparison(
       issues.push(`${label} must be an object`);
       return;
     }
-    if (
-      typeof item["category"] !== "string" ||
-      !(CONTRACT_CATEGORIES as readonly string[]).includes(item["category"])
-    ) {
+    // Enum values match case-insensitively: only case/whitespace
+    // variants of valid values are normalized, never other words.
+    const categoryValue =
+      typeof item["category"] === "string" ? item["category"].trim().toLowerCase() : "";
+    if (!(CONTRACT_CATEGORIES as readonly string[]).includes(categoryValue)) {
       issues.push(`${label}.category must be one of: ${CONTRACT_CATEGORIES.join(", ")}`);
       return;
     }
-    if (
-      typeof item["status"] !== "string" ||
-      !(COMPARISON_STATUSES as readonly string[]).includes(item["status"])
-    ) {
+    const statusValue =
+      typeof item["status"] === "string" ? item["status"].trim().toLowerCase() : "";
+    if (!(COMPARISON_STATUSES as readonly string[]).includes(statusValue)) {
       issues.push(`${label}.status must be one of: ${COMPARISON_STATUSES.join(", ")}`);
       return;
     }
@@ -1036,7 +1045,7 @@ export function parsePromiseComparison(
       issues.push(`${label}.followUpQuestion must be 1..${MAX_QUESTION_CHARS} characters`);
       return;
     }
-    const category = item["category"] as ContractCategory;
+    const category = categoryValue as ContractCategory;
     const slotClaims: Array<{ slot: string; claim: EmploymentClaim }> = [];
     let failed = false;
     for (const slot of FINDING_SLOTS) {
@@ -1057,7 +1066,7 @@ export function parsePromiseComparison(
     if (failed) {
       return;
     }
-    const structural = checkFindingStructure(slotClaims, item["status"] as ComparisonStatus);
+    const structural = checkFindingStructure(slotClaims, statusValue as ComparisonStatus);
     if (structural) {
       issues.push(`${label}: ${structural}`);
       return;
@@ -1074,7 +1083,7 @@ export function parsePromiseComparison(
       ...(bySlot.has("contractClause")
         ? { contractClause: bySlot.get("contractClause") as EmploymentClaim }
         : {}),
-      status: item["status"] as ComparisonStatus,
+      status: statusValue as ComparisonStatus,
       explanation: (item["explanation"] as string).trim(),
       followUpQuestion: (item["followUpQuestion"] as string).trim(),
     });

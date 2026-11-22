@@ -120,13 +120,17 @@ export interface ComparisonInput {
   terms: EmploymentClaim[];
 }
 
-function formatComparisonTerm(term: EmploymentClaim, ownerLabel: string): string {
+function formatComparisonTerm(
+  term: EmploymentClaim,
+  ownerLabel: string,
+  docLabel: string,
+): string {
   const excerpt =
     term.sourceExcerpt.length > COMPARISON_EXCERPT_CHARS
       ? `${term.sourceExcerpt.slice(0, COMPARISON_EXCERPT_CHARS).trimEnd()} [trimmed]`
       : term.sourceExcerpt;
   return (
-    `- [${term.category}] (${ownerLabel}, document ${term.documentReference.documentId}): ` +
+    `- [${term.category}] (${docLabel} · ${ownerLabel}): ` +
     `${term.claim} | Excerpt: "${excerpt}"`
   );
 }
@@ -136,25 +140,29 @@ export function buildPromiseComparisonPrompt(
   language: UiLanguage = "en",
 ): string {
   const lines: string[] = [];
-  for (const input of inputs) {
+  const header = inputs
+    .map(
+      (input, index) =>
+        `- Document ${index + 1}: ${DOCUMENT_TYPE_LABELS[input.documentType]} "${input.fileName}"`,
+    )
+    .join("\n");
+  inputs.forEach((input, inputIndex) => {
     const owner = `${DOCUMENT_TYPE_LABELS[input.documentType]} "${input.fileName}"`;
+    const docLabel = `Document ${inputIndex + 1}`;
     for (const term of input.terms) {
       if (lines.length >= COMPARISON_MAX_TERMS) {
         break;
       }
-      lines.push(formatComparisonTerm(term, owner));
+      lines.push(formatComparisonTerm(term, owner, docLabel));
     }
-    if (lines.length >= COMPARISON_MAX_TERMS) {
-      break;
-    }
-  }
+  });
   return (
     "You compare employment terms across the documents below. For each term that can be judged, " +
     "output one finding as JSON. Output a JSON array only.\n" +
     "Rules:\n" +
     comparisonLanguageRule(language) +
     "- Every sourceExcerpt MUST be copied verbatim from the excerpts below. Never paraphrase, shorten, or invent quotations.\n" +
-    "- Every documentId MUST be copied character-for-character from the term list (the code after the word 'document', e.g. doc-abc123-1). Never substitute the file name, and never invent an id.\n" +
+    "- In every finding, cite documents ONLY as 'Document 1', 'Document 2', etc. (the labels in the document list). Never use file names or raw codes, and never invent an id.\n" +
     "- Status 'consistent': the documents agree on the term.\n" +
     "- Status 'discrepancy': the documents state different terms. Example: recruiter says accommodation is free, " +
     'the contract deducts an accommodation fee — category deductions, status discrepancy.\n' +
@@ -171,6 +179,7 @@ export function buildPromiseComparisonPrompt(
     '"advertisementClaim\"?: {...}, "contractClause"?: {...}, "status": "...", "explanation": "...", "followUpQuestion": "..."}. ' +
     "Use recruiterStatement only for recruiter communications, advertisementClaim only for job advertisements, " +
     "contractClause only for offer letters and employment contracts.\n\n" +
+    `Documents:\n${header}\n\n` +
     `Extracted terms:\n${lines.join("\n")}`
   );
 }
