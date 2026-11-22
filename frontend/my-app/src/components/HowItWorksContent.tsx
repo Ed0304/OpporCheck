@@ -5,6 +5,7 @@
 "use client";
 
 import Link from "next/link";
+import GetStartedLink from "@/components/GetStartedLink";
 import { Enter, Reveal } from "@/components/motion";
 import { DeskArt, SpotBook, SpotCheck, SpotDocLens, SpotUpload } from "@/components/spot";
 import { StatusLabel } from "@/components/ui";
@@ -106,12 +107,9 @@ export default function HowItWorksContent() {
         </section>
       </Reveal>
       <div className="mx-auto mt-8 flex max-w-3xl flex-wrap gap-3">
-        <Link
-          href="/register"
-          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong"
-        >
+        <GetStartedLink className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong">
           {t.landingGetStarted}
-        </Link>
+        </GetStartedLink>
         <Link
           href="/resources"
           className="inline-flex h-11 items-center rounded-md border border-edge bg-card px-6 text-base font-medium transition-colors duration-150 ease-out hover:bg-brand-soft"

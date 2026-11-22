@@ -536,6 +536,18 @@ export default function ReviewPage() {
           <ProgressBar value={device.progress} label={t.revDeviceProgressAria} />
         )}
 
+        <details className="mt-4 rounded-lg border border-edge bg-canvas/60 px-4 py-3 text-sm leading-6">
+          <summary className="cursor-pointer font-medium">
+            {t.revProcessingTitle}
+          </summary>
+          <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-muted">
+            <li>{t.revProcessingFiles}</li>
+            <li>{t.revProcessingBackend}</li>
+            <li>{t.revProcessingApproval}</li>
+            <li>{t.revProcessingSave}</li>
+          </ul>
+        </details>
+
         <div role="tablist" aria-label={t.revInputMethodAria} className="mt-4 flex gap-2">
           <button
             type="button"

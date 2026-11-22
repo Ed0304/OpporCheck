@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import { ContextualNotice } from "@/components/Disclaimer";
+import GetStartedLink from "@/components/GetStartedLink";
 import { Enter, Reveal } from "@/components/motion";
 import { DeskArt, SpotCheck, SpotDocLens, SpotShield, SpotSlash, SpotText } from "@/components/spot";
 import { getConciseNotice } from "@/lib/disclaimer";
@@ -107,12 +108,9 @@ export default function AboutContent() {
       </Reveal>
 
       <div className="mx-auto mt-8 flex max-w-3xl flex-wrap gap-3">
-        <Link
-          href="/register"
-          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong"
-        >
+        <GetStartedLink className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-base font-medium text-on-action transition-colors duration-200 ease-out hover:bg-brand-strong">
           {t.landingGetStarted}
-        </Link>
+        </GetStartedLink>
         <Link
           href="/how-it-works"
           className="inline-flex h-11 items-center rounded-md border border-edge bg-card px-6 text-base font-medium transition-colors duration-150 ease-out hover:bg-brand-soft"

@@ -4,8 +4,8 @@
 
 "use client";
 
-import Link from "next/link";
 import CorridorResources from "@/components/CorridorResources";
+import GetStartedLink from "@/components/GetStartedLink";
 import { ContextualNotice } from "@/components/Disclaimer";
 import { Enter, Reveal } from "@/components/motion";
 import { useLang } from "@/lib/lang";
@@ -29,12 +29,9 @@ export default function PublicResourcesContent() {
       <Reveal className="mt-10 max-w-3xl">
         <p className="leading-7">
           {t.resourcesClosing}{" "}
-          <Link
-            href="/register"
-            className="font-medium text-brand underline decoration-brand/40 underline-offset-2 transition-colors hover:decoration-brand"
-          >
+          <GetStartedLink className="font-medium text-brand underline decoration-brand/40 underline-offset-2 transition-colors hover:decoration-brand">
             {t.landingGetStarted}
-          </Link>
+          </GetStartedLink>
         </p>
       </Reveal>
     </>

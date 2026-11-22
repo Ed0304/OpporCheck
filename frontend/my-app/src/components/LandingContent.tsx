@@ -19,11 +19,11 @@
 "use client";
 
 import Link from "next/link";
+import GetStartedLink from "@/components/GetStartedLink";
 import HeroComposition from "@/components/HeroComposition";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { SpotBook, SpotCheck, SpotDocLens, SpotInfo, SpotShield, SpotText, SpotUpload } from "@/components/spot";
 import { getConciseNotice } from "@/lib/disclaimer";
-import { useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
 
@@ -115,12 +115,7 @@ function ListingPreview() {
 
 export default function LandingContent() {
   const { language } = useLang();
-  const { user } = useAuth();
   const t = getStrings(language);
-  // Signed-in visitors go straight to the desk; everyone else starts
-  // with registration. Both destinations already exist and behave as
-  // before — this only picks the sensible one.
-  const primaryHref = user ? "/workspace/review" : "/register";
   const workflow = [
     { n: "01", title: t.landingStep1Title, text: t.landingStep1Text, Art: SpotUpload },
     { n: "02", title: t.landingStep2Title, text: t.landingStep2Text, Art: SpotDocLens },
@@ -154,12 +149,9 @@ export default function LandingContent() {
           </StaggerItem>
           <StaggerItem>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link
-                href={primaryHref}
-                className="inline-flex min-h-12 items-center rounded-lg bg-brand px-7 text-base font-medium text-on-action transition-colors hover:bg-brand-strong"
-              >
+              <GetStartedLink className="inline-flex min-h-12 items-center rounded-lg bg-brand px-7 text-base font-medium text-on-action transition-colors hover:bg-brand-strong">
                 {t.landingGetStarted}
-              </Link>
+              </GetStartedLink>
               <Link
                 href="/how-it-works"
                 className="inline-flex min-h-12 items-center rounded-lg border border-edge px-7 text-base font-medium text-ink transition-colors hover:bg-brand-soft"
@@ -312,12 +304,9 @@ export default function LandingContent() {
               {t.landingClosingTitle}
             </h2>
             <div className="mt-5 flex flex-wrap justify-center gap-3">
-              <Link
-                href={primaryHref}
-                className="inline-flex min-h-12 items-center rounded-lg bg-brand px-7 text-base font-medium text-on-action transition-colors hover:bg-brand-strong"
-              >
+              <GetStartedLink className="inline-flex min-h-12 items-center rounded-lg bg-brand px-7 text-base font-medium text-on-action transition-colors hover:bg-brand-strong">
                 {t.landingGetStarted}
-              </Link>
+              </GetStartedLink>
               <Link
                 href="/how-it-works"
                 className="inline-flex min-h-12 items-center rounded-lg border border-edge px-7 text-base font-medium text-ink transition-colors hover:bg-brand-soft"

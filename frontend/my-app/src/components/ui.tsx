@@ -299,7 +299,7 @@ export interface DeskStep {
 export function Stepper({ steps, label }: { steps: DeskStep[]; label: string }) {
   return (
     <nav aria-label={label}>
-      <ol className="flex flex-wrap items-center gap-x-2 gap-y-2">
+      <ol className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-2">
         {steps.map((step, index) => (
           <li key={step.label} className="flex items-center gap-2">
             {index > 0 && <span aria-hidden className="h-px w-6 bg-edge sm:w-10" />}

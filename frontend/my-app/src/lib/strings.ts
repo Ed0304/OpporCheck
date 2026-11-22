@@ -300,6 +300,7 @@ const EN = {
   wsRedirecting: "Redirecting to sign-in…",
   wsSidebarAria: "Workspace",
   wsSectionsAria: "Workspace sections",
+  wsSiteNavAria: "OpporCheck site",
   wsCollapse: "Collapse",
   wsExpand: "Expand",
   wsCloseMenuAria: "Close workspace menu",
@@ -345,6 +346,15 @@ const EN = {
   revPostingPlaceholder: "Paste the job posting text here…",
   revSampleBadge: "Sample",
   revSampleNotice: "Sample posting — replace it with your own text, or clear it to start blank.",
+  revProcessingTitle: "How document processing works",
+  revProcessingFiles:
+    "Pasted text stays in this browser until analysis. Uploaded PDFs and images are sent to the OpporCheck document service to extract their text.",
+  revProcessingBackend:
+    "The document service reads your file in memory to extract text and does not store the file. Extraction and OCR run on the service, not on your device.",
+  revProcessingApproval:
+    "Privacy Check runs locally in your browser: review each finding, then approve the sanitized text. Analysis only accepts the exact approved text.",
+  revProcessingSave:
+    "Only the approved text and its report are saved to your investigation. Original files and unapproved text are never stored.",
   revDocLanguage: "Document language",
   revPdfLabel: "PDF offer document",
   revPdfHint:
@@ -858,6 +868,7 @@ const EN = {
   hdRawOutput: "Raw model output",
   hdTestAria: "How to test",
   hdTestTitle: "How to test both paths",
+  hdBackToWorkspace: "Back to workspace",
   hdTest1Before: "Use Chrome desktop v139+ with",
   hdTest1After: "set to Enabled, then restart Chrome.",
   hdTest2Before: "On-device path: click",
@@ -1131,6 +1142,7 @@ const ID: UiStrings = {
   wsRedirecting: "Mengalihkan ke halaman masuk…",
   wsSidebarAria: "Ruang kerja",
   wsSectionsAria: "Bagian ruang kerja",
+  wsSiteNavAria: "Situs OpporCheck",
   wsCollapse: "Ciutkan",
   wsExpand: "Bentangkan",
   wsCloseMenuAria: "Tutup menu ruang kerja",
@@ -1174,6 +1186,15 @@ const ID: UiStrings = {
   revPostingPlaceholder: "Tempel teks lowongan kerja di sini…",
   revSampleBadge: "Contoh",
   revSampleNotice: "Contoh lowongan — ganti dengan teks Anda sendiri atau kosongkan untuk memulai dari awal.",
+  revProcessingTitle: "Cara kerja pemrosesan dokumen",
+  revProcessingFiles:
+    "Teks tempelan tetap di browser ini hingga analisis. PDF dan gambar yang diunggah dikirim ke layanan dokumen OpporCheck untuk mengekstraksi teksnya.",
+  revProcessingBackend:
+    "Layanan dokumen membaca berkas Anda di memori untuk mengekstraksi teks dan tidak menyimpan berkas. Ekstraksi dan OCR berjalan di layanan, bukan di perangkat Anda.",
+  revProcessingApproval:
+    "Periksa Privasi berjalan lokal di browser Anda: tinjau setiap temuan, lalu setujui teks yang telah dibersihkan. Analisis hanya menerima teks persetujuan yang persis.",
+  revProcessingSave:
+    "Hanya teks yang disetujui dan laporannya yang disimpan ke investigasi Anda. Berkas asli dan teks yang belum disetujui tidak pernah disimpan.",
   revDocLanguage: "Bahasa dokumen",
   revPdfLabel: "Dokumen penawaran PDF",
   revPdfHint:
@@ -1676,6 +1697,7 @@ const ID: UiStrings = {
   hdRawOutput: "Output mentah model",
   hdTestAria: "Cara menguji",
   hdTestTitle: "Cara menguji kedua jalur",
+  hdBackToWorkspace: "Kembali ke ruang kerja",
   hdTest1Before: "Gunakan Chrome desktop v139+ dengan",
   hdTest1After: "diatur ke Enabled, lalu mulai ulang Chrome.",
   hdTest2Before: "Jalur di perangkat: klik",

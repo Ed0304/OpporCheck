@@ -22,6 +22,10 @@ import {
   type OpportunityAnalysis,
 } from "@/lib/opportunityAnalysis";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
+import AppHeader from "@/components/AppHeader";
+import SiteFooter from "@/components/SiteFooter";
+import { getPublicLinks } from "@/components/PublicShell";
+import Link from "next/link";
 import {
   approvalCovers,
   assertAnalysisAllowed,
@@ -294,8 +298,24 @@ export default function HybridDemoPage() {
   const initError = clientStatus.message;
 
   return (
-    <div className="min-h-full bg-zinc-50 font-sans text-zinc-950 dark:bg-black dark:text-zinc-50">
-      <main className="mx-auto w-full max-w-3xl px-6 py-10">
+    <div className="flex min-h-full flex-1 flex-col bg-zinc-50 font-sans text-zinc-950 dark:bg-black dark:text-zinc-50">
+      <AppHeader links={getPublicLinks(language)} />
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
+        <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+          <Link
+            href="/workspace"
+            className="inline-flex h-10 items-center rounded-lg border border-edge bg-card px-4 font-medium text-ink transition-colors hover:bg-brand-soft"
+          >
+            <span aria-hidden>←&nbsp;</span>
+            {t.hdBackToWorkspace}
+          </Link>
+          <Link href="/workspace/review" className="font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand">
+            {t.wsNavReview}
+          </Link>
+          <Link href="/workspace/compare" className="font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand">
+            {t.wsNavCompare}
+          </Link>
+        </div>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">{t.hdEyebrow}</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">{t.hdTitle}</h1>
         <p className="mt-2 max-w-2xl leading-7 text-zinc-700 dark:text-zinc-300">
@@ -591,6 +611,7 @@ export default function HybridDemoPage() {
           </ol>
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }

@@ -5,11 +5,13 @@
 
 import Link from "next/link";
 import { getFullDisclaimerParagraphs } from "@/lib/disclaimer";
+import { useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
 import { format, getStrings } from "@/lib/strings";
 
 export default function SiteFooter() {
   const { language } = useLang();
+  const { user } = useAuth();
   const t = getStrings(language);
   const paragraphs = getFullDisclaimerParagraphs(language);
   const columns: Array<{ heading: string; links: Array<{ href: string; label: string }> }> = [
@@ -25,17 +27,24 @@ export default function SiteFooter() {
       heading: t.footerWorkspace,
       links: [
         { href: "/workspace/review", label: t.footerReview },
+        { href: "/workspace/compare", label: t.wsNavCompare },
         { href: "/workspace/investigations", label: t.footerInvestigations },
         { href: "/hybrid-demo", label: t.footerPlayground },
       ],
     },
     {
       heading: t.footerAccount,
-      links: [
-        { href: "/login", label: t.footerSignIn },
-        { href: "/register", label: t.footerCreateAccount },
-        { href: "/workspace/settings", label: t.footerSettings },
-      ],
+      links: user
+        ? [
+            { href: "/workspace", label: t.headerWorkspace },
+            { href: "/workspace/investigations", label: t.footerInvestigations },
+            { href: "/workspace/settings", label: t.footerSettings },
+          ]
+        : [
+            { href: "/login", label: t.footerSignIn },
+            { href: "/register", label: t.footerCreateAccount },
+            { href: "/workspace/settings", label: t.footerSettings },
+          ],
     },
   ];
   return (

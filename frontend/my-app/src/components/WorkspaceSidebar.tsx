@@ -118,6 +118,25 @@ export default function WorkspaceSidebar({
             </p>
           )}
           <nav aria-label={t.wsSectionsAria}>{list(undefined, collapsed)}</nav>
+          {!collapsed && (
+            <nav aria-label={t.wsSiteNavAria} className="mt-2 border-t border-rail-edge pt-2">
+              <ul className="flex flex-col gap-0.5">
+                {[
+                  { href: "/about", label: t.navAbout },
+                  { href: "/how-it-works", label: t.navHowItWorks },
+                ].map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="block rounded-lg px-3 py-2 text-sm text-muted transition-colors duration-150 ease-out hover:bg-brand-soft hover:text-ink"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
         </div>
         <div className="border-t border-rail-edge p-2.5">
           <button
@@ -177,6 +196,24 @@ export default function WorkspaceSidebar({
                 </button>
               </div>
               <nav aria-label={t.wsSectionsAria}>{list(onCloseDrawer, false, "oc-ws-drawer")}</nav>
+              <nav aria-label={t.wsSiteNavAria} className="border-t border-rail-edge pt-3">
+                <ul className="flex flex-col gap-0.5">
+                  {[
+                    { href: "/about", label: t.navAbout },
+                    { href: "/how-it-works", label: t.navHowItWorks },
+                  ].map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onCloseDrawer}
+                        className="block rounded-lg px-3 py-2 text-sm text-muted transition-colors duration-150 ease-out hover:bg-brand-soft hover:text-ink"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
             </motion.div>
           </div>
         )}
