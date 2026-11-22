@@ -373,6 +373,37 @@ test("standalone finding and claim validators enforce shapes", () => {
   );
 });
 
+test("comparison treats explicit null slots as absent", () => {
+  const finding = { ...comparisonFinding(), advertisementClaim: null };
+  const parsed = parsePromiseComparison(JSON.stringify([finding]), DOCS);
+  assert.equal(parsed.parseError, null);
+  assert.deepEqual(parsed.issues, []);
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(parsed.findings[0]?.advertisementClaim, undefined);
+});
+
+test("standalone finding validator treats null slots as absent", () => {
+  const claim = {
+    category: "deductions",
+    claim: "Accommodation is free.",
+    documentReference: {
+      documentId: "doc-msg",
+      documentType: "recruiter_communication",
+      fileName: "message.txt",
+    },
+    sourceExcerpt: "Accommodation is completely free.",
+  };
+  const result = validatePromiseToPaperFinding({
+    category: "deductions",
+    recruiterStatement: claim,
+    contractClause: null,
+    status: "not_addressed",
+    explanation: "The promise-side term has no written counterpart in the supplied documents.",
+    followUpQuestion: "Where is the accommodation term written?",
+  });
+  assert.equal(result.valid, true);
+});
+
 test("locateExcerptPage finds normalized pages and rejects short excerpts", () => {
   assert.equal(locateExcerptPage(CONTRACT.pages, "base   SALARY is £12.50\nper hour."), 1);
   assert.equal(

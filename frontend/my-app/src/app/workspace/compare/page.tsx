@@ -475,7 +475,15 @@ export default function ComparePage() {
         fileName: doc.input.fileName,
         terms: doc.terms,
       }));
-      const texts = extractedDocs.map((doc) => toContractText(doc.input));
+      // Validate against the same approved pages extraction used: terms and
+      // excerpts derive from sanitized text, so originals would wrongly fail
+      // attribution for every redacted region and drop the findings.
+      const texts = extractedDocs.map((doc) =>
+        toContractText({
+          ...doc.input,
+          pages: approvedPagesOrThrow(doc.privacy, doc.input.pages, doc.input.fileName, language),
+        }),
+      );
       const response = await model.generateContent(
         buildPromiseComparisonPrompt(inputs, language),
       );

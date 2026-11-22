@@ -702,7 +702,7 @@ export function validatePromiseToPaperFinding(
   const claims: Array<{ slot: string; claim: EmploymentClaim }> = [];
   for (const slot of FINDING_SLOTS) {
     const raw = value[slot.key];
-    if (raw === undefined) {
+    if (raw === undefined || raw === null) {
       continue;
     }
     const result = validateEmploymentClaim(raw);
@@ -1015,7 +1015,9 @@ export function parsePromiseComparison(
     let failed = false;
     for (const slot of FINDING_SLOTS) {
       const raw = item[slot.key];
-      if (raw === undefined) {
+      // Optional slots may arrive explicitly null from looser model
+      // outputs; that means absent, not malformed.
+      if (raw === undefined || raw === null) {
         continue;
       }
       const parsedClaim = parseSlotClaim(label, slot.key, raw);
