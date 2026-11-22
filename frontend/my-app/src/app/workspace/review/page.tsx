@@ -754,6 +754,21 @@ export default function ReviewPage() {
                     ))}
                   </ul>
                 )}
+                {pdf.result.text.trim().length > 0 && (
+                  <div>
+                    <p id="pdf-preview-label" className="text-sm font-medium">
+                      {t.revPdfPreviewLabel}
+                    </p>
+                    <div
+                      role="region"
+                      aria-labelledby="pdf-preview-label"
+                      tabIndex={0}
+                      className="mt-1 max-h-56 overflow-auto rounded-md border border-edge bg-canvas/60 p-3 text-sm leading-6 whitespace-pre-wrap"
+                    >
+                      {pdf.result.text}
+                    </div>
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="secondary"
