@@ -21,7 +21,7 @@
 import Link from "next/link";
 import HeroComposition from "@/components/HeroComposition";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
-import { SpotBook, SpotDocLens, SpotUpload } from "@/components/spot";
+import { SpotBook, SpotCheck, SpotDocLens, SpotInfo, SpotShield, SpotText, SpotUpload } from "@/components/spot";
 import { getConciseNotice } from "@/lib/disclaimer";
 import { useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
@@ -127,10 +127,10 @@ export default function LandingContent() {
     { n: "03", title: t.landingStep3Title, text: t.landingStep3Text, Art: SpotBook },
   ];
   const capabilities = [
-    { title: t.landingCap1Title, text: t.landingCap1Text },
-    { title: t.landingCap2Title, text: t.landingCap2Text },
-    { title: t.landingCap3Title, text: t.landingCap3Text },
-    { title: t.landingCap4Title, text: t.landingCap4Text },
+    { title: t.landingCap1Title, text: t.landingCap1Text, Art: SpotText },
+    { title: t.landingCap2Title, text: t.landingCap2Text, Art: SpotDocLens },
+    { title: t.landingCap3Title, text: t.landingCap3Text, Art: SpotCheck },
+    { title: t.landingCap4Title, text: t.landingCap4Text, Art: SpotShield },
   ];
   const samples = [
     { name: t.landingSampleReceipt, focus: t.landingSampleReceiptFocus, Preview: ReceiptPreview },
@@ -265,9 +265,17 @@ export default function LandingContent() {
             <p className="mt-2 text-muted">{t.landingCapabilitiesIntro}</p>
             <dl className="mt-4 grid gap-x-10 md:grid-cols-2">
               {capabilities.map((item) => (
-                <div key={item.title} className="border-t border-edge py-4">
-                  <dt className="font-semibold text-ink">{item.title}</dt>
-                  <dd className="mt-1 text-sm leading-6 text-muted">{item.text}</dd>
+                <div key={item.title} className="flex gap-3 border-t border-edge py-4">
+                  <span
+                    aria-hidden
+                    className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand"
+                  >
+                    <item.Art size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <dt className="font-semibold text-ink">{item.title}</dt>
+                    <dd className="mt-1 text-sm leading-6 text-muted">{item.text}</dd>
+                  </div>
                 </div>
               ))}
             </dl>
@@ -281,10 +289,15 @@ export default function LandingContent() {
             </h2>
             <div className="mt-4 leading-7 text-ink">
               <p>{t.landingTransparencyText}</p>
-              <ul className="mt-2 list-disc pl-5">
-                <li>{t.landingLimit1}</li>
-                <li>{t.landingLimit2}</li>
-                <li>{t.landingLimit3}</li>
+              <ul className="mt-3 flex flex-col gap-2">
+                {[t.landingLimit1, t.landingLimit2, t.landingLimit3].map((limit) => (
+                  <li key={limit.slice(0, 24)} className="flex items-start gap-2.5">
+                    <span aria-hidden className="mt-1.5 shrink-0 text-evidence">
+                      <SpotInfo size={16} />
+                    </span>
+                    <span>{limit}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </section>

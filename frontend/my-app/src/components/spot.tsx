@@ -110,6 +110,47 @@ export function SpotImage({ size, className }: { size?: number; className?: stri
   );
 }
 
+/** Checklist item: box with a check. */
+export function SpotCheck({ size, className }: { size?: number; className?: string }) {
+  return (
+    <Glyph size={size} className={className}>
+      <rect x="4" y="4" width="16" height="16" rx="4" />
+      <path d="m8.5 12.2 2.4 2.4 4.6-5" />
+    </Glyph>
+  );
+}
+
+/** Privacy and on-device processing: shield. */
+export function SpotShield({ size, className }: { size?: number; className?: string }) {
+  return (
+    <Glyph size={size} className={className}>
+      <path d="M12 3.5 5.5 6v6c0 4.5 2.8 7.8 6.5 9.5 3.7-1.7 6.5-5 6.5-9.5V6L12 3.5Z" />
+      <path d="m9.3 11.8 2 2 3.4-3.8" />
+    </Glyph>
+  );
+}
+
+/** Neutral information bullet. */
+export function SpotInfo({ size, className }: { size?: number; className?: string }) {
+  return (
+    <Glyph size={size} className={className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 11v5" />
+      <circle cx="12" cy="8" r="0.5" fill="currentColor" />
+    </Glyph>
+  );
+}
+
+/** Exclusion bullet for "what this is not" lists. */
+export function SpotSlash({ size, className }: { size?: number; className?: string }) {
+  return (
+    <Glyph size={size} className={className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M6.2 6.2l11.6 11.6" />
+    </Glyph>
+  );
+}
+
 /**
  * Evidence Desk motif: layered paper sheets with a highlighted clause
  * under review. For auth side panels and page heroes.

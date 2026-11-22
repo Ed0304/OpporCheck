@@ -9,6 +9,7 @@
 
 import { motion } from "motion/react";
 import { OC_DURATION, OC_EASE } from "@/components/motion";
+import { SpotBook } from "@/components/spot";
 import { UK_GUIDANCE, type GuidanceEntry } from "@/lib/guidance";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
@@ -35,14 +36,19 @@ export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] })
         >
           <div aria-hidden="true" className="oc-page-edge h-1.5 w-full" />
           <div className="p-5">
-          <a
-            href={entry.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold text-evidence underline decoration-evidence/40 underline-offset-2 transition-colors duration-150 ease-out hover:decoration-evidence"
-          >
-            {entry.title} <span aria-hidden>{t.commonOpenInNewTab}</span>
-          </a>
+          <div className="flex items-start gap-2.5">
+            <span aria-hidden className="mt-0.5 shrink-0 text-evidence">
+              <SpotBook size={17} />
+            </span>
+            <a
+              href={entry.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-evidence underline decoration-evidence/40 underline-offset-2 transition-colors duration-150 ease-out hover:decoration-evidence"
+            >
+              {entry.title} <span aria-hidden>{t.commonOpenInNewTab}</span>
+            </a>
+          </div>
           <p className="mt-1 text-sm leading-6 text-muted">{entry.summary}</p>
           <p className="mt-2 text-xs text-muted">
             {t.guidancePublisher} {entry.publisher} · {t.guidanceCountry} {entry.country} ·{" "}
