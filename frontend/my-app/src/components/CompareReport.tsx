@@ -133,12 +133,12 @@ function FindingCard({
 export default function CompareReport({
   documents,
   findings,
-  droppedCount,
+  droppedIssues,
   limitations,
 }: {
   documents: ReportDocument[];
   findings: PromiseToPaperFinding[];
-  droppedCount: number;
+  droppedIssues: string[];
   limitations: string[];
 }) {
   const { language } = useLang();
@@ -146,6 +146,7 @@ export default function CompareReport({
   const docTypeLabels = getCompareDocTypeLabels(language);
   const summary = summarizeFindings(findings);
   const questions = collectQuestions(findings);
+  const droppedCount = droppedIssues.length;
   const sourceById = new Map(documents.map((doc) => [doc.id, doc.source]));
   const groups = [
     { key: "consistent", title: t.crGroupConsistent },
@@ -264,6 +265,16 @@ export default function CompareReport({
                 pronoun: droppedCount === 1 ? t.evDroppedPronounOne : t.evDroppedPronounMany,
                 verb2: droppedCount === 1 ? t.crIs : t.crAre,
               })}
+              <details className="mt-1">
+                <summary className="cursor-pointer text-[13px] font-medium text-brand">
+                  {t.cmpDroppedDetails}
+                </summary>
+                <ul className="mt-1 list-disc pl-5 text-[13px] leading-6 text-muted">
+                  {droppedIssues.map((issue, index) => (
+                    <li key={`${index}-${issue.slice(0, 24)}`}>{issue}</li>
+                  ))}
+                </ul>
+              </details>
             </li>
           )}
           <li>{t.crOnlyExcerpts}</li>

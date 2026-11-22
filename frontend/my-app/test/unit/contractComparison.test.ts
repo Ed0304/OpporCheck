@@ -414,3 +414,25 @@ test("locateExcerptPage finds normalized pages and rejects short excerpts", () =
   assert.equal(locateExcerptPage(CONTRACT.pages, "short"), null);
   assert.equal(locateExcerptPage([], "Base salary is £12.50 per hour."), null);
 });
+
+test("locateExcerptPage tolerates quoted page markers but never trusts them", () => {
+  assert.equal(
+    locateExcerptPage(CONTRACT.pages, "[Page 1] Base salary is £12.50 per hour."),
+    1,
+  );
+  assert.equal(
+    locateExcerptPage(CONTRACT.pages, "[page 2] Accommodation fee of £120 will be deducted monthly from wages."),
+    2,
+  );
+  // A marker pointing elsewhere must not move attribution: search wins.
+  assert.equal(
+    locateExcerptPage(CONTRACT.pages, "[Page 2] Base salary is £12.50 per hour."),
+    1,
+  );
+  // Markers alone, or around fabricated text, still locate nothing.
+  assert.equal(locateExcerptPage(CONTRACT.pages, "[Page 1]"), null);
+  assert.equal(
+    locateExcerptPage(CONTRACT.pages, "[Page 1] clause that appears nowhere in the text"),
+    null,
+  );
+});

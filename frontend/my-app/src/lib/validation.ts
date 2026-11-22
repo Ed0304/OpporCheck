@@ -747,15 +747,27 @@ export function validatePromiseToPaperFinding(
  * Locates an excerpt within document pages. Returns the 1-based page
  * number, or null when the excerpt is too short or not verifiably
  * present. Matching is case-insensitive over collapsed whitespace.
+ *
+ * Extraction prompts embed our own "[Page N]" markers, so a faithfully
+ * verbatim quote may include them; the retry below strips that
+ * scaffolding before giving up. Fabrication still cannot match, and the
+ * page always comes from search, never from a quoted marker.
  */
 export function locateExcerptPage(pages: string[], excerpt: string): number | null {
   const normalized = normalizeForAttribution(excerpt);
   if (normalized.length < MIN_ATTRIBUTION_CHARS) {
     return null;
   }
-  for (let index = 0; index < pages.length; index += 1) {
-    if (normalizeForAttribution(pages[index] ?? "").includes(normalized)) {
-      return index + 1;
+  const candidates = [normalized];
+  const stripped = normalized.replace(/\[page\s+\d+\]/g, " ").replace(/\s+/g, " ").trim();
+  if (stripped.length >= MIN_ATTRIBUTION_CHARS && stripped !== normalized) {
+    candidates.push(stripped);
+  }
+  for (const candidate of candidates) {
+    for (let index = 0; index < pages.length; index += 1) {
+      if (normalizeForAttribution(pages[index] ?? "").includes(candidate)) {
+        return index + 1;
+      }
     }
   }
   return null;

@@ -141,7 +141,7 @@ export default function ComparePage() {
   const [statusMsg, setStatusMsg] = useState("");
   const [runError, setRunError] = useState<string | null>(null);
   const [findings, setFindings] = useState<PromiseToPaperFinding[] | null>(null);
-  const [droppedCount, setDroppedCount] = useState(0);
+  const [droppedIssues, setDroppedIssues] = useState<string[]>([]);
   const [privacyTarget, setPrivacyTarget] = useState<PrivacyTarget | null>(null);
   const [comparisonSource, setComparisonSource] = useState<string | null>(null);
 
@@ -463,7 +463,7 @@ export default function ComparePage() {
     }
     setRunError(null);
     setFindings(null);
-    setDroppedCount(0);
+    setDroppedIssues([]);
     setComparisonSource(null);
     setComparing(true);
     setStatusMsg(t.cmpComparingStatus);
@@ -494,7 +494,7 @@ export default function ComparePage() {
         return;
       }
       setFindings(parsed.findings);
-      setDroppedCount(parsed.issues.length);
+      setDroppedIssues(parsed.issues);
     } catch (err) {
       setRunError(friendlyError(err, mode, language));
     } finally {
@@ -958,12 +958,24 @@ export default function ComparePage() {
                         </p>
                       )}
                       {doc.extractionIssues.length > 0 && (
-                        <p className="mt-1 text-sm text-muted">
-                          {doc.extractionIssues.length}{" "}
-                          {doc.extractionIssues.length === 1 ? t.cmpTermOne : t.cmpTermMany}{" "}
-                          {doc.extractionIssues.length === 1 ? t.cmpWas : t.cmpWere}{" "}
-                          {t.cmpDroppedDuring}
-                        </p>
+                        <div className="mt-1 text-sm text-muted">
+                          <p>
+                            {doc.extractionIssues.length}{" "}
+                            {doc.extractionIssues.length === 1 ? t.cmpTermOne : t.cmpTermMany}{" "}
+                            {doc.extractionIssues.length === 1 ? t.cmpWas : t.cmpWere}{" "}
+                            {t.cmpDroppedDuring}
+                          </p>
+                          <details className="mt-1">
+                            <summary className="cursor-pointer text-[13px] font-medium text-brand">
+                              {t.cmpDroppedDetails}
+                            </summary>
+                            <ul className="mt-1 list-disc pl-5 text-[13px] leading-6">
+                              {doc.extractionIssues.map((issue, index) => (
+                                <li key={`${index}-${issue.slice(0, 24)}`}>{issue}</li>
+                              ))}
+                            </ul>
+                          </details>
+                        </div>
                       )}
                       <p className="mt-1 text-xs text-muted" role="status">
                         {describeActualSource(doc.inferenceSource, language).label}
@@ -1058,7 +1070,7 @@ export default function ComparePage() {
             <CompareReport
               documents={reportDocs}
               findings={findings}
-              droppedCount={droppedCount}
+              droppedIssues={droppedIssues}
               limitations={limitations}
             />
             <div className="mt-4">
