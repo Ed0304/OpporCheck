@@ -700,6 +700,7 @@ export function validatePromiseToPaperFinding(
     issues.push(`finding.followUpQuestion must be 1..${MAX_QUESTION_CHARS} characters`);
   }
   const claims: Array<{ slot: string; claim: EmploymentClaim }> = [];
+  const slotIssues: string[] = [];
   for (const slot of FINDING_SLOTS) {
     const raw = value[slot.key];
     if (raw === undefined || raw === null) {
@@ -709,17 +710,18 @@ export function validatePromiseToPaperFinding(
     if (result.valid && result.value) {
       claims.push({ slot: slot.key, claim: result.value });
     } else {
-      issues.push(`finding.${slot.key}: ${result.issues.join("; ")}`);
-    }
-  }
-  if (issues.length === 0) {
-    const structural = checkFindingStructure(claims, value["status"] as ComparisonStatus);
-    if (structural) {
-      issues.push(structural);
+      // A malformed slot is skipped, not fatal: the finding survives on
+      // its remaining verified claims, and the structural check below
+      // still requires coherent evidence for its status.
+      slotIssues.push(`finding.${slot.key}: ${result.issues.join("; ")}`);
     }
   }
   if (issues.length > 0) {
     return fail(issues);
+  }
+  const structural = checkFindingStructure(claims, value["status"] as ComparisonStatus);
+  if (structural) {
+    return fail([...slotIssues, structural]);
   }
   const bySlot = new Map(claims.map(({ slot, claim }) => [slot, claim]));
   return {
@@ -739,7 +741,7 @@ export function validatePromiseToPaperFinding(
       explanation: (value["explanation"] as string).trim(),
       followUpQuestion: (value["followUpQuestion"] as string).trim(),
     },
-    issues: [],
+    issues: slotIssues,
   };
 }
 
@@ -1047,7 +1049,6 @@ export function parsePromiseComparison(
     }
     const category = categoryValue as ContractCategory;
     const slotClaims: Array<{ slot: string; claim: EmploymentClaim }> = [];
-    let failed = false;
     for (const slot of FINDING_SLOTS) {
       const raw = item[slot.key];
       // Optional slots may arrive explicitly null from looser model
@@ -1056,15 +1057,14 @@ export function parsePromiseComparison(
         continue;
       }
       const parsedClaim = parseSlotClaim(label, slot.key, raw);
+      // A malformed slot is skipped, not fatal: the finding survives on
+      // its remaining verified claims (issues stay recorded), and the
+      // structural check below still requires coherent evidence.
       if (!parsedClaim) {
-        failed = true;
-        break;
+        continue;
       }
       parsedClaim.claim.category = category;
       slotClaims.push({ slot: slot.key, claim: parsedClaim.claim });
-    }
-    if (failed) {
-      return;
     }
     const structural = checkFindingStructure(slotClaims, statusValue as ComparisonStatus);
     if (structural) {

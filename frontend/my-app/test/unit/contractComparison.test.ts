@@ -481,6 +481,61 @@ test("comparison normalizes case variants of category and status", () => {
   assert.equal(parsed.findings[0]?.status, "discrepancy");
 });
 
+test("comparison skips malformed slots but keeps findings with verified claims", () => {
+  const sparse = {
+    ...comparisonFinding(),
+    advertisementClaim: {
+      documentId: "doc-ad",
+      claim: "Accommodation provided free.",
+      sourceExcerpt: "",
+    },
+  };
+  const parsed = parsePromiseComparison(JSON.stringify([sparse]), DOCS);
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(parsed.findings[0]?.advertisementClaim, undefined);
+  assert.ok(parsed.issues.length > 0, "skipped slots stay recorded");
+
+  const onlyBad = {
+    ...comparisonFinding(),
+    recruiterStatement: {
+      documentId: "doc-msg",
+      claim: "Accommodation is free.",
+      sourceExcerpt: "",
+    },
+    contractClause: {
+      documentId: "doc-contract",
+      claim: "£120 monthly accommodation deduction.",
+      sourceExcerpt: "",
+    },
+  };
+  const parsedEmpty = parsePromiseComparison(JSON.stringify([onlyBad]), DOCS);
+  assert.equal(parsedEmpty.findings.length, 0);
+});
+
+test("standalone finding validator skips malformed slots", () => {
+  const good = {
+    category: "deductions",
+    claim: "Accommodation is free.",
+    documentReference: {
+      documentId: "doc-msg",
+      documentType: "recruiter_communication",
+      fileName: "message.txt",
+    },
+    sourceExcerpt: "Accommodation is completely free.",
+  };
+  const result = validatePromiseToPaperFinding({
+    category: "deductions",
+    recruiterStatement: good,
+    contractClause: { ...good, sourceExcerpt: "" },
+    status: "not_addressed",
+    explanation: "The promise-side term has no written counterpart in the supplied documents.",
+    followUpQuestion: "Where is the accommodation term written?",
+  });
+  assert.equal(result.valid, true);
+  assert.equal(result.value?.contractClause, undefined);
+  assert.ok(result.issues.length > 0, "skipped slots stay recorded");
+});
+
 test("locateExcerptPage tolerates quoted page markers but never trusts them", () => {
   assert.equal(
     locateExcerptPage(CONTRACT.pages, "[Page 1] Base salary is £12.50 per hour."),
