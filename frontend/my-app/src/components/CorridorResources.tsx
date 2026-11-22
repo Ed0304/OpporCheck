@@ -10,6 +10,7 @@
 "use client";
 
 import { useState } from "react";
+import { CorridorFlag } from "@/components/flags";
 import GuidanceList from "@/components/GuidanceList";
 import { EmptyState } from "@/components/ui";
 import {
@@ -87,7 +88,14 @@ export default function CorridorResources({
                       verified ? "bg-emerald-600 dark:bg-emerald-400" : "bg-amber-500 dark:bg-amber-400"
                     }`}
                   />
+                  <CorridorFlag code={entry.code} className="h-3.5 w-5" />
                   {entry.displayName}
+                  <span
+                    aria-hidden
+                    className="oc-tnum rounded border border-edge bg-canvas px-1 py-px text-[11px] font-semibold text-muted"
+                  >
+                    {entry.code}
+                  </span>
                 </button>
               );
             })}
@@ -120,11 +128,14 @@ export default function CorridorResources({
             ))}
           </select>
         </label>
-        <p className="pb-2 text-sm text-muted" role="status">
-          {profile.status === "sources_verified"
-            ? t.statusSourcesVerified
-            : t.statusPartial}
-          {profile.lastReviewed ? ` · ${t.sourcesVerifiedOn} ${profile.lastReviewed}` : ""}
+        <p className="flex items-center gap-2 pb-2 text-sm text-muted" role="status">
+          <CorridorFlag code={code} className="h-3.5 w-5" />
+          <span>
+            {profile.status === "sources_verified"
+              ? t.statusSourcesVerified
+              : t.statusPartial}
+            {profile.lastReviewed ? ` · ${t.sourcesVerifiedOn} ${profile.lastReviewed}` : ""}
+          </span>
         </p>
       </div>
       {entries.length > 0 ? (

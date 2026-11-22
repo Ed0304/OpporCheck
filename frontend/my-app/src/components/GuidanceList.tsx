@@ -8,11 +8,18 @@
 "use client";
 
 import { motion } from "motion/react";
+import { CorridorFlag } from "@/components/flags";
 import { OC_DURATION, OC_EASE } from "@/components/motion";
+import { resolveCorridorCode } from "@/lib/corridors";
 import { SpotBook } from "@/components/spot";
 import { UK_GUIDANCE, type GuidanceEntry } from "@/lib/guidance";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
+
+function EntryFlag({ country }: { country: string }) {
+  const code = resolveCorridorCode(country);
+  return code ? <CorridorFlag code={code} className="h-3 w-4" /> : null;
+}
 
 export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] }) {
   const { language } = useLang();
@@ -50,9 +57,12 @@ export default function GuidanceList({ entries }: { entries?: GuidanceEntry[] })
             </a>
           </div>
           <p className="mt-1 text-sm leading-6 text-muted">{entry.summary}</p>
-          <p className="mt-2 text-xs text-muted">
-            {t.guidancePublisher} {entry.publisher} · {t.guidanceCountry} {entry.country} ·{" "}
-            {t.guidanceReviewed} {entry.reviewed}
+          <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted">
+            <EntryFlag country={entry.country} />
+            <span>
+              {t.guidancePublisher} {entry.publisher} · {t.guidanceCountry} {entry.country} ·{" "}
+              {t.guidanceReviewed} {entry.reviewed}
+            </span>
           </p>
           </div>
         </motion.li>

@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import { Enter, Reveal } from "@/components/motion";
+import { DeskArt, SpotBook, SpotCheck, SpotDocLens, SpotUpload } from "@/components/spot";
 import { StatusLabel } from "@/components/ui";
 import type { FindingAssessment } from "@/lib/investigations";
 import { useLang } from "@/lib/lang";
@@ -16,10 +17,10 @@ export default function HowItWorksContent() {
   const { language } = useLang();
   const t = getStrings(language);
   const steps = [
-    { n: "1", title: t.howStep1Title, text: t.howStep1Text },
-    { n: "2", title: t.howStep2Title, text: t.howStep2Text },
-    { n: "3", title: t.howStep3Title, text: t.howStep3Text },
-    { n: "4", title: t.howStep4Title, text: t.howStep4Text },
+    { n: "1", title: t.howStep1Title, text: t.howStep1Text, Art: SpotUpload },
+    { n: "2", title: t.howStep2Title, text: t.howStep2Text, Art: SpotDocLens },
+    { n: "3", title: t.howStep3Title, text: t.howStep3Text, Art: SpotBook },
+    { n: "4", title: t.howStep4Title, text: t.howStep4Text, Art: SpotCheck },
   ];
   const labels = getAssessmentLabels(language);
   const glossary: Array<{ assessment: FindingAssessment; meaning: string }> = [
@@ -30,7 +31,8 @@ export default function HowItWorksContent() {
   return (
     <>
       <Enter className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-bold tracking-tight text-navy">{t.howTitle}</h1>
+        <DeskArt className="mx-auto h-36 w-auto" />
+        <h1 className="mt-6 text-3xl font-bold tracking-tight text-navy">{t.howTitle}</h1>
         <p className="mt-3 leading-7 text-muted">{t.howSubtitle}</p>
       </Enter>
       <div aria-hidden className="mx-auto mt-8 hidden max-w-3xl items-start sm:flex">
@@ -65,8 +67,16 @@ export default function HowItWorksContent() {
               {step.n}
             </span>
             <div className="flex-1 rounded-lg border border-paper-edge bg-paper p-4 shadow-[0_2px_10px_var(--oc-paper-shadow)]">
-              <h2 className="font-semibold">{step.title}</h2>
-              <p className="mt-1 text-sm leading-6">{step.text}</p>
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand"
+                >
+                  <step.Art size={18} />
+                </span>
+                <h2 className="font-semibold">{step.title}</h2>
+              </div>
+              <p className="mt-2 text-sm leading-6">{step.text}</p>
             </div>
           </li>
         ))}

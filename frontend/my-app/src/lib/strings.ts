@@ -267,6 +267,8 @@ const EN = {
   resourcesCoverageSummary:
     "{verified} of {total} destinations have verified sources; {partial} have partial coverage.",
   resourcesCoverageHint: "Select a destination to browse its links.",
+  resourcesCoverageDisclaimer:
+    "Employment guidance is currently available for the destinations listed below only. Other countries are not covered yet.",
   resourcesClosing: "Have an opportunity to check?",
   // ---- Workspace resources page ----
   wsResourcesTitle: "Resources",
@@ -1099,6 +1101,8 @@ const ID: UiStrings = {
   resourcesCoverageSummary:
     "{verified} dari {total} destinasi memiliki sumber terverifikasi; {partial} berstatus cakupan sebagian.",
   resourcesCoverageHint: "Pilih destinasi untuk menelusuri tautannya.",
+  resourcesCoverageDisclaimer:
+    "Panduan ketenagakerjaan saat ini hanya tersedia untuk destinasi yang tercantum di bawah. Negara lain belum dicakup.",
   resourcesClosing: "Punya peluang untuk diperiksa?",
   wsResourcesTitle: "Sumber daya",
   wsResourcesSubtitle:

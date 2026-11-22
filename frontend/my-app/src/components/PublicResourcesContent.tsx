@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import CorridorResources from "@/components/CorridorResources";
+import { ContextualNotice } from "@/components/Disclaimer";
 import { Enter, Reveal } from "@/components/motion";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
@@ -18,6 +19,9 @@ export default function PublicResourcesContent() {
       <Enter className="max-w-3xl">
         <h1 className="text-3xl font-bold tracking-tight text-navy">{t.resourcesTitle}</h1>
         <p className="mt-3 leading-7 text-muted">{t.resourcesSubtitle}</p>
+        <div className="mt-4">
+          <ContextualNotice>{t.resourcesCoverageDisclaimer}</ContextualNotice>
+        </div>
       </Enter>
       <div className="mt-6">
         <CorridorResources showCoverageStrip />
