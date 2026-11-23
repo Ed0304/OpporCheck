@@ -71,7 +71,7 @@ export default function HeroComposition() {
               <p className="text-xs font-semibold tracking-wider text-evidence uppercase">
                 {t.landingExampleContractHeading}
               </p>
-              <span className="rounded-full bg-navy px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-canvas uppercase">
+              <span className="rounded-full border border-edge bg-card px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-brand uppercase">
                 {t.landingSampleBadge}
               </span>
             </div>

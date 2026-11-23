@@ -203,7 +203,7 @@ export default function LandingContent() {
                   className="oc-glass oc-lift rounded-xl border border-edge p-4"
                 >
                   <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
-                    <span className="absolute top-2 left-2 z-10 rounded-full bg-black/85 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-white uppercase">
+                    <span className="absolute top-2 left-2 z-10 rounded-full border border-edge bg-card px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-brand uppercase">
                       {t.landingSampleBadge}
                     </span>
                     <div aria-hidden className="h-full w-full">
