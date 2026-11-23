@@ -300,7 +300,7 @@ export default function HybridDemoPage() {
   return (
     <div className="flex min-h-full flex-1 flex-col bg-canvas font-sans text-ink">
       <AppHeader links={getPublicLinks(language)} />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
+      <main className="oc-page-glow mx-auto w-full max-w-3xl flex-1 px-6 py-10">
         <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           <Link
             href="/workspace"

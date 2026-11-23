@@ -223,6 +223,31 @@ body {
   position: relative;
 }
 
+/* Shared page wash: the same ambient indigo/teal language as the hero,
+   applied to every app shell (public pages, workspace, demo) so all
+   routes share one background treatment. Fainter than the hero glow and
+   anchored to the top so long reading surfaces stay quiet. Static —
+   no motion, no interaction. */
+.oc-page-glow {
+  position: relative;
+}
+
+.oc-page-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 26rem;
+  pointer-events: none;
+  background:
+    radial-gradient(30rem 14rem at 12% 0%, var(--oc-soft) 0%, transparent 70%),
+    radial-gradient(26rem 12rem at 88% 8%, var(--oc-evidence-soft) 0%, transparent 70%);
+  opacity: 0.7;
+}
+
+.oc-page-glow > * {
+  position: relative;
+}
+
 .oc-hero-glow::before {
   content: "";
   position: absolute;
@@ -389,12 +414,12 @@ body {
   }
 }
 
-/* Custom cursor layer: an accent core with a soft translucent ring that
-   tracks the pointer. Decorative only — interactivity is never signaled
-   by the ring alone. Rendered only for fine pointers; hidden for touch
-   and reduced motion. The system arrow hides inside the site only while
-   the oc-has-cursor class (set on first working pointer movement)
-   proves the custom cursor is mounted and functioning. */
+/* Custom cursor layer: a static accent arrow whose tip sits exactly
+   on the pointer. No easing, trailing, or press motion — position is
+   set synchronously, so the arrow cannot stray. Interactive feedback
+   is a color shift only. The system arrow hides inside the site only
+   while the oc-has-cursor class (set on first working pointer
+   movement) proves the custom cursor is mounted and functioning. */
 .oc-cursor {
   position: fixed;
   inset: 0;
@@ -402,44 +427,21 @@ body {
   pointer-events: none;
 }
 
-.oc-cursor-ring,
-.oc-cursor-dot {
+.oc-cursor-arrow {
   position: absolute;
   left: 0;
   top: 0;
   opacity: 0;
-  transition: opacity 250ms ease-out;
+  color: var(--oc-blue);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+  transition:
+    opacity 200ms ease-out,
+    color 150ms ease-out;
   will-change: transform;
 }
 
-.oc-cursor-dot {
-  width: 6px;
-  height: 6px;
-  margin: -3px 0 0 -3px;
-  border-radius: 9999px;
-  background-color: var(--oc-blue);
-}
-
-.oc-cursor-ring {
-  width: 30px;
-  height: 30px;
-  margin: -15px 0 0 -15px;
-  border-radius: 9999px;
-  border: 1.5px solid color-mix(in srgb, var(--oc-blue) 65%, transparent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--oc-blue) 25%, transparent);
-  transition:
-    opacity 250ms ease-out,
-    scale 180ms ease-out,
-    border-color 180ms ease-out;
-}
-
-.oc-cursor-ring[data-active="true"] {
-  scale: 1.45;
-  border-color: var(--oc-blue);
-}
-
-.oc-cursor-ring[data-pressed="true"] {
-  scale: 0.85;
+.oc-cursor-arrow[data-active="true"] {
+  color: var(--oc-evidence);
 }
 
 @media (hover: none), (pointer: coarse) {
