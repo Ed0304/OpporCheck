@@ -193,6 +193,39 @@ export function ActivePill({
 }
 
 /**
+ * Pointer spotlight wrapper: tracks the cursor as --oc-spot-x/--oc-spot-y
+ * percentages so the .oc-spotlight glow follows it over decorative
+ * panels. The glow itself renders only for fine pointers on
+ * hover-capable devices (see globals.css); touch, keyboard, and
+ * reduced-motion users are unaffected. Never intercepts clicks.
+ */
+export function Spotlight({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`oc-spotlight ${className ?? ""}`}
+      onMouseMove={(event) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+          return;
+        }
+        const x = ((event.clientX - rect.left) / rect.width) * 100;
+        const y = ((event.clientY - rect.top) / rect.height) * 100;
+        event.currentTarget.style.setProperty("--oc-spot-x", `${x.toFixed(1)}%`);
+        event.currentTarget.style.setProperty("--oc-spot-y", `${y.toFixed(1)}%`);
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
  * Truthful progress bar: width always reflects a real measured value
  * (device-model download, upload fraction) passed by the caller.
  * Animates smoothly between reported values; null renders full width

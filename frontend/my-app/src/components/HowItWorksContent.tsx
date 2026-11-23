@@ -18,11 +18,11 @@ export default function HowItWorksContent() {
   const { language } = useLang();
   const t = getStrings(language);
   const steps = [
-    { n: "1", title: t.howStep1Title, text: t.howStep1Text, Art: SpotUpload },
-    { n: "2", title: t.howStep2Title, text: t.howStep2Text, Art: SpotShield },
-    { n: "3", title: t.howStep3Title, text: t.howStep3Text, Art: SpotDocLens },
-    { n: "4", title: t.howStep4Title, text: t.howStep4Text, Art: SpotCheck },
-    { n: "5", title: t.howStep5Title, text: t.howStep5Text, Art: SpotBook },
+    { n: "1", title: t.howStep1Title, text: t.howStep1Text, Art: SpotUpload, chip: "bg-brand-soft text-brand" },
+    { n: "2", title: t.howStep2Title, text: t.howStep2Text, Art: SpotShield, chip: "bg-ok-soft text-ok" },
+    { n: "3", title: t.howStep3Title, text: t.howStep3Text, Art: SpotDocLens, chip: "bg-evidence-soft text-evidence" },
+    { n: "4", title: t.howStep4Title, text: t.howStep4Text, Art: SpotCheck, chip: "bg-brand-soft text-brand" },
+    { n: "5", title: t.howStep5Title, text: t.howStep5Text, Art: SpotBook, chip: "bg-evidence-soft text-evidence" },
   ];
   const labels = getAssessmentLabels(language);
   const glossary: Array<{ assessment: FindingAssessment; meaning: string }> = [
@@ -59,7 +59,7 @@ export default function HowItWorksContent() {
             {index < steps.length - 1 && (
               <span
                 aria-hidden="true"
-                className="absolute left-[17px] top-10 h-[calc(100%-2.5rem)] w-px bg-paper-edge"
+                className="oc-flow-line absolute left-[17px] top-10 h-[calc(100%-2.5rem)] w-px bg-paper-edge"
               />
             )}
             <span
@@ -72,7 +72,7 @@ export default function HowItWorksContent() {
               <div className="flex items-center gap-3">
                 <span
                   aria-hidden
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand"
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${step.chip}`}
                 >
                   <step.Art size={18} />
                 </span>

@@ -14,12 +14,15 @@ import { Enter, OC_DURATION, OC_EASE } from "@/components/motion";
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 const BUTTON_STYLES: Record<ButtonVariant, string> = {
-  primary: "bg-brand text-on-action shadow-sm hover:bg-brand-strong",
-  secondary: "border border-edge bg-card text-ink shadow-sm hover:bg-brand-soft",
-  ghost: "text-ink hover:bg-brand-soft",
+  primary:
+    "bg-brand text-on-action shadow-sm hover:bg-brand-strong hover:shadow-md " +
+    "active:scale-[0.98]",
+  secondary:
+    "border border-edge bg-card text-ink shadow-sm hover:border-brand/50 " +
+    "hover:bg-brand-soft active:scale-[0.98]",
+  ghost: "text-ink hover:bg-brand-soft active:scale-[0.98]",
   danger:
-    "border border-red-300 text-red-700 hover:bg-red-50 " +
-    "dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/50",
+    "border border-danger/50 text-danger hover:bg-danger-soft active:scale-[0.98]",
 };
 
 const BUTTON_SIZES: Record<"sm" | "md" | "lg", string> = {
@@ -125,7 +128,7 @@ export function Field({
       <div className="mt-1">{children}</div>
       {hint && !error && <p className="mt-1 text-sm text-muted">{hint}</p>}
       {error && (
-        <p role="alert" className="mt-1 text-sm font-medium text-red-700 dark:text-red-300">
+        <p role="alert" className="mt-1 text-sm font-medium text-danger">
           {error}
         </p>
       )}
@@ -145,21 +148,20 @@ export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
 export type StatusTone = "ok" | "warn" | "bad" | "info" | "idle" | "evidence";
 
 const CHIP: Record<StatusTone, string> = {
-  ok: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200",
-  warn: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/60 dark:text-amber-200",
-  bad: "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/60 dark:text-red-200",
-  info: "border-edge bg-brand-soft text-navy",
+  ok: "border-ok/40 bg-ok-soft text-ok",
+  warn: "border-warn/40 bg-warn-soft text-warn",
+  bad: "border-danger/40 bg-danger-soft text-danger",
+  info: "border-brand/30 bg-brand-soft text-navy",
   idle: "border-edge bg-canvas text-muted",
-  evidence:
-    "border-evidence/30 bg-evidence-soft text-evidence dark:border-evidence/40",
+  evidence: "border-evidence/30 bg-evidence-soft text-evidence",
 };
 
 const DOT: Record<StatusTone, string> = {
-  ok: "bg-emerald-600 dark:bg-emerald-400",
-  warn: "bg-amber-500 dark:bg-amber-400",
-  bad: "bg-red-600 dark:bg-red-400",
+  ok: "bg-ok",
+  warn: "bg-warn",
+  bad: "bg-danger",
   info: "bg-brand",
-  idle: "bg-zinc-400",
+  idle: "bg-muted",
   evidence: "bg-evidence",
 };
 
@@ -212,7 +214,7 @@ export function EmptyState({
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="mx-auto mb-3 text-muted"
+          className="mx-auto mb-3 text-brand/70"
         >
           <rect x="5" y="3" width="14" height="18" rx="2" />
           <path d="M9 8h6M9 12h6M9 16h4" />
@@ -357,13 +359,20 @@ export function Stepper({ steps, label }: { steps: DeskStep[]; label: string }) 
         {steps.map((step, index) => (
           <li key={step.label} className="flex items-center gap-2">
             {index > 0 && <span aria-hidden className="h-px w-6 bg-edge sm:w-10" />}
-            <span
+            <motion.span
               aria-current={step.state === "current" ? "step" : undefined}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                duration: OC_DURATION.base,
+                ease: OC_EASE,
+                delay: Math.min(index * 0.05, 0.15),
+              }}
               className={`inline-flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13px] font-medium whitespace-nowrap ${
                 step.state === "done"
-                  ? "border-evidence/30 bg-evidence-soft text-evidence"
+                  ? "border-ok/40 bg-ok-soft text-ok"
                   : step.state === "current"
-                    ? "border-edge bg-card text-ink shadow-sm"
+                    ? "border-brand/60 bg-card text-ink shadow-sm ring-1 ring-brand/30"
                     : "border-edge bg-transparent text-muted"
               }`}
             >
@@ -371,7 +380,7 @@ export function Stepper({ steps, label }: { steps: DeskStep[]; label: string }) 
                 aria-hidden
                 className={`oc-tnum inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${
                   step.state === "done"
-                    ? "bg-evidence text-white dark:text-evidence-soft"
+                    ? "bg-ok text-white dark:text-canvas"
                     : step.state === "current"
                       ? "bg-brand text-on-action"
                       : "bg-canvas text-muted"
@@ -380,7 +389,7 @@ export function Stepper({ steps, label }: { steps: DeskStep[]; label: string }) 
                 {step.state === "done" ? "✓" : index + 1}
               </span>
               {step.label}
-            </span>
+            </motion.span>
           </li>
         ))}
       </ol>

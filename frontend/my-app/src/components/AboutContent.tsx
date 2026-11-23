@@ -21,10 +21,10 @@ export default function AboutContent() {
   const t = getStrings(language);
   const limits = [t.aboutNot1, t.aboutNot2, t.aboutNot3];
   const capabilities = [
-    { title: t.landingCap1Title, text: t.landingCap1Text, Art: SpotText },
-    { title: t.landingCap2Title, text: t.landingCap2Text, Art: SpotDocLens },
-    { title: t.landingCap3Title, text: t.landingCap3Text, Art: SpotCheck },
-    { title: t.landingCap4Title, text: t.landingCap4Text, Art: SpotShield },
+    { title: t.landingCap1Title, text: t.landingCap1Text, Art: SpotText, chip: "bg-brand-soft text-brand" },
+    { title: t.landingCap2Title, text: t.landingCap2Text, Art: SpotDocLens, chip: "bg-warn-soft text-warn" },
+    { title: t.landingCap3Title, text: t.landingCap3Text, Art: SpotCheck, chip: "bg-evidence-soft text-evidence" },
+    { title: t.landingCap4Title, text: t.landingCap4Text, Art: SpotShield, chip: "bg-ok-soft text-ok" },
   ];
   return (
     <>
@@ -90,7 +90,7 @@ export default function AboutContent() {
                 <div className="flex items-center gap-3">
                   <span
                     aria-hidden
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand"
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${item.chip}`}
                   >
                     <item.Art size={18} />
                   </span>

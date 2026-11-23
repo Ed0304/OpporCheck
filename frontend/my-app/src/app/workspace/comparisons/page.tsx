@@ -269,7 +269,7 @@ export default function ComparisonsPage() {
                               type="button"
                               onClick={() => void handleDelete(item.id)}
                               disabled={busyId === item.id}
-                              className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline disabled:opacity-50 dark:text-red-300"
+                              className="cursor-pointer rounded px-2 py-1 font-medium text-danger hover:underline disabled:opacity-50"
                             >
                               {t.invConfirmDelete}
                             </button>
@@ -288,7 +288,7 @@ export default function ComparisonsPage() {
                               setConfirmingDeleteId(item.id);
                               setRenamingId(null);
                             }}
-                            className="cursor-pointer rounded px-2 py-1 font-medium text-red-700 hover:underline dark:text-red-300"
+                            className="cursor-pointer rounded px-2 py-1 font-medium text-danger hover:underline"
                           >
                             {t.invDelete}
                           </button>

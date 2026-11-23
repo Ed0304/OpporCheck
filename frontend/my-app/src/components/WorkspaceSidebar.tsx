@@ -89,7 +89,7 @@ export default function WorkspaceSidebar({
                   : "text-muted hover:bg-brand-soft hover:text-ink"
               } ${slim ? "text-center" : ""}`}
             >
-              {active && <ActivePill pillId={pillId} className="bg-card shadow-sm" />}
+              {active && <ActivePill pillId={pillId} className="bg-gradient-to-r from-brand-soft to-transparent shadow-sm" />}
               <span className="relative">
                 {slim ? <span aria-hidden>{item.short}</span> : item.label}
               </span>

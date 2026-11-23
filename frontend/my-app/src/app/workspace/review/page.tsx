@@ -947,7 +947,7 @@ export default function ReviewPage() {
         description={t.revPrivacyDesc}
         className={
           gateState === "INVALIDATED"
-            ? "border-red-300 dark:border-red-900"
+            ? "border-danger/60"
             : gateState === "REVIEW_REQUIRED" || gateState === "READY_FOR_APPROVAL"
               ? "border-brand/50"
               : ""

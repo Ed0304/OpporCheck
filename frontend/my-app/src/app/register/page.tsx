@@ -66,7 +66,7 @@ function RegisterForm() {
         <div className="mt-5">
           <Card>
                 {setupError && (
-                  <p role="alert" className="mb-3 text-sm font-medium text-red-700">
+                  <p role="alert" className="mb-3 text-sm font-medium text-danger">
                     {t.authSetupPrefix} {setupError}
                   </p>
                 )}
@@ -99,7 +99,7 @@ function RegisterForm() {
                     />
                   </Field>
                   {error && (
-                    <p role="alert" className="text-sm font-medium text-red-700">
+                    <p role="alert" className="text-sm font-medium text-danger">
                       {error}
                     </p>
                   )}

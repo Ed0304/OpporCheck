@@ -21,7 +21,7 @@
 import Link from "next/link";
 import GetStartedLink from "@/components/GetStartedLink";
 import HeroComposition from "@/components/HeroComposition";
-import { Reveal, Stagger, StaggerItem } from "@/components/motion";
+import { Reveal, Spotlight, Stagger, StaggerItem } from "@/components/motion";
 import { SpotBook, SpotCheck, SpotDocLens, SpotInfo, SpotShield, SpotText, SpotUpload } from "@/components/spot";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
@@ -121,10 +121,10 @@ export default function LandingContent() {
     { n: "03", title: t.landingStep3Title, text: t.landingStep3Text, Art: SpotBook },
   ];
   const capabilities = [
-    { title: t.landingCap1Title, text: t.landingCap1Text, Art: SpotText },
-    { title: t.landingCap2Title, text: t.landingCap2Text, Art: SpotDocLens },
-    { title: t.landingCap3Title, text: t.landingCap3Text, Art: SpotCheck },
-    { title: t.landingCap4Title, text: t.landingCap4Text, Art: SpotShield },
+    { title: t.landingCap1Title, text: t.landingCap1Text, Art: SpotText, chip: "bg-brand-soft text-brand" },
+    { title: t.landingCap2Title, text: t.landingCap2Text, Art: SpotDocLens, chip: "bg-warn-soft text-warn" },
+    { title: t.landingCap3Title, text: t.landingCap3Text, Art: SpotCheck, chip: "bg-evidence-soft text-evidence" },
+    { title: t.landingCap4Title, text: t.landingCap4Text, Art: SpotShield, chip: "bg-ok-soft text-ok" },
   ];
   const samples = [
     { name: t.landingSampleReceipt, focus: t.landingSampleReceiptFocus, Preview: ReceiptPreview },
@@ -135,7 +135,7 @@ export default function LandingContent() {
   return (
     <div className="-mx-4 -my-10 bg-canvas text-ink sm:-mx-6 lg:-my-14">
       <div className="mx-auto max-w-6xl px-4 pt-10 pb-20 sm:px-6 lg:pt-16">
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
+        <Spotlight className="oc-hero-glow grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
           <Stagger className="mx-auto w-full max-w-3xl text-center lg:mx-0 lg:text-left">
             <StaggerItem>
               <p>
@@ -182,7 +182,7 @@ export default function LandingContent() {
             </StaggerItem>
           </Stagger>
           <HeroComposition />
-        </div>
+        </Spotlight>
 
         <Reveal className="mt-20">
           <section aria-labelledby="samples">
@@ -195,11 +195,12 @@ export default function LandingContent() {
             <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-muted">
               {t.landingSamplesNote}
             </p>
+            <Spotlight>
             <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {samples.map(({ name, focus, Preview }) => (
                 <li
                   key={name}
-                  className="oc-shadow-card rounded-xl border border-edge bg-card p-4"
+                  className="oc-shadow-card rounded-xl border border-edge bg-card p-4 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md"
                 >
                   <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
                     <span className="absolute top-2 left-2 z-10 rounded-full bg-black/85 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-white uppercase">
@@ -214,6 +215,7 @@ export default function LandingContent() {
                 </li>
               ))}
             </ul>
+            </Spotlight>
           </section>
         </Reveal>
 
@@ -241,7 +243,7 @@ export default function LandingContent() {
               {workflow.map((item) => (
                 <li
                   key={item.title}
-                  className="oc-shadow-card rounded-xl border border-edge bg-card p-5"
+                  className="oc-shadow-card rounded-xl border border-edge bg-card p-5 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span
@@ -273,7 +275,7 @@ export default function LandingContent() {
                 <div key={item.title} className="flex gap-3 border-t border-edge py-4">
                   <span
                     aria-hidden
-                    className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand"
+                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${item.chip}`}
                   >
                     <item.Art size={18} />
                   </span>

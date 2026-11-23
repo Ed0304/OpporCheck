@@ -140,19 +140,19 @@ function friendlyError(err: unknown, language: UiLanguage = "en"): string {
 function StatusDot({ tone }: { tone: "ok" | "warn" | "bad" | "idle" }) {
   const color =
     tone === "ok"
-      ? "bg-emerald-600"
+      ? "bg-ok"
       : tone === "warn"
-        ? "bg-amber-500"
+        ? "bg-warn"
         : tone === "bad"
-          ? "bg-red-600"
-          : "bg-zinc-400";
+          ? "bg-danger"
+          : "bg-muted";
   return <span aria-hidden className={`inline-block h-2 w-2 rounded-full ${color}`} />;
 }
 
 function StatusRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-1.5">
-      <dt className="text-zinc-600 dark:text-zinc-400">{label}</dt>
+      <dt className="text-muted">{label}</dt>
       <dd className="text-right font-medium">{children}</dd>
     </div>
   );
@@ -298,7 +298,7 @@ export default function HybridDemoPage() {
   const initError = clientStatus.message;
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-zinc-50 font-sans text-zinc-950 dark:bg-black dark:text-zinc-50">
+    <div className="flex min-h-full flex-1 flex-col bg-canvas font-sans text-ink">
       <AppHeader links={getPublicLinks(language)} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
         <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
@@ -316,16 +316,16 @@ export default function HybridDemoPage() {
             {t.wsNavCompare}
           </Link>
         </div>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{t.hdEyebrow}</p>
+        <p className="text-sm text-muted">{t.hdEyebrow}</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">{t.hdTitle}</h1>
-        <p className="mt-2 max-w-2xl leading-7 text-zinc-700 dark:text-zinc-300">
+        <p className="mt-2 max-w-2xl leading-7 text-muted">
           {t.hdSubtitle}
         </p>
 
         {/* Environment status */}
-        <section aria-label={t.hdEnvAria} className="mt-8 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label={t.hdEnvAria} className="oc-shadow-card mt-8 rounded-xl border border-edge bg-card p-5">
           <h2 className="text-lg font-semibold">{t.hdEnvTitle}</h2>
-          <dl className="mt-2 divide-y divide-zinc-100 text-sm dark:divide-zinc-900">
+          <dl className="mt-2 divide-y divide-edge text-sm">
             <StatusRow label={t.hdEnvFirebaseConfig}>
               {configOk ? (
                 <span className="flex items-center gap-2"><StatusDot tone="ok" /> {t.hdEnvConfigOk}</span>
@@ -343,7 +343,7 @@ export default function HybridDemoPage() {
               )}
             </StatusRow>
             <StatusRow label={t.hdEnvCloudModel}>
-              <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-zinc-800">
+              <code className="rounded bg-brand-soft px-1.5 py-0.5 font-mono text-[0.9em]">
                 {envProbe.cloudModelName}
               </code>
             </StatusRow>
@@ -362,13 +362,13 @@ export default function HybridDemoPage() {
               )}
             </StatusRow>
             <StatusRow label={t.hdEnvPromptApi}>
-              <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-zinc-800">
+              <code className="rounded bg-brand-soft px-1.5 py-0.5 font-mono text-[0.9em]">
                 {browser?.promptApi ?? t.hdEnvPromptChecking}
               </code>
             </StatusRow>
           </dl>
           {(!configOk || initError) && (
-            <div className="mt-4 rounded-md border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mt-4 rounded-md border border-edge bg-canvas p-4 text-sm leading-6">
               <p className="font-semibold">{t.hdSetupTitle}</p>
               <ol className="mt-1 list-decimal pl-5">
                 <li>{t.hdSetupStep1Before} <code className="font-mono">.env.example</code> {t.hdSetupStep1Mid} <code className="font-mono">.env.local</code> {t.hdSetupStep1After}</li>
@@ -381,9 +381,9 @@ export default function HybridDemoPage() {
         </section>
 
         {/* Step 1: initialize on-device model */}
-        <section aria-label={t.hdStep1Aria} className="mt-6 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label={t.hdStep1Aria} className="oc-shadow-card mt-6 rounded-xl border border-edge bg-card p-5">
           <h2 className="text-lg font-semibold">{t.hdStep1Title}</h2>
-          <p className="mt-1 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+          <p className="mt-1 text-sm leading-6 text-muted">
             {t.hdStep1Desc}
           </p>
           <div className="mt-3 flex items-center gap-3">
@@ -391,7 +391,7 @@ export default function HybridDemoPage() {
               type="button"
               onClick={handleInitDevice}
               disabled={!clientReady || device.state === "initializing" || device.state === "ready"}
-              className="h-10 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+              className="h-10 rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
             >
               {device.state === "initializing" ? t.hdInitDownloading : t.hdInitButton}
             </button>
@@ -412,7 +412,7 @@ export default function HybridDemoPage() {
           </div>
           {device.progress !== null && (
             <div
-              className="mt-3 h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800"
+              className="mt-3 h-2 w-full rounded-full bg-edge"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={100}
@@ -420,7 +420,7 @@ export default function HybridDemoPage() {
               aria-label={t.hdInitProgressAria}
             >
               <div
-                className="h-2 rounded-full bg-zinc-900 transition-[width] dark:bg-zinc-100"
+                className="h-2 rounded-full bg-brand transition-[width]"
                 style={{ width: `${Math.round(device.progress * 100)}%` }}
               />
             </div>
@@ -428,14 +428,14 @@ export default function HybridDemoPage() {
           {device.state === "error" && (
             <p className="mt-2 text-sm leading-6">
               {t.hdInitFailedBefore}{" "}
-              <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</code>
+              <code className="rounded bg-brand-soft px-1 font-mono">chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</code>
               {t.hdInitFailedAfter}
             </p>
           )}
         </section>
 
         {/* Step 2: run analysis */}
-        <section aria-label={t.hdStep2Aria} className="mt-6 rounded-md border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label={t.hdStep2Aria} className="oc-shadow-card mt-6 rounded-xl border border-edge bg-card p-5">
           <h2 className="text-lg font-semibold">{t.hdStep2Title}</h2>
           <fieldset className="mt-3">
             <legend className="text-sm font-medium">{t.hdInferenceMode}</legend>
@@ -451,7 +451,7 @@ export default function HybridDemoPage() {
                 />
                 <span>
                   <span className="font-mono font-medium">PREFER_ON_DEVICE</span>
-                  <span className="text-zinc-600 dark:text-zinc-400"> {t.hdModePreferHint}</span>
+                  <span className="text-muted"> {t.hdModePreferHint}</span>
                 </span>
               </label>
               <label className="flex cursor-pointer items-start gap-2">
@@ -465,7 +465,7 @@ export default function HybridDemoPage() {
                 />
                 <span>
                   <span className="font-mono font-medium">ONLY_IN_CLOUD</span>
-                  <span className="text-zinc-600 dark:text-zinc-400"> {t.hdModeCloudHint}</span>
+                  <span className="text-muted"> {t.hdModeCloudHint}</span>
                 </span>
               </label>
             </div>
@@ -478,12 +478,12 @@ export default function HybridDemoPage() {
             value={opportunityText}
             onChange={(event) => setOpportunityText(event.target.value)}
             rows={8}
-            className="mt-1 w-full rounded-md border border-zinc-300 bg-white p-3 font-mono text-sm leading-6 dark:border-zinc-700 dark:bg-zinc-900"
+            className="mt-1 w-full rounded-md border border-edge bg-card p-3 font-mono text-sm leading-6"
           />
-          <div className="mt-3 rounded-md border border-zinc-300 p-3 dark:border-zinc-700">
+          <div className="mt-3 rounded-md border border-edge p-3">
             <p className="text-sm font-medium">
               {t.hdPrivacyTitle}{" "}
-              <span className="font-normal text-zinc-600 dark:text-zinc-400">
+              <span className="font-normal text-muted">
                 {approvalCovers(approval, opportunityText) ? t.hdPrivacyApproved : t.hdPrivacyRequired}
               </span>
             </p>
@@ -496,7 +496,7 @@ export default function HybridDemoPage() {
                   setPrivacyNonce((nonce) => nonce + 1);
                   setPrivacyOpen(true);
                 }}
-                className="mt-2 h-9 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                className="mt-2 h-9 rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t.commonCheckPrivacy}
               </button>
@@ -521,7 +521,7 @@ export default function HybridDemoPage() {
               opportunityText.trim().length === 0 ||
               !approvalCovers(approval, opportunityText)
             }
-            className="mt-3 h-10 rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+            className="mt-3 h-10 rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
           >
             {running ? t.hdAnalyzing : format(t.hdAnalyzeButton, { mode: MODE_LABEL[mode] })}
           </button>
@@ -531,11 +531,11 @@ export default function HybridDemoPage() {
             </p>
           )}
           {result && (
-            <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+            <div className="mt-4 border-t border-edge pt-4">
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
                 <span>
                   inferenceSource:{" "}
-                  <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono font-semibold dark:bg-zinc-800">
+                  <code className="rounded bg-brand-soft px-1.5 py-0.5 font-mono font-semibold">
                     {result.inferenceSource}
                   </code>
                 </span>
@@ -555,7 +555,7 @@ export default function HybridDemoPage() {
                 <p className="mt-2 text-sm leading-6">{result.parseError}</p>
               )}
               {result.data && (
-                <dl className="mt-3 divide-y divide-zinc-100 text-sm dark:divide-zinc-900">
+                <dl className="mt-3 divide-y divide-edge text-sm">
                   <StatusRow label={t.hdResultOccupation}>{result.data.occupation}</StatusRow>
                   <StatusRow label={t.hdResultSalary}>{result.data.salary}</StatusRow>
                   <StatusRow label={t.hdResultCountry}>{result.data.destination_country}</StatusRow>
@@ -577,7 +577,7 @@ export default function HybridDemoPage() {
               )}
               <details className="mt-3 text-sm">
                 <summary className="cursor-pointer font-medium">{t.hdRawOutput}</summary>
-                <pre className="mt-2 overflow-x-auto rounded-md bg-zinc-50 p-3 font-mono text-xs leading-5 dark:bg-zinc-900">
+                <pre className="mt-2 overflow-x-auto rounded-md border border-edge bg-canvas p-3 font-mono text-xs leading-5">
                   {result.rawText}
                 </pre>
               </details>
@@ -586,27 +586,27 @@ export default function HybridDemoPage() {
         </section>
 
         {/* Test guide */}
-        <section aria-label={t.hdTestAria} className="mt-6 rounded-md border border-zinc-200 bg-white p-5 text-sm leading-6 dark:border-zinc-800 dark:bg-zinc-950">
+        <section aria-label={t.hdTestAria} className="oc-shadow-card mt-6 rounded-xl border border-edge bg-card p-5 text-sm leading-6">
           <h2 className="text-lg font-semibold">{t.hdTestTitle}</h2>
           <ol className="mt-2 list-decimal pl-5">
             <li>
               {t.hdTest1Before}{" "}
-              <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</code>{" "}
+              <code className="rounded bg-brand-soft px-1 font-mono">chrome://flags/#prompt-api-for-gemini-nano-multimodal-input</code>{" "}
               {t.hdTest1After}
             </li>
             <li>
               {t.hdTest2Before} “{t.hdInitButton}”, {t.hdTest2Mid}{" "}
               <span className="font-mono">PREFER_ON_DEVICE</span>{t.hdTest2After}{" "}
-              <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">inferenceSource: on_device</code>.
+              <code className="rounded bg-brand-soft px-1 font-mono">inferenceSource: on_device</code>.
             </li>
             <li>
               {t.hdTest3Before} <span className="font-mono">ONLY_IN_CLOUD</span> {t.hdTest3Mid}{" "}
-              <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">inferenceSource: in_cloud</code>.
+              <code className="rounded bg-brand-soft px-1 font-mono">inferenceSource: in_cloud</code>.
             </li>
             <li>
               {t.hdTest4Before}{" "}
               <span className="font-mono">PREFER_ON_DEVICE</span> {t.hdTest4Mid}{" "}
-              <code className="rounded bg-zinc-100 px-1 font-mono dark:bg-zinc-800">in_cloud</code> {t.hdTest4After}
+              <code className="rounded bg-brand-soft px-1 font-mono">in_cloud</code> {t.hdTest4After}
             </li>
           </ol>
         </section>

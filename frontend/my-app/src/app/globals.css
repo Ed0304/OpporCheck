@@ -3,8 +3,11 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* OpporCheck design tokens — The Evidence Desk.
-   Teal marks evidence/sources; periwinkle marks actions/selected states.
-   Every text pair below clears WCAG AA (ratios verified 2026-11-21);
+   Periwinkle/indigo marks actions and selected states; teal marks
+   evidence and sources; green marks verified/complete; amber marks
+   needs-clarification and partial coverage; coral-red marks errors and
+   destructive actions only — never a verdict on an employer.
+   Every text pair below clears WCAG AA (ratios verified 2026-11-23);
    hairline borders stay decorative while the 2px focus ring carries
    interactive-element contrast. */
 :root {
@@ -12,14 +15,20 @@
   --oc-blue-strong: #2e4391;
   --oc-navy: #1a2b4d;
   --oc-soft: #e8edf9;
-  --oc-canvas: #f5f7fa;
+  --oc-canvas: #f4f6fb;
   --oc-card: #ffffff;
   --oc-border: #d9e1ec;
   --oc-ink: #16233a;
   --oc-muted: #4f5f78;
   --oc-focus: #3d55b4;
-  --oc-evidence: #0b7a6e;
+  --oc-evidence: #0a6e63;
   --oc-evidence-soft: #e0f0ed;
+  --oc-ok: #1e7a3c;
+  --oc-ok-soft: #e2f3e7;
+  --oc-warn: #8a5a00;
+  --oc-warn-soft: #faefdc;
+  --oc-danger: #b3261e;
+  --oc-danger-soft: #fdecea;
   --oc-on-action: #ffffff;
   --oc-paper: #faf6ec;
   --oc-paper-edge: #e2d7bd;
@@ -37,23 +46,29 @@
 .dark {
   --oc-blue: #a8bfff;
   --oc-blue-strong: #c3d2ff;
-  --oc-navy: #f4f4f5;
-  --oc-soft: #1e1e24;
-  --oc-canvas: #09090b;
-  --oc-card: #131316;
-  --oc-border: #27272d;
-  --oc-ink: #f4f4f5;
-  --oc-muted: #b7b7c0;
+  --oc-navy: #eef1f8;
+  --oc-soft: #18223e;
+  --oc-canvas: #0b1020;
+  --oc-card: #131a2e;
+  --oc-border: #273052;
+  --oc-ink: #edf1f9;
+  --oc-muted: #a9b4c9;
   --oc-focus: #a8bfff;
-  --oc-evidence: #69d3c2;
-  --oc-evidence-soft: #0e2f2b;
-  --oc-on-action: #09090b;
+  --oc-evidence: #6fd6c4;
+  --oc-evidence-soft: #0d2a30;
+  --oc-ok: #82d895;
+  --oc-ok-soft: #0e2c1a;
+  --oc-warn: #eebc49;
+  --oc-warn-soft: #2c2310;
+  --oc-danger: #ff9d8a;
+  --oc-danger-soft: #341a15;
+  --oc-on-action: #0b1020;
   --oc-paper: #23201a;
   --oc-paper-edge: #4d4435;
   --oc-page-edge: #2f2a22;
   --oc-paper-shadow: rgba(0, 0, 0, 0.55);
-  --oc-rail: #050507;
-  --oc-rail-edge: #232329;
+  --oc-rail: #060a15;
+  --oc-rail-edge: #1c2440;
   --oc-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
   --oc-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
@@ -71,6 +86,12 @@
   --color-muted: var(--oc-muted);
   --color-evidence: var(--oc-evidence);
   --color-evidence-soft: var(--oc-evidence-soft);
+  --color-ok: var(--oc-ok);
+  --color-ok-soft: var(--oc-ok-soft);
+  --color-warn: var(--oc-warn);
+  --color-warn-soft: var(--oc-warn-soft);
+  --color-danger: var(--oc-danger);
+  --color-danger-soft: var(--oc-danger-soft);
   --color-on-action: var(--oc-on-action);
   --color-paper: var(--oc-paper);
   --color-paper-edge: var(--oc-paper-edge);
@@ -186,5 +207,88 @@ body {
   }
   .oc-doc-stack-layer {
     transform: none !important;
+  }
+}
+
+/* Hero atmosphere: a static indigo/teal wash behind first-screen content.
+   Pure background depth — no layout, no interaction, no motion. */
+.oc-hero-glow {
+  position: relative;
+}
+
+.oc-hero-glow::before {
+  content: "";
+  position: absolute;
+  inset: -2rem -1rem auto -1rem;
+  height: 22rem;
+  pointer-events: none;
+  background:
+    radial-gradient(28rem 14rem at 18% 20%, var(--oc-soft) 0%, transparent 70%),
+    radial-gradient(24rem 12rem at 85% 30%, var(--oc-evidence-soft) 0%, transparent 70%);
+  opacity: 0.9;
+}
+
+/* Pointer spotlight: a soft radial light that follows the cursor over
+   decorative panels. Rendered only for fine pointers on hover-capable
+   devices; touch and keyboard users see the static panel. Position comes
+   from --oc-spot-x/--oc-spot-y set by the Spotlight wrapper. */
+.oc-spotlight {
+  position: relative;
+}
+
+.oc-spotlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+  background: radial-gradient(
+    16rem 16rem at var(--oc-spot-x, 50%) var(--oc-spot-y, 50%),
+    rgba(168, 191, 255, 0.16) 0%,
+    transparent 70%
+  );
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .oc-spotlight:hover::after,
+  .oc-spotlight:focus-within::after {
+    opacity: 1;
+  }
+}
+
+/* Animated step connector: a slow gradient drift along How-it-works
+   step rails. Decorative only — step order is carried by numbers. */
+@keyframes oc-flow-drift {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+.oc-flow-line {
+  background-image: linear-gradient(
+    to bottom,
+    var(--oc-border),
+    var(--oc-blue) 30%,
+    var(--oc-evidence) 60%,
+    var(--oc-border)
+  );
+  background-size: 100% 220%;
+  animation: oc-flow-drift 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oc-flow-line {
+    animation: none !important;
+  }
+  .oc-spotlight::after {
+    display: none !important;
   }
 }

@@ -100,12 +100,12 @@ export default function SettingsPage() {
                   />
                   <p className="mt-1 text-[13px] leading-5 text-muted">{t.stDisplayNameHint}</p>
                   {formError && (
-                    <p role="alert" className="mt-1 text-sm font-medium text-red-700 dark:text-red-300">
+                    <p role="alert" className="mt-1 text-sm font-medium text-danger">
                       {formError}
                     </p>
                   )}
                   {saved && !formError && (
-                    <p role="status" className="mt-1 text-sm font-medium text-evidence">
+                    <p role="status" className="mt-1 text-sm font-medium text-ok">
                       {t.stDisplayNameSaved}
                     </p>
                   )}

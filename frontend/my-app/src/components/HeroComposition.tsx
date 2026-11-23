@@ -68,7 +68,7 @@ export default function HeroComposition() {
             }`}
           >
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold tracking-wider text-muted uppercase">
+              <p className="text-xs font-semibold tracking-wider text-evidence uppercase">
                 {t.landingExampleContractHeading}
               </p>
               <span className="rounded-full bg-navy px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-canvas uppercase">
@@ -79,8 +79,8 @@ export default function HeroComposition() {
               <mark
                 className={`rounded px-1 py-0.5 transition-colors ${
                   active
-                    ? "bg-amber-200 ring-1 ring-amber-500/60 dark:bg-amber-700/60"
-                    : "bg-amber-200/60 ring-1 ring-amber-500/25 dark:bg-amber-800/40"
+                    ? "bg-warn-soft ring-1 ring-warn/70"
+                    : "bg-warn-soft/70 ring-1 ring-warn/30"
                 }`}
               >
                 &ldquo;{t.landingExampleQuote}&rdquo;

@@ -78,14 +78,14 @@ export default function CorridorResources({
                   onClick={() => setCode(entry.code)}
                   className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] transition-colors ${
                     selected
-                      ? "border-brand bg-brand-soft font-semibold"
-                      : "border-edge bg-card hover:bg-brand-soft"
+                      ? "border-brand bg-brand-soft font-semibold ring-1 ring-brand/30"
+                      : "border-edge bg-card hover:border-brand/40 hover:bg-brand-soft"
                   }`}
                 >
                   <span
                     aria-hidden
                     className={`inline-block h-1.5 w-1.5 rounded-full ${
-                      verified ? "bg-emerald-600 dark:bg-emerald-400" : "bg-amber-500 dark:bg-amber-400"
+                      verified ? "bg-ok" : "bg-warn"
                     }`}
                   />
                   <CorridorFlag code={entry.code} className="h-3.5 w-5" />
@@ -103,11 +103,11 @@ export default function CorridorResources({
           <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] leading-5 text-muted">
             <span>{t.resourcesCoverageHint}</span>
             <span className="inline-flex items-center gap-1.5">
-              <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+              <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-ok" />
               {t.statusSourcesVerified}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
+              <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-warn" />
               {t.statusPartial}
             </span>
           </p>
