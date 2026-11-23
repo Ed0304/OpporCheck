@@ -260,6 +260,31 @@ export function buildComparisonTitle(fileNames: string[]): string {
   return `${fileNames.slice(0, 2).join(" vs ")} +${fileNames.length - 2}`;
 }
 
+/**
+ * Distinct excerpts from one document cited across findings. Compared
+ * against the document's extracted term count, this shows coverage: a
+ * document with terms but zero citations never entered the comparison.
+ */
+export function countCitedExcerpts(
+  findings: PromiseToPaperFinding[],
+  documentId: string,
+): number {
+  const seen = new Set<string>();
+  for (const finding of findings) {
+    for (const claim of [
+      finding.recruiterStatement,
+      finding.advertisementClaim,
+      finding.contractClause,
+      finding.supportingEvidence,
+    ]) {
+      if (claim && claim.documentReference.documentId === documentId) {
+        seen.add(claim.sourceExcerpt);
+      }
+    }
+  }
+  return seen.size;
+}
+
 /** Follow-up questions across findings, deduplicated, in first-seen order. */
 export function collectQuestions(findings: PromiseToPaperFinding[]): string[] {
   const seen = new Set<string>();

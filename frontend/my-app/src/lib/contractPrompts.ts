@@ -178,6 +178,8 @@ export function buildPromiseComparisonPrompt(
     '- Copy every sourceExcerpt ONLY from an "Excerpt: ..." portion below, never from the claim text beside it, which may be written in another language and can never attribute.\n' +
     "- In every finding, cite documents ONLY as 'Document 1', 'Document 2', etc. (the labels in the document list). Never use file names or raw codes, and never invent an id.\n" +
     "- Omit slots that do not apply; never emit a slot with an empty claim or excerpt.\n" +
+    "- Include a slot only when its excerpt directly addresses the compared term: never fill a slot with unrelated text such as invoice dates or reference numbers, and never restate an excerpt as a claim it does not state.\n" +
+    "- Describe only the excerpts cited in the finding: never mention documents, terms, or clauses that no cited excerpt contains.\n" +
     "- Status 'consistent': the documents agree on the term.\n" +
     "- Status 'discrepancy': the documents state different terms. Example: recruiter says accommodation is free, " +
     'the contract deducts an accommodation fee — category deductions, status discrepancy.\n' +

@@ -8,6 +8,7 @@ import test from "node:test";
 import {
   buildComparisonTitle,
   collectQuestions,
+  countCitedExcerpts,
   summarizeFindings,
   toContractText,
   COMPARE_CATEGORY_LABELS,
@@ -75,6 +76,35 @@ test("every contract category has a display label", () => {
   for (const label of Object.values(COMPARE_CATEGORY_LABELS)) {
     assert.ok(label.trim().length > 0);
   }
+});
+
+test("countCitedExcerpts counts distinct cited excerpts per document", () => {
+  const cited = (excerpt: string, documentId: string): PromiseToPaperFinding => ({
+    category: "compensation",
+    status: "consistent",
+    explanation: "Comparison of excerpts only, with stated limitations.",
+    followUpQuestion: "Is overtime paid?",
+    contractClause: {
+      category: "compensation",
+      claim: "Base salary is £12.50 per hour.",
+      documentReference: {
+        documentId,
+        documentType: "employment_contract",
+        fileName: "c.pdf",
+        pageNumber: 1,
+      },
+      sourceExcerpt: excerpt,
+    },
+  });
+  const findings = [
+    cited("Base salary is £12.50 per hour.", "doc-contract"),
+    cited("Base salary is £12.50 per hour.", "doc-contract"),
+    cited("Normal working hours are 40 hours per week.", "doc-contract"),
+  ];
+  // The repeated excerpt counts once; unknown docs and empty lists are zero.
+  assert.equal(countCitedExcerpts(findings, "doc-contract"), 2);
+  assert.equal(countCitedExcerpts(findings, "doc-other"), 0);
+  assert.equal(countCitedExcerpts([], "doc-contract"), 0);
 });
 
 test("buildComparisonTitle joins names with vs and counts the rest", () => {

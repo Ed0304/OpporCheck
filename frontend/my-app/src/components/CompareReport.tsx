@@ -21,6 +21,7 @@ import type {
 } from "@/lib/contractTypes";
 import {
   collectQuestions,
+  countCitedExcerpts,
   summarizeFindings,
   getCompareCategoryLabels,
   getCompareDocTypeLabels,
@@ -195,6 +196,11 @@ export default function CompareReport({
                 : t.cmpPastedText}
               {doc.wasTrimmed ? t.crTrimmedSuffix : ""} · {doc.termCount}{" "}
               {doc.termCount === 1 ? t.cmpTermOne : t.cmpTermMany} {t.crExtractedTail}
+              {" · "}
+              {format(t.crCitedInFindings, {
+                cited: String(countCitedExcerpts(findings, doc.id)),
+                total: String(doc.termCount),
+              })}
             </li>
           ))}
         </ul>

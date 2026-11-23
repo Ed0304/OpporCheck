@@ -158,6 +158,20 @@ test("comparison prompt forbids quoting claim text as excerpts", () => {
   assert.ok(prompt.includes("never from the claim text"));
 });
 
+test("comparison prompt demands relevant slots and evidence-bound explanations", () => {
+  // Slots filled with unrelated text (invoice dates as "supporting
+  // evidence") and explanations describing uncited documents are the two
+  // failure modes validation cannot catch structurally.
+  const inputs: ComparisonInput[] = [
+    { documentId: "doc-1", documentType: "employment_contract", fileName: "c.pdf", terms: [claim()] },
+  ];
+  const prompt = buildPromiseComparisonPrompt(inputs);
+  assert.match(prompt, /only when its excerpt directly addresses the compared term/);
+  assert.match(prompt, /never fill a slot with unrelated text/);
+  assert.match(prompt, /never restate an excerpt as a claim it does not state/);
+  assert.match(prompt, /never mention documents, terms, or clauses that no cited excerpt contains/);
+});
+
 test("comparison prompt compares other-category terms leniently", () => {
   const inputs: ComparisonInput[] = [
     { documentId: "doc-1", documentType: "employment_contract", fileName: "c.pdf", terms: [claim()] },
