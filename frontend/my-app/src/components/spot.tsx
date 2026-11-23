@@ -204,7 +204,7 @@ export function AuthArt() {
   const { language } = useLang();
   const t = getStrings(language);
   return (
-    <div className="oc-shadow-card hidden rounded-xl border border-edge bg-card p-8 lg:block">
+    <div className="oc-glass hidden rounded-xl border border-edge p-8 lg:block">
       <DeskArt className="h-auto w-full" />
       <p className="mt-6 text-xl leading-8 font-semibold tracking-tight text-balance text-navy">
         {t.landingTitle}

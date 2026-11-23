@@ -436,7 +436,7 @@ export default function EvidenceInvestigation({
             value={corridorCode}
             disabled={running}
             onChange={(event) => changeCorridor(event.target.value as CorridorCode)}
-            className="h-10 rounded-md border border-edge bg-card px-3 text-sm"
+            className="oc-field h-10 rounded-md border border-edge bg-card px-3 text-sm"
           >
             {Object.values(CORRIDORS).map((entry) => (
               <option

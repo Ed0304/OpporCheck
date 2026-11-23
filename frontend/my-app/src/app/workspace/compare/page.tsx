@@ -684,7 +684,7 @@ export default function ComparePage() {
               id="next-doc-type"
               value={nextType}
               onChange={(event) => setNextType(event.target.value as ContractDocumentType)}
-              className="h-10 rounded-md border border-edge bg-card px-3 text-sm"
+              className="oc-field h-10 rounded-md border border-edge bg-card px-3 text-sm"
             >
               {DOC_TYPE_OPTIONS.map((option) => (
                 <option key={option} value={option}>
@@ -720,7 +720,7 @@ export default function ComparePage() {
               rows={5}
               maxLength={PASTE_MAX_CHARS}
               placeholder={t.cmpPastePlaceholder}
-              className="w-full rounded-md border border-edge bg-card p-3 text-sm leading-7"
+              className="oc-field w-full rounded-md border border-edge bg-card p-3 text-sm leading-7"
             />
           </Field>
           <div className="flex flex-wrap items-end gap-3">
@@ -732,7 +732,7 @@ export default function ComparePage() {
                 onChange={(event) => setPasteName(event.target.value)}
                 placeholder={t.cmpPasteNamePlaceholder}
                 maxLength={120}
-                className="h-10 w-72 rounded-md border border-edge bg-card px-3 text-sm"
+                className="oc-field h-10 w-72 rounded-md border border-edge bg-card px-3 text-sm"
               />
             </Field>
             <Button variant="secondary" onClick={handlePasteAdd} disabled={uploading || running}>
@@ -811,7 +811,7 @@ export default function ComparePage() {
                               onChange={(event) =>
                                 changeDocType(doc.input.id, event.target.value as ContractDocumentType)
                               }
-                              className="h-9 rounded-md border border-edge bg-card px-2 text-sm"
+                              className="oc-field h-9 rounded-md border border-edge bg-card px-2 text-sm"
                             >
                               {DOC_TYPE_OPTIONS.map((option) => (
                                 <option key={option} value={option}>

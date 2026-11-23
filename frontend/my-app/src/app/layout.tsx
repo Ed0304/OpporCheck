@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import CustomCursor from "@/components/CustomCursor";
 import DocumentLang from "@/components/DocumentLang";
 import { MotionProvider } from "@/components/motion";
 import { ThemeProvider } from "@/lib/theme";
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: langScript }} />
       </head>
       <body className="min-h-full flex flex-col">
+        <CustomCursor />
         <ThemeProvider>
           <LangProvider>
             <DocumentLang />

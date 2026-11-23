@@ -39,7 +39,7 @@ export default function CorridorResources({
       {showCoverageStrip && (
         <section
           aria-label={t.resourcesCoverageTitle}
-          className="oc-shadow-card rounded-xl border border-edge bg-card p-5"
+          className="oc-glass-strong rounded-xl border border-edge p-5"
         >
           <h2 className="flex items-center gap-2 font-semibold text-ink">
             <svg
@@ -76,7 +76,7 @@ export default function CorridorResources({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => setCode(entry.code)}
-                  className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] transition-colors ${
+                  className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] transition-all duration-150 ease-out hover:shadow-[0_4px_12px_var(--oc-glow)] ${
                     selected
                       ? "border-brand bg-brand-soft font-semibold ring-1 ring-brand/30"
                       : "border-edge bg-card hover:border-brand/40 hover:bg-brand-soft"
@@ -119,7 +119,7 @@ export default function CorridorResources({
           <select
             value={code}
             onChange={(event) => setCode(event.target.value as CorridorCode)}
-            className="h-10 rounded-md border border-edge bg-card px-3 text-sm"
+            className="oc-field h-10 rounded-md border border-edge bg-card px-3 text-sm"
           >
             {Object.values(CORRIDORS).map((entry) => (
               <option key={entry.code} value={entry.code}>

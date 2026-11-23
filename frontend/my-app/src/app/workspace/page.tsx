@@ -120,10 +120,10 @@ export default function WorkspaceOverviewPage() {
             key={action.href}
             href={action.href}
             aria-label={action.title}
-            className={`oc-shadow-card group flex items-center gap-4 rounded-xl border p-5 transition-all duration-150 ease-out hover:-translate-y-0.5 ${
+            className={`oc-glass oc-lift group flex items-center gap-4 rounded-xl border p-5 ${
               action.primary
-                ? "border-brand/50 bg-brand-soft/50 hover:border-brand"
-                : "border-edge bg-card hover:border-brand/40"
+                ? "border-brand/50"
+                : "border-edge"
             }`}
           >
             <span

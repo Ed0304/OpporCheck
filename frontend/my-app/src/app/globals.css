@@ -40,6 +40,7 @@
   --oc-rail-edge: #d3dae6;
   --oc-shadow-card: 0 1px 2px rgba(23, 59, 112, 0.06), 0 1px 3px rgba(23, 59, 112, 0.05);
   --oc-shadow-pop: 0 12px 32px rgba(23, 59, 112, 0.14);
+  --oc-glow: rgba(61, 85, 180, 0.28);
   color-scheme: light;
 }
 
@@ -71,6 +72,7 @@
   --oc-rail-edge: #1c2440;
   --oc-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
   --oc-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --oc-glow: rgba(168, 191, 255, 0.3);
   color-scheme: dark;
 }
 
@@ -290,5 +292,157 @@ body {
   }
   .oc-spotlight::after {
     display: none !important;
+  }
+}
+
+/* Shared glass surfaces: tinted translucency with backdrop blur, used by
+   cards, menus, drawers, and overlays. Text opacity is never lowered —
+   only the panel background is translucent. Solid fallback included for
+   browsers without backdrop-filter support. */
+.oc-glass,
+.oc-glass-strong,
+.oc-glass-rail {
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: var(--oc-shadow-card);
+}
+
+.oc-glass {
+  background-color: color-mix(in srgb, var(--oc-card) 80%, transparent);
+}
+
+.oc-glass-strong {
+  background-color: color-mix(in srgb, var(--oc-card) 90%, transparent);
+}
+
+.oc-glass-rail {
+  background-color: color-mix(in srgb, var(--oc-rail) 88%, transparent);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .oc-glass,
+  .oc-glass-strong {
+    background-color: var(--oc-card);
+  }
+  .oc-glass-rail {
+    background-color: var(--oc-rail);
+  }
+}
+
+/* Shared lift treatment for interactive cards and tiles: brighter
+   accent border, local glow, and a modest rise. Transform-only — no
+   layout shift. Disabled controls never use this class. */
+.oc-lift {
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out,
+    border-color 180ms ease-out;
+}
+
+@media (hover: hover) {
+  .oc-lift:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--oc-blue) 45%, transparent);
+    box-shadow:
+      0 10px 28px -8px var(--oc-glow),
+      var(--oc-shadow-card);
+  }
+  .oc-lift:active {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oc-lift {
+    transition: none;
+  }
+  .oc-lift:hover {
+    transform: none;
+  }
+}
+
+/* Shared field treatment for text-entry controls: border feedback on
+   hover and focus, never lift or tilt. The global :focus-visible ring
+   still carries keyboard focus. */
+.oc-field {
+  transition:
+    border-color 150ms ease-out,
+    background-color 150ms ease-out;
+}
+
+.oc-field:hover {
+  border-color: color-mix(in srgb, var(--oc-blue) 45%, var(--oc-border));
+}
+
+.oc-field:focus {
+  border-color: var(--oc-blue);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oc-field {
+    transition: none;
+  }
+}
+
+/* Custom cursor layer: an accent core with a soft translucent ring that
+   follows the pointer. Decorative only — the native cursor stays
+   visible, and interactivity is never signaled by the ring alone.
+   Rendered only for fine pointers; hidden for touch and reduced motion. */
+.oc-cursor {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.oc-cursor-ring,
+.oc-cursor-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+  will-change: transform;
+}
+
+.oc-cursor-dot {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 9999px;
+  background-color: var(--oc-blue);
+}
+
+.oc-cursor-ring {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 9999px;
+  border: 1.5px solid color-mix(in srgb, var(--oc-blue) 65%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--oc-blue) 25%, transparent);
+  transition:
+    opacity 250ms ease-out,
+    scale 180ms ease-out,
+    border-color 180ms ease-out;
+}
+
+.oc-cursor-ring[data-active="true"] {
+  scale: 1.45;
+  border-color: var(--oc-blue);
+}
+
+.oc-cursor-ring[data-pressed="true"] {
+  scale: 0.85;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .oc-cursor {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oc-cursor {
+    display: none;
   }
 }

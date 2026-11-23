@@ -44,7 +44,7 @@ export default function HeroComposition() {
     <figure aria-label={t.landingExampleAria}>
       <Stagger className="flex flex-col">
         <StaggerItem>
-          <div className="oc-shadow-card flex gap-4 rounded-xl border border-edge bg-card p-5 text-left">
+          <div className="oc-glass flex gap-4 rounded-xl border border-edge p-5 text-left">
             <span aria-hidden className="font-serif text-5xl leading-none text-brand/30">
               &ldquo;
             </span>
@@ -63,7 +63,7 @@ export default function HeroComposition() {
 
         <StaggerItem>
           <div
-            className={`oc-shadow-card rounded-xl border bg-card p-5 text-left transition-colors ${
+            className={`oc-glass rounded-xl border p-5 text-left transition-colors ${
               active ? "border-brand" : "border-edge"
             }`}
           >
@@ -107,7 +107,7 @@ export default function HeroComposition() {
             onMouseLeave={() => setHover(false)}
             onFocus={() => setHover(true)}
             onBlur={() => setHover(false)}
-            className="oc-shadow-card rounded-xl border border-edge bg-card p-5 text-left"
+            className="oc-glass rounded-xl border border-edge p-5 text-left"
           >
             <div className="flex items-center gap-2">
               <button

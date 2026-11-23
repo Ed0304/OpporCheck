@@ -620,7 +620,7 @@ export default function ReviewPage() {
               rows={10}
               maxLength={60000}
               placeholder={t.revPostingPlaceholder}
-              className="mt-1 w-full rounded-md border border-edge bg-card p-3 text-sm leading-7 placeholder:text-muted"
+              className="oc-field mt-1 w-full rounded-md border border-edge bg-card p-3 text-sm leading-7 placeholder:text-muted"
             />
             <div className="mt-2 flex flex-wrap gap-2">
               <Button
@@ -659,7 +659,7 @@ export default function ReviewPage() {
                     setPdfLanguage(event.target.value as OcrLanguage)
                   }
                   disabled={pdf.phase === "uploading"}
-                  className="h-10 rounded-md border border-edge bg-card px-3 text-sm"
+                  className="oc-field h-10 rounded-md border border-edge bg-card px-3 text-sm"
                 >
                   {OCR_LANGUAGES.map((option) => (
                     <option key={option.code} value={option.code}>
@@ -820,7 +820,7 @@ export default function ReviewPage() {
                     })
                   }
                   disabled={ocr.phase === "uploading"}
-                  className="h-10 rounded-md border border-edge bg-card px-3 text-sm"
+                  className="oc-field h-10 rounded-md border border-edge bg-card px-3 text-sm"
                 >
                   {OCR_LANGUAGES.map((option) => (
                     <option key={option.code} value={option.code}>
@@ -883,7 +883,7 @@ export default function ReviewPage() {
                   }
                   rows={10}
                   maxLength={60000}
-                  className="w-full rounded-md border border-edge bg-card p-3 text-sm leading-7"
+                  className="oc-field w-full rounded-md border border-edge bg-card p-3 text-sm leading-7"
                 />
                 <div className="flex flex-wrap gap-2">
                   <Button

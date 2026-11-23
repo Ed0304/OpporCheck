@@ -15,14 +15,15 @@ type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 const BUTTON_STYLES: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand text-on-action shadow-sm hover:bg-brand-strong hover:shadow-md " +
-    "active:scale-[0.98]",
+    "bg-brand text-on-action shadow-sm enabled:hover:bg-brand-strong " +
+    "enabled:hover:shadow-[0_6px_20px_var(--oc-glow)] enabled:active:scale-[0.98]",
   secondary:
-    "border border-edge bg-card text-ink shadow-sm hover:border-brand/50 " +
-    "hover:bg-brand-soft active:scale-[0.98]",
-  ghost: "text-ink hover:bg-brand-soft active:scale-[0.98]",
+    "border border-edge bg-card text-ink shadow-sm enabled:hover:border-brand/50 " +
+    "enabled:hover:bg-brand-soft enabled:active:scale-[0.98]",
+  ghost: "text-ink enabled:hover:bg-brand-soft enabled:active:scale-[0.98]",
   danger:
-    "border border-danger/50 text-danger hover:bg-danger-soft active:scale-[0.98]",
+    "border border-danger/50 text-danger enabled:hover:bg-danger-soft " +
+    "enabled:active:scale-[0.98]",
 };
 
 const BUTTON_SIZES: Record<"sm" | "md" | "lg", string> = {
@@ -77,7 +78,7 @@ export function Card({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: OC_DURATION.panel, ease: OC_EASE }}
-      className={`oc-shadow-card overflow-hidden rounded-xl border border-edge bg-card ${className}`}
+      className={`oc-glass-strong overflow-hidden rounded-xl border border-edge ${className}`}
     >
       {(eyebrow || title || actions) && (
         <div className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5">
@@ -139,7 +140,7 @@ export function Field({
 export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className="h-10 w-full rounded-md border border-edge bg-card px-3 text-sm text-ink placeholder:text-muted disabled:opacity-60"
+      className="oc-field h-10 w-full rounded-md border border-edge bg-card px-3 text-sm text-ink placeholder:text-muted disabled:opacity-60"
       {...props}
     />
   );
@@ -202,7 +203,7 @@ export function EmptyState({
   illustration?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-edge bg-canvas/60 px-6 py-10 text-center">
+    <div className="oc-glass rounded-xl border border-dashed border-edge px-6 py-10 text-center">
       {illustration ?? (
         <svg
           aria-hidden

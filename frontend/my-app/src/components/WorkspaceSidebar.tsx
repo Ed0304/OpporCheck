@@ -110,7 +110,7 @@ export default function WorkspaceSidebar({
         initial={false}
         animate={{ width: collapsed ? "4.5rem" : "15.5rem" }}
         transition={{ duration: OC_DURATION.base, ease: OC_EASE }}
-        className="hidden shrink-0 flex-col self-start overflow-hidden rounded-xl border border-rail-edge bg-rail lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100vh-6rem)]"
+        className="oc-glass-rail hidden shrink-0 flex-col self-start overflow-hidden rounded-xl border border-rail-edge lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100vh-6rem)]"
       >
         <div className="flex-1 p-2.5">
           {!collapsed && (
@@ -181,7 +181,7 @@ export default function WorkspaceSidebar({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}
               transition={{ duration: OC_DURATION.panel, ease: OC_EASE }}
-              className="absolute left-0 top-0 flex h-full w-72 flex-col gap-3 overflow-y-auto border-r border-rail-edge bg-rail p-4"
+              className="oc-glass-rail absolute left-0 top-0 flex h-full w-72 flex-col gap-3 overflow-y-auto border-r border-rail-edge p-4"
             >
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-semibold tracking-wider text-muted uppercase">

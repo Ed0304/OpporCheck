@@ -212,7 +212,7 @@ export default function InvestigationsPage() {
                           value={renameValue}
                           onChange={(event) => setRenameValue(event.target.value)}
                           maxLength={120}
-                          className="h-9 min-w-52 flex-1 rounded-md border border-edge bg-card px-3 text-sm"
+                          className="oc-field h-9 min-w-52 flex-1 rounded-md border border-edge bg-card px-3 text-sm"
                           autoFocus
                         />
                         <Button type="submit" size="sm" disabled={busyId === item.id}>

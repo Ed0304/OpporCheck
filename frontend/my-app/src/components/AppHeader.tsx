@@ -112,7 +112,7 @@ function AccountMenu() {
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: OC_DURATION.fast, ease: OC_EASE }}
-        className="absolute right-0 z-40 mt-2 w-52 rounded-md border border-edge bg-card p-1 shadow-[0_4px_12px_rgba(23,59,112,0.12)]"
+        className="oc-glass-strong absolute right-0 z-40 mt-2 w-52 rounded-md border border-edge p-1"
       >
         <p className="truncate px-3 py-2 text-xs text-muted">{user.email}</p>
         <Link
@@ -221,7 +221,7 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
   const t = getStrings(language);
   const closeMenu = () => setMenuOpen(false);
   return (
-    <header className="sticky top-0 z-30 border-b border-edge bg-card/95 backdrop-blur">
+    <header className="oc-glass-strong sticky top-0 z-30 border-b border-edge">
       <a href="#main-content" className="skip-link">
         {t.headerSkipLink}
       </a>
@@ -276,7 +276,7 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: OC_DURATION.base, ease: OC_EASE }}
-            className="overflow-hidden border-t border-edge bg-card md:hidden"
+            className="oc-glass-strong overflow-hidden border-t border-edge md:hidden"
           >
             <div className="px-4 py-3">
               <Suspense fallback={<MobileLinks links={links} pathname={null} onNavigate={closeMenu} />}>

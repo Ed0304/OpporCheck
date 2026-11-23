@@ -48,7 +48,7 @@ export default function SiteFooter() {
     },
   ];
   return (
-    <footer className="border-t border-edge bg-card">
+    <footer className="oc-glass-strong border-t border-edge">
       <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
         {columns.map((column) => (
           <nav

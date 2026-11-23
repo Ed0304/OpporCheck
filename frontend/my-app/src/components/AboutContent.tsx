@@ -40,7 +40,7 @@ export default function AboutContent() {
           <h2 id="about-limits" className="text-xl font-semibold text-ink">
             {t.aboutNotTitle}
           </h2>
-          <ul className="mt-3 divide-y divide-edge rounded-xl border border-edge bg-card">
+          <ul className="oc-glass-strong mt-3 divide-y divide-edge rounded-xl border border-edge">
             {limits.map((limit) => (
               <li
                 key={limit.slice(0, 24)}
@@ -85,7 +85,7 @@ export default function AboutContent() {
             {capabilities.map((item) => (
               <li
                 key={item.title}
-                className="oc-shadow-card rounded-xl border border-edge bg-card p-4"
+                className="oc-glass oc-lift rounded-xl border border-edge p-4"
               >
                 <div className="flex items-center gap-3">
                   <span

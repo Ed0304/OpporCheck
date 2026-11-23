@@ -323,7 +323,7 @@ export default function HybridDemoPage() {
         </p>
 
         {/* Environment status */}
-        <section aria-label={t.hdEnvAria} className="oc-shadow-card mt-8 rounded-xl border border-edge bg-card p-5">
+        <section aria-label={t.hdEnvAria} className="oc-glass-strong mt-8 rounded-xl border border-edge p-5">
           <h2 className="text-lg font-semibold">{t.hdEnvTitle}</h2>
           <dl className="mt-2 divide-y divide-edge text-sm">
             <StatusRow label={t.hdEnvFirebaseConfig}>
@@ -381,7 +381,7 @@ export default function HybridDemoPage() {
         </section>
 
         {/* Step 1: initialize on-device model */}
-        <section aria-label={t.hdStep1Aria} className="oc-shadow-card mt-6 rounded-xl border border-edge bg-card p-5">
+        <section aria-label={t.hdStep1Aria} className="oc-glass-strong mt-6 rounded-xl border border-edge p-5">
           <h2 className="text-lg font-semibold">{t.hdStep1Title}</h2>
           <p className="mt-1 text-sm leading-6 text-muted">
             {t.hdStep1Desc}
@@ -391,7 +391,7 @@ export default function HybridDemoPage() {
               type="button"
               onClick={handleInitDevice}
               disabled={!clientReady || device.state === "initializing" || device.state === "ready"}
-              className="h-10 rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-10 rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors enabled:hover:bg-brand-strong enabled:hover:shadow-[0_6px_20px_var(--oc-glow)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {device.state === "initializing" ? t.hdInitDownloading : t.hdInitButton}
             </button>
@@ -435,7 +435,7 @@ export default function HybridDemoPage() {
         </section>
 
         {/* Step 2: run analysis */}
-        <section aria-label={t.hdStep2Aria} className="oc-shadow-card mt-6 rounded-xl border border-edge bg-card p-5">
+        <section aria-label={t.hdStep2Aria} className="oc-glass-strong mt-6 rounded-xl border border-edge p-5">
           <h2 className="text-lg font-semibold">{t.hdStep2Title}</h2>
           <fieldset className="mt-3">
             <legend className="text-sm font-medium">{t.hdInferenceMode}</legend>
@@ -478,7 +478,7 @@ export default function HybridDemoPage() {
             value={opportunityText}
             onChange={(event) => setOpportunityText(event.target.value)}
             rows={8}
-            className="mt-1 w-full rounded-md border border-edge bg-card p-3 font-mono text-sm leading-6"
+            className="oc-field mt-1 w-full rounded-md border border-edge bg-card p-3 font-mono text-sm leading-6"
           />
           <div className="mt-3 rounded-md border border-edge p-3">
             <p className="text-sm font-medium">
@@ -496,7 +496,7 @@ export default function HybridDemoPage() {
                   setPrivacyNonce((nonce) => nonce + 1);
                   setPrivacyOpen(true);
                 }}
-                className="mt-2 h-9 rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-2 h-9 rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors enabled:hover:bg-brand-strong enabled:hover:shadow-[0_6px_20px_var(--oc-glow)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t.commonCheckPrivacy}
               </button>
@@ -521,7 +521,7 @@ export default function HybridDemoPage() {
               opportunityText.trim().length === 0 ||
               !approvalCovers(approval, opportunityText)
             }
-            className="mt-3 h-10 rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-3 h-10 rounded-md bg-brand px-4 text-sm font-medium text-on-action transition-colors enabled:hover:bg-brand-strong enabled:hover:shadow-[0_6px_20px_var(--oc-glow)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {running ? t.hdAnalyzing : format(t.hdAnalyzeButton, { mode: MODE_LABEL[mode] })}
           </button>
@@ -586,7 +586,7 @@ export default function HybridDemoPage() {
         </section>
 
         {/* Test guide */}
-        <section aria-label={t.hdTestAria} className="oc-shadow-card mt-6 rounded-xl border border-edge bg-card p-5 text-sm leading-6">
+        <section aria-label={t.hdTestAria} className="oc-glass-strong mt-6 rounded-xl border border-edge p-5 text-sm leading-6">
           <h2 className="text-lg font-semibold">{t.hdTestTitle}</h2>
           <ol className="mt-2 list-decimal pl-5">
             <li>

@@ -68,7 +68,7 @@ export default function HowItWorksContent() {
             >
               {step.n}
             </span>
-            <div className="flex-1 rounded-lg border border-paper-edge bg-paper p-4 shadow-[0_2px_10px_var(--oc-paper-shadow)]">
+            <div className="oc-glass flex-1 rounded-lg border border-edge p-4">
               <div className="flex items-center gap-3">
                 <span
                   aria-hidden

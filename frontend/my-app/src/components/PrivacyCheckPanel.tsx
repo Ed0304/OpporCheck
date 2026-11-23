@@ -274,7 +274,7 @@ export default function PrivacyCheckPanel({
           value={review.sourceText}
           rows={6}
           aria-label={t.pvManualAria}
-          className="mt-2 w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
+          className="oc-field mt-2 w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
         />
         {manualError && (
           <p role="alert" className="mt-1 text-sm">
@@ -292,7 +292,7 @@ export default function PrivacyCheckPanel({
             placeholder={t.pvReplacementShort}
             maxLength={200}
             aria-label={t.pvManualReplaceAria}
-            className="h-9 w-56 rounded-md border border-edge bg-card px-3 text-sm"
+            className="oc-field h-9 w-56 rounded-md border border-edge bg-card px-3 text-sm"
           />
           <Button variant="secondary" onClick={() => handleManual(true)}>
             {t.pvReplaceSelection}
@@ -329,7 +329,7 @@ export default function PrivacyCheckPanel({
           value={sanitized.text}
           rows={8}
           aria-label={t.pvPreviewTitle}
-          className="mt-2 w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
+          className="oc-field mt-2 w-full rounded-md border border-edge bg-card p-3 text-sm leading-6"
         />
       </section>
 
