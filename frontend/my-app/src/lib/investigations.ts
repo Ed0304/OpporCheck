@@ -121,8 +121,14 @@ function invalidInput(issues: string[]): StoreFail {
   };
 }
 
-/** Shared Firestore failure mapping, reused by sibling repositories. */
-export function classifyError(err: unknown): StoreFail {
+/**
+ * Shared Firestore failure mapping, reused by sibling repositories.
+ * Callers pass their collection so denial messages name the right rules.
+ */
+export function classifyError(
+  err: unknown,
+  collection: string = INVESTIGATIONS_COLLECTION,
+): StoreFail {
   const message = err instanceof Error ? err.message : String(err);
   const code = (err as { code?: unknown }).code;
   const codeText = typeof code === "string" ? code : "";
@@ -133,7 +139,7 @@ export function classifyError(err: unknown): StoreFail {
       code: "permission-denied",
       message:
         "Firestore denied the request. Sign in with the owning account and check the " +
-        "security rules for the 'investigations' collection, then try again.",
+        `security rules for the '${collection}' collection, then try again.`,
     };
   }
   if (/requires an index|needs an index/.test(haystack)) {

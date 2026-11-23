@@ -195,7 +195,7 @@ export async function saveComparisonReport(
     });
     return { ok: true, value: ref.id };
   } catch (err) {
-    return classifyError(err);
+    return classifyError(err, COMPARISONS_COLLECTION);
   }
 }
 
@@ -222,7 +222,7 @@ export async function listUserComparisons(
       value: snap.docs.map((d) => toSavedReport(d.id, d.data())),
     };
   } catch (err) {
-    return classifyError(err);
+    return classifyError(err, COMPARISONS_COLLECTION);
   }
 }
 
@@ -237,7 +237,7 @@ export async function getComparisonReport(
     }
     return { ok: true, value: toSavedReport(snap.id, snap.data()) };
   } catch (err) {
-    return classifyError(err);
+    return classifyError(err, COMPARISONS_COLLECTION);
   }
 }
 
@@ -257,7 +257,7 @@ export async function renameComparisonReport(
     });
     return { ok: true, value: undefined };
   } catch (err) {
-    return classifyError(err);
+    return classifyError(err, COMPARISONS_COLLECTION);
   }
 }
 
@@ -269,6 +269,6 @@ export async function deleteComparisonReport(
     await deleteDoc(doc(db, COMPARISONS_COLLECTION, id));
     return { ok: true, value: undefined };
   } catch (err) {
-    return classifyError(err);
+    return classifyError(err, COMPARISONS_COLLECTION);
   }
 }
