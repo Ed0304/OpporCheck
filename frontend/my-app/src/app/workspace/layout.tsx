@@ -77,7 +77,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
           drawerOpen={drawerOpen}
           onCloseDrawer={() => setDrawerOpen(false)}
         />
-        <main id="main-content" className="oc-page-glow min-w-0 flex-1">
+        <main id="main-content" className="min-w-0 flex-1">
           {children}
         </main>
       </div>

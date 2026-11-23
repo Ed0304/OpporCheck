@@ -104,8 +104,16 @@
     Arial, sans-serif;
 }
 
+/* Full-viewport ambient wash: the same indigo/teal language as the
+   hero, painted on the body background so it reaches the viewport
+   edges on every route. Corner-anchored and faint, so long reading
+   surfaces below stay quiet. Static — no motion, no interaction. */
 body {
-  background: var(--oc-canvas);
+  background-color: var(--oc-canvas);
+  background-image:
+    radial-gradient(55vw 26rem at 0% 0%, var(--oc-soft) 0%, transparent 70%),
+    radial-gradient(50vw 24rem at 100% 0%, var(--oc-evidence-soft) 0%, transparent 70%);
+  background-repeat: no-repeat;
   color: var(--oc-ink);
 }
 
@@ -220,31 +228,6 @@ body {
 
 /* Content always paints above the ambient wash. */
 .oc-hero-glow > * {
-  position: relative;
-}
-
-/* Shared page wash: the same ambient indigo/teal language as the hero,
-   applied to every app shell (public pages, workspace, demo) so all
-   routes share one background treatment. Fainter than the hero glow and
-   anchored to the top so long reading surfaces stay quiet. Static —
-   no motion, no interaction. */
-.oc-page-glow {
-  position: relative;
-}
-
-.oc-page-glow::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 26rem;
-  pointer-events: none;
-  background:
-    radial-gradient(30rem 14rem at 12% 0%, var(--oc-soft) 0%, transparent 70%),
-    radial-gradient(26rem 12rem at 88% 8%, var(--oc-evidence-soft) 0%, transparent 70%);
-  opacity: 0.7;
-}
-
-.oc-page-glow > * {
   position: relative;
 }
 
