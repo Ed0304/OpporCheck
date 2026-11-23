@@ -974,13 +974,15 @@ export function parsePromiseComparison(
       issues.push(`${label}.${slotKey} must be an object`);
       return null;
     }
-    // Small models often cite the human-meaningful file name shown beside
-    // the id, or wrap the id in quotes. Resolve leniently: exact id first,
-    // then a unique file-name match. Ambiguous or unknown references still
-    // fail rather than guess.
+    // Small models cite documents loosely: exact ids, file names, full
+    // ordinals ("Document 1"), shortened ordinals ("Doc 1", "D1", 1), or
+    // quoted variants. Resolve leniently in that order; real ids always
+    // contain hyphens and letters, so short forms can never collide with
+    // them. Ambiguous or unknown references still fail rather than guess.
     const rawId = raw["documentId"];
-    const cleanedId =
-      typeof rawId === "string" ? rawId.trim().replace(/^["']+|["']+$/g, "").trim() : "";
+    const idText =
+      typeof rawId === "string" ? rawId : typeof rawId === "number" ? String(rawId) : "";
+    const cleanedId = idText.trim().replace(/^["']+|["']+$/g, "").trim();
     let doc = cleanedId !== "" ? byId.get(cleanedId) : undefined;
     if (!doc && cleanedId !== "") {
       const matches = docs.filter(
@@ -991,16 +993,20 @@ export function parsePromiseComparison(
       }
     }
     if (!doc && cleanedId !== "") {
-      // Ordinal labels assigned by the comparison prompt ("Document 1"),
-      // resolved in the same input order the prompt lists them.
-      const ordinal = cleanedId.match(/^documents?\s+(\d+)$/i);
-      const index = ordinal?.[1] !== undefined ? Number.parseInt(ordinal[1], 10) - 1 : -1;
+      // Ordinal labels assigned by the comparison prompt, resolved in the
+      // same input order the prompt lists them.
+      const ordinal = cleanedId.match(/^(?:documents?|docs?|d)?\s*[#:]?\s*(\d+)\s*[.)]?$/i);
+      const index =
+        ordinal?.[1] !== undefined ? Number.parseInt(ordinal[1], 10) - 1 : -1;
       if (index >= 0 && index < docs.length) {
         doc = docs[index];
       }
     }
     if (!doc) {
-      issues.push(`${label}.${slotKey}.documentId does not match a compared document`);
+      const received = idText.trim().slice(0, 40);
+      issues.push(
+        `${label}.${slotKey}.documentId '${received}' does not match a compared document`,
+      );
       return null;
     }
     if (

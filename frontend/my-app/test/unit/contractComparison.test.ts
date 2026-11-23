@@ -473,6 +473,38 @@ test("comparison resolves ordinal document labels in input order", () => {
   );
 });
 
+test("comparison accepts shortened ordinal references", () => {
+  for (const [recruiterRef, contractRef] of [
+    ["2", "3"],
+    [2, 3],
+    ["Doc 2", "Doc 3"],
+    ["document2", "DOCUMENT 3."],
+    ["#2", "D3"],
+  ] as Array<[unknown, unknown]>) {
+    const finding = comparisonFinding();
+    (finding.recruiterStatement as { documentId: unknown }).documentId = recruiterRef;
+    (finding.contractClause as { documentId: unknown }).documentId = contractRef;
+    const parsed = parsePromiseComparison(JSON.stringify([finding]), DOCS);
+    assert.equal(parsed.findings.length, 1, `refs ${recruiterRef}/${contractRef} dropped`);
+    assert.equal(
+      parsed.findings[0]?.recruiterStatement?.documentReference.documentId,
+      "doc-msg",
+    );
+    assert.equal(
+      parsed.findings[0]?.contractClause?.documentReference.documentId,
+      "doc-contract",
+    );
+  }
+});
+
+test("unmatched references name the received value", () => {
+  const bad = comparisonFinding();
+  bad.recruiterStatement!.documentId = "Exhibit Z";
+  const parsed = parsePromiseComparison(JSON.stringify([bad]), DOCS);
+  assert.equal(parsed.findings.length, 0);
+  assert.match(parsed.issues.join(";"), /'Exhibit Z' does not match/);
+});
+
 test("comparison normalizes case variants of category and status", () => {
   const varied = { ...comparisonFinding(), category: "Deductions", status: "Discrepancy " };
   const parsed = parsePromiseComparison(JSON.stringify([varied]), DOCS);
