@@ -40,11 +40,11 @@ export default function AboutContent() {
           <h2 id="about-limits" className="text-xl font-semibold text-ink">
             {t.aboutNotTitle}
           </h2>
-          <ul className="oc-glass-strong mt-3 divide-y divide-edge rounded-xl border border-edge">
+          <ul className="mt-3 flex flex-col gap-3">
             {limits.map((limit) => (
               <li
                 key={limit.slice(0, 24)}
-                className="flex items-start gap-3 px-4 py-3 leading-7"
+                className="oc-glass oc-lift flex items-start gap-3 rounded-xl border border-edge px-4 py-3 leading-7"
               >
                 <span
                   aria-hidden

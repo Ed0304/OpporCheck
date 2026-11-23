@@ -229,7 +229,7 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="text-xl font-bold tracking-tight text-navy"
+            className="text-xl font-bold tracking-tight text-navy transition-[text-shadow] duration-200 ease-out [text-shadow:0_0_16px_var(--oc-glow)] hover:[text-shadow:0_0_26px_var(--oc-glow)]"
             aria-label={t.headerHomeAria}
           >
             OpporCheck

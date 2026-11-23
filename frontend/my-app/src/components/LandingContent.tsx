@@ -21,7 +21,7 @@
 import Link from "next/link";
 import GetStartedLink from "@/components/GetStartedLink";
 import HeroComposition from "@/components/HeroComposition";
-import { Reveal, Spotlight, Stagger, StaggerItem } from "@/components/motion";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { SpotBook, SpotCheck, SpotDocLens, SpotInfo, SpotShield, SpotText, SpotUpload } from "@/components/spot";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
@@ -133,9 +133,9 @@ export default function LandingContent() {
     { name: t.landingSampleListing, focus: t.landingSampleListingFocus, Preview: ListingPreview },
   ];
   return (
-    <div className="-mx-4 -my-10 bg-canvas text-ink sm:-mx-6 lg:-my-14">
+    <div className="-mx-4 -my-10 text-ink sm:-mx-6 lg:-my-14">
       <div className="mx-auto max-w-6xl px-4 pt-10 pb-20 sm:px-6 lg:pt-16">
-        <Spotlight className="oc-hero-glow grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
           <Stagger className="mx-auto w-full max-w-3xl text-center lg:mx-0 lg:text-left">
             <StaggerItem>
               <p>
@@ -182,7 +182,7 @@ export default function LandingContent() {
             </StaggerItem>
           </Stagger>
           <HeroComposition />
-        </Spotlight>
+        </div>
 
         <Reveal className="mt-20">
           <section aria-labelledby="samples">
@@ -195,7 +195,6 @@ export default function LandingContent() {
             <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-muted">
               {t.landingSamplesNote}
             </p>
-            <Spotlight>
             <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {samples.map(({ name, focus, Preview }) => (
                 <li
@@ -215,7 +214,6 @@ export default function LandingContent() {
                 </li>
               ))}
             </ul>
-            </Spotlight>
           </section>
         </Reveal>
 

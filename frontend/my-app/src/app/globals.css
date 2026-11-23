@@ -108,11 +108,24 @@
    hero, painted on the body background so it reaches the viewport
    edges on every route. Corner-anchored and faint, so long reading
    surfaces below stay quiet. Static — no motion, no interaction. */
+/* The spotlight bleed extends past section bounds; clip horizontal
+   overflow at the viewport so it never creates a scrollbar. `clip`
+   (unlike hidden) creates no scroll container, so sticky headers and
+   inner scroll regions keep working. */
+html,
+body {
+  overflow-x: clip;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--oc-canvas);
   background-image:
-    radial-gradient(55vw 26rem at 0% 0%, var(--oc-soft) 0%, transparent 70%),
-    radial-gradient(50vw 24rem at 100% 0%, var(--oc-evidence-soft) 0%, transparent 70%);
+    radial-gradient(55vw 26rem at 0% 0%, var(--oc-soft) 0%, rgb(from var(--oc-soft) r g b / 0) 70%),
+    radial-gradient(50vw 24rem at 100% 0%, var(--oc-evidence-soft) 0%, rgb(from var(--oc-evidence-soft) r g b / 0) 70%);
   background-repeat: no-repeat;
   color: var(--oc-ink);
 }
@@ -220,59 +233,6 @@ body {
   }
 }
 
-/* Hero atmosphere: a static indigo/teal wash behind first-screen content.
-   Pure background depth — no layout, no interaction, no motion. */
-.oc-hero-glow {
-  position: relative;
-}
-
-/* Content always paints above the ambient wash. */
-.oc-hero-glow > * {
-  position: relative;
-}
-
-.oc-hero-glow::before {
-  content: "";
-  position: absolute;
-  inset: -2rem -1rem auto -1rem;
-  height: 22rem;
-  pointer-events: none;
-  background:
-    radial-gradient(28rem 14rem at 18% 20%, var(--oc-soft) 0%, transparent 70%),
-    radial-gradient(24rem 12rem at 85% 30%, var(--oc-evidence-soft) 0%, transparent 70%);
-  opacity: 0.9;
-}
-
-/* Pointer spotlight: a soft radial light that follows the cursor over
-   decorative panels. Rendered only for fine pointers on hover-capable
-   devices; touch and keyboard users see the static panel. Position comes
-   from --oc-spot-x/--oc-spot-y set by the Spotlight wrapper. */
-.oc-spotlight {
-  position: relative;
-}
-
-.oc-spotlight::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 220ms ease-out;
-  background: radial-gradient(
-    16rem 16rem at var(--oc-spot-x, 50%) var(--oc-spot-y, 50%),
-    rgba(168, 191, 255, 0.16) 0%,
-    transparent 70%
-  );
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .oc-spotlight:hover::after,
-  .oc-spotlight:focus-within::after {
-    opacity: 1;
-  }
-}
-
 /* Animated step connector: a slow gradient drift along How-it-works
    step rails. Decorative only — step order is carried by numbers. */
 @keyframes oc-flow-drift {
@@ -302,9 +262,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .oc-flow-line {
     animation: none !important;
-  }
-  .oc-spotlight::after {
-    display: none !important;
   }
 }
 

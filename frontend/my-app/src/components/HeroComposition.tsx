@@ -4,9 +4,9 @@
 // sample data, no analysis runs here.
 //
 // Cards stack in reading order at every width, so the story survives
-// narrow screens with no horizontal scrolling. Dashed connectors with a
-// shared "1" marker link the promise to the pinned contract term and the
-// finding. Hovering, focusing, or pinning the finding emphasizes the
+// narrow screens with no horizontal scrolling. Gradient timeline
+// connectors with a shared "1" marker link the promise to the pinned
+// contract term and the finding. Hovering, focusing, or pinning the
 // highlight, connectors, and finding together; the pin button
 // (aria-pressed) gives keyboard users the same persistent emphasis.
 // Meaning is carried by text labels, not color or lines alone, and all
@@ -23,12 +23,14 @@ import { getStrings } from "@/lib/strings";
 
 function Connector({ active }: { active: boolean }) {
   return (
-    <div aria-hidden className="flex justify-center py-1">
-      <span
-        className={`h-5 w-0.5 rounded-full transition-colors ${
-          active ? "bg-brand" : "bg-edge"
-        }`}
-      />
+    <div aria-hidden className="flex justify-center py-1.5">
+      <span className="relative flex h-7 w-0.5 justify-center rounded-full bg-gradient-to-b from-brand/60 via-edge to-evidence/60">
+        <span
+          className={`absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full border-2 border-card transition-colors ${
+            active ? "bg-brand" : "bg-muted/70"
+          }`}
+        />
+      </span>
     </div>
   );
 }
@@ -75,19 +77,17 @@ export default function HeroComposition() {
                 {t.landingSampleBadge}
               </span>
             </div>
-            <p className="mt-2 text-lg leading-8">
-              {/* Plain span, not <mark>: browsers apply their own dark
-                  MarkText color to mark elements, which survives theme
-                  styling and muddies the highlight in dark mode. */}
-              <span
-                className={`rounded px-1 py-0.5 text-ink transition-colors ${
-                  active
-                    ? "bg-warn-soft ring-1 ring-warn/70"
-                    : "bg-warn-soft/70 ring-1 ring-warn/30"
-                }`}
-              >
-                &ldquo;{t.landingExampleQuote}&rdquo;
-              </span>{" "}
+            {/* Same evidence-quote treatment as every quoted excerpt in
+                the app: teal bar plus faint wash, no filled slab, so the
+                card can never clash with its neighbors. */}
+            <blockquote
+              className={`mt-2 rounded-r-lg border-l-2 px-3 py-2 text-lg leading-8 transition-colors ${
+                active
+                  ? "border-evidence bg-evidence-soft/70"
+                  : "border-evidence/70 bg-evidence-soft/40"
+              }`}
+            >
+              &ldquo;{t.landingExampleQuote}&rdquo;{" "}
               <span
                 title={t.landingPreviewAnnotation}
                 aria-hidden
@@ -95,7 +95,7 @@ export default function HeroComposition() {
               >
                 1
               </span>
-            </p>
+            </blockquote>
             <p className="mt-2 text-[13px] leading-5 text-muted">
               {t.landingExampleContractLabel}
             </p>
