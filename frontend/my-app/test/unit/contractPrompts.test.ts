@@ -134,6 +134,30 @@ test("extraction prompt files miscellaneous documents leniently under other", ()
   );
 });
 
+test("comparison prompt forbids quoting claim text as excerpts", () => {
+  // Claims may be written in another language (extraction localizes them
+  // while excerpts stay verbatim), so the prompt must steer the model to
+  // the Excerpt portions only — quoting a claim can never attribute.
+  const inputs: ComparisonInput[] = [
+    {
+      documentId: "doc-1",
+      documentType: "employment_contract",
+      fileName: "c.pdf",
+      terms: [
+        claim({
+          claim: "Gaji pokok adalah SGD 1.850 per bulan.",
+          sourceExcerpt: "Basic salary: SGD 1,850 per month.",
+        }),
+      ],
+    },
+  ];
+  const prompt = buildPromiseComparisonPrompt(inputs);
+  assert.ok(prompt.includes("Gaji pokok adalah SGD 1.850 per bulan."));
+  assert.ok(prompt.includes('Excerpt: "Basic salary: SGD 1,850 per month."'));
+  assert.match(prompt, /ONLY from an "Excerpt:[^"]*" portion/);
+  assert.ok(prompt.includes("never from the claim text"));
+});
+
 test("comparison prompt compares other-category terms leniently", () => {
   const inputs: ComparisonInput[] = [
     { documentId: "doc-1", documentType: "employment_contract", fileName: "c.pdf", terms: [claim()] },

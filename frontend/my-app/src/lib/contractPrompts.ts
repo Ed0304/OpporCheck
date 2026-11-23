@@ -175,6 +175,7 @@ export function buildPromiseComparisonPrompt(
     "Rules:\n" +
     comparisonLanguageRule(language) +
     "- Every sourceExcerpt MUST be copied verbatim from the excerpts below. Never paraphrase, shorten, or invent quotations.\n" +
+    '- Copy every sourceExcerpt ONLY from an "Excerpt: ..." portion below, never from the claim text beside it, which may be written in another language and can never attribute.\n' +
     "- In every finding, cite documents ONLY as 'Document 1', 'Document 2', etc. (the labels in the document list). Never use file names or raw codes, and never invent an id.\n" +
     "- Omit slots that do not apply; never emit a slot with an empty claim or excerpt.\n" +
     "- Status 'consistent': the documents agree on the term.\n" +
