@@ -94,7 +94,7 @@ export default function HowItWorksContent() {
             {glossary.map((item) => (
               <li
                 key={item.assessment}
-                className="oc-shadow-card rounded-xl border border-edge bg-card p-4 sm:flex sm:items-start sm:gap-4"
+                className="oc-glass rounded-xl border border-edge p-4 sm:flex sm:items-start sm:gap-4"
               >
                 <div className="sm:w-64 sm:shrink-0">
                   <StatusLabel tone={ASSESSMENT_TONES[item.assessment]} wrap>

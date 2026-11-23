@@ -16,7 +16,6 @@ benchmarks/*/samples/multipage3.pdf
 # (backend/README.md references some Phase reports by name.)
 /*_REPORT.md
 /*_AUDIT.md
-/DEMO_SCENARIO_HACKATHON.md
 /benchmarks/*/*_BENCHMARK.md
 /benchmarks/*/*_REPORT.md
 

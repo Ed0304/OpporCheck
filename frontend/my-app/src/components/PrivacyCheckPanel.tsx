@@ -142,7 +142,7 @@ function DetectionRow({
           })}
           maxLength={200}
           aria-label={format(t.pvReplacementAria, { label: detection.label })}
-          className="mt-2 h-9 w-full rounded-md border border-edge bg-card px-3 text-sm"
+          className="oc-field mt-2 h-9 w-full rounded-md border border-edge bg-card px-3 text-sm"
         />
       )}
     </motion.li>
@@ -333,7 +333,7 @@ export default function PrivacyCheckPanel({
         />
       </section>
 
-      <div className="rounded-md border border-edge bg-card p-3">
+      <div className="oc-glass-strong rounded-md border border-edge p-3">
         <p className="text-sm font-medium">{t.pvBeforeApprove}</p>
         <p className="mt-1 text-sm leading-6 text-muted">{t.pvAutoDetectNote}</p>
         <p className="mt-2 text-sm leading-6">

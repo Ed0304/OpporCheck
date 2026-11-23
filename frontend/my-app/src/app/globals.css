@@ -218,6 +218,11 @@ body {
   position: relative;
 }
 
+/* Content always paints above the ambient wash. */
+.oc-hero-glow > * {
+  position: relative;
+}
+
 .oc-hero-glow::before {
   content: "";
   position: absolute;
@@ -385,9 +390,11 @@ body {
 }
 
 /* Custom cursor layer: an accent core with a soft translucent ring that
-   follows the pointer. Decorative only — the native cursor stays
-   visible, and interactivity is never signaled by the ring alone.
-   Rendered only for fine pointers; hidden for touch and reduced motion. */
+   tracks the pointer. Decorative only — interactivity is never signaled
+   by the ring alone. Rendered only for fine pointers; hidden for touch
+   and reduced motion. The system arrow hides inside the site only while
+   the oc-has-cursor class (set on first working pointer movement)
+   proves the custom cursor is mounted and functioning. */
 .oc-cursor {
   position: fixed;
   inset: 0;
@@ -445,4 +452,26 @@ body {
   .oc-cursor {
     display: none;
   }
+}
+
+/* System-arrow discipline: hidden inside the site only while the
+   custom cursor is proven active; native behavior everywhere else.
+   Text-entry elements always keep the native text pointer so the
+   insertion caret stays visible and editing feels normal. */
+.oc-has-cursor,
+.oc-has-cursor * {
+  cursor: none !important;
+}
+
+.oc-has-cursor input:not([type]),
+.oc-has-cursor input[type="text"],
+.oc-has-cursor input[type="email"],
+.oc-has-cursor input[type="password"],
+.oc-has-cursor input[type="search"],
+.oc-has-cursor input[type="url"],
+.oc-has-cursor input[type="number"],
+.oc-has-cursor input[type="tel"],
+.oc-has-cursor textarea,
+.oc-has-cursor [contenteditable="true"] {
+  cursor: text !important;
 }

@@ -260,7 +260,7 @@ export default function InvestigationReportPage() {
 
       {report && <EvidenceInvestigation report={report} postingText={item.postingText} />}
 
-      <details className="oc-shadow-card rounded-xl border border-edge bg-card px-6 py-5">
+      <details className="oc-glass-strong rounded-xl border border-edge px-6 py-5">
         <summary className="cursor-pointer text-[17px] font-semibold tracking-tight">{t.invdOriginalPosting}</summary>
         <pre className="mt-3 max-h-80 overflow-auto rounded-lg border border-edge bg-canvas/60 p-4 font-sans text-sm leading-6 whitespace-pre-wrap text-muted">
           {item.postingText}
