@@ -76,7 +76,10 @@ export default function HeroComposition() {
               </span>
             </div>
             <p className="mt-2 text-lg leading-8">
-              <mark
+              {/* Plain span, not <mark>: browsers apply their own dark
+                  MarkText color to mark elements, which survives theme
+                  styling and muddies the highlight in dark mode. */}
+              <span
                 className={`rounded px-1 py-0.5 text-ink transition-colors ${
                   active
                     ? "bg-warn-soft ring-1 ring-warn/70"
@@ -84,7 +87,7 @@ export default function HeroComposition() {
                 }`}
               >
                 &ldquo;{t.landingExampleQuote}&rdquo;
-              </mark>{" "}
+              </span>{" "}
               <span
                 title={t.landingPreviewAnnotation}
                 aria-hidden
