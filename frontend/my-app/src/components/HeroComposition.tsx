@@ -77,7 +77,7 @@ export default function HeroComposition() {
             </div>
             <p className="mt-2 text-lg leading-8">
               <mark
-                className={`rounded px-1 py-0.5 transition-colors ${
+                className={`rounded px-1 py-0.5 text-ink transition-colors ${
                   active
                     ? "bg-warn-soft ring-1 ring-warn/70"
                     : "bg-warn-soft/70 ring-1 ring-warn/30"
