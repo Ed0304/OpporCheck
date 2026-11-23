@@ -279,6 +279,7 @@ export const COMPARE_DOC_TYPE_LABELS: Record<ContractDocumentType, string> = {
   recruiter_communication: "Recruiter communication",
   offer_letter: "Offer letter",
   employment_contract: "Employment contract",
+  other: "Other document",
 };
 
 // Indonesian working-draft labels (need native-speaker review).
@@ -298,6 +299,7 @@ export const COMPARE_DOC_TYPE_LABELS_ID: Record<ContractDocumentType, string> = 
   recruiter_communication: "Komunikasi perekrut",
   offer_letter: "Surat penawaran",
   employment_contract: "Kontrak kerja",
+  other: "Dokumen lain",
 };
 
 export function getCompareCategoryLabels(

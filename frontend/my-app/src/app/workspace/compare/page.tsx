@@ -1,13 +1,14 @@
 // Promise-to-Paper: compare job ads, recruiter messages, offer letters,
 // and employment contracts.
 //
-// Transient by design: documents and results live in component state only
-// and are never saved or sent anywhere except the selected AI inference
-// path. Inference mode is explicit, and cloud processing of document text
-// requires consent.
+// Session documents live in component state and are sent nowhere except
+// the selected AI inference path. Inference mode is explicit, and cloud
+// processing of document text requires consent. Reports are persisted to
+// Firestore only through the explicit Save action below.
 
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { GenerativeModel } from "firebase/ai";
 import { AnimatePresence, motion } from "motion/react";
@@ -57,6 +58,8 @@ import {
   type CompareDocumentInput,
   type DocPrivacyState,
 } from "@/lib/compareSession";
+import { useAuth } from "@/lib/auth";
+import { saveComparisonReport } from "@/lib/comparisons";
 import { failedPageNumbers } from "@/lib/documents";
 import { describeActualSource, type PrivacyApproval } from "@/lib/privacyGate";
 import { PROMISE_SIDE_TYPES } from "@/lib/validation";
@@ -66,6 +69,7 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 import { mapServiceError } from "@/lib/aiErrors";
 import { apiBase, uploadPdf, validatePdfFile } from "@/lib/documents";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
+import { getInvestigationsDb } from "@/lib/investigations";
 
 const MAX_DOCS = 6;
 const PASTE_MAX_CHARS = 60000;
@@ -75,6 +79,7 @@ const DOC_TYPE_OPTIONS: ContractDocumentType[] = [
   "recruiter_communication",
   "offer_letter",
   "employment_contract",
+  "other",
 ];
 
 interface SessionDoc {
@@ -117,6 +122,7 @@ function friendlyError(err: unknown, mode: CompareInferenceMode, language: UiLan
 
 export default function ComparePage() {
   const [envProbe] = useState(() => probeFirebaseConfig());
+  const { user } = useAuth();
   const { language } = useLang();
   const t = getStrings(language);
   const docTypeLabels = getCompareDocTypeLabels(language);
@@ -144,6 +150,9 @@ export default function ComparePage() {
   const [findings, setFindings] = useState<PromiseToPaperFinding[] | null>(null);
   const [droppedIssues, setDroppedIssues] = useState<string[]>([]);
   const [droppedCount, setDroppedCount] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
   const [privacyTarget, setPrivacyTarget] = useState<PrivacyTarget | null>(null);
   const [comparisonSource, setComparisonSource] = useState<string | null>(null);
 
@@ -455,13 +464,16 @@ export default function ComparePage() {
     if (comparing || extracting || extractedDocs.length < 2) {
       return;
     }
-    // Promise-to-Paper compares promised terms against written terms: without
-    // at least one promise-side document the model's recruiter/advertisement
-    // evidence has nowhere valid to go and every finding drops. Fail fast
-    // with the fix instead of a mystifying empty report.
+    // Promise-to-Paper compares promised terms against written terms: when
+    // every document is a written agreement with no promise-side or
+    // supporting document, the model's recruiter/advertisement evidence has
+    // nowhere valid to go and every finding drops (usually a mislabeled
+    // type). Fail fast with the fix instead of a mystifying empty report.
     if (
-      !extractedDocs.some((doc) =>
-        (PROMISE_SIDE_TYPES as readonly string[]).includes(doc.input.documentType),
+      !extractedDocs.some(
+        (doc) =>
+          doc.input.documentType === "other" ||
+          (PROMISE_SIDE_TYPES as readonly string[]).includes(doc.input.documentType),
       )
     ) {
       setRunError(t.cmpNeedPromiseSide);
@@ -479,6 +491,8 @@ export default function ComparePage() {
     setFindings(null);
     setDroppedIssues([]);
     setDroppedCount(0);
+    setSavedId(null);
+    setSaveMessage(null);
     setComparisonSource(null);
     setComparing(true);
     setStatusMsg(t.cmpComparingStatus);
@@ -516,6 +530,50 @@ export default function ComparePage() {
     } finally {
       setComparing(false);
       setStatusMsg("");
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user || !findings || saving) {
+      return;
+    }
+    // Saving re-verifies live approvals, exactly like comparison: only
+    // reports generated from approved text can be kept.
+    try {
+      for (const doc of extractedDocs) {
+        approvedPagesOrThrow(doc.privacy, doc.input.pages, doc.input.fileName, language);
+      }
+    } catch (err) {
+      setSaveMessage(err instanceof Error ? err.message : String(err));
+      return;
+    }
+    setSaving(true);
+    setSaveMessage(null);
+    try {
+      const names = reportDocs.map((doc) => doc.fileName);
+      const title =
+        names.length <= 2
+          ? names.join(" vs ")
+          : `${names.slice(0, 2).join(" vs ")} +${names.length - 2}`;
+      const saved = await saveComparisonReport(getInvestigationsDb(getFirebaseClient().app), {
+        ownerId: user.uid,
+        title,
+        documents: reportDocs,
+        findings,
+        droppedCount,
+        limitations,
+        comparisonSource: comparisonSource ?? "unknown",
+      });
+      if (saved.ok) {
+        setSavedId(saved.value);
+        setSaveMessage(t.cmpRepSaved);
+      } else {
+        setSaveMessage(saved.message);
+      }
+    } catch (err) {
+      setSaveMessage(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
     }
   };
 

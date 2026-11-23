@@ -10,7 +10,8 @@ export type ContractDocumentType =
   | "job_advertisement"
   | "recruiter_communication"
   | "offer_letter"
-  | "employment_contract";
+  | "employment_contract"
+  | "other";
 
 /** Comparison outcome for one employment term. */
 export type ComparisonStatus =
@@ -53,6 +54,8 @@ export interface PromiseToPaperFinding {
   recruiterStatement?: EmploymentClaim;
   advertisementClaim?: EmploymentClaim;
   contractClause?: EmploymentClaim;
+  /** Supporting evidence from an "other" document (invoice, receipt, …). */
+  supportingEvidence?: EmploymentClaim;
   status: ComparisonStatus;
   explanation: string;
   followUpQuestion: string;

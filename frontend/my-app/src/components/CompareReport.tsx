@@ -66,8 +66,11 @@ function ClaimBlock({
       : t.cmpPastedText;
   // Written employment terms read as document excerpts; spoken or
   // advertised promises stay neutral so the two are easy to tell apart.
+  // Supporting documents (invoices, receipts) are written evidence too.
   const isWrittenTerms =
-    ref.documentType === "employment_contract" || ref.documentType === "offer_letter";
+    ref.documentType === "employment_contract" ||
+    ref.documentType === "offer_letter" ||
+    ref.documentType === "other";
   return (
     <div
       className={`rounded-md border border-edge p-3 ${isWrittenTerms ? "bg-evidence-soft/40" : ""}`}
@@ -99,6 +102,7 @@ function FindingCard({
     { label: t.crSlotRecruiter, claim: finding.recruiterStatement },
     { label: t.crSlotAdvertisement, claim: finding.advertisementClaim },
     { label: t.crSlotContract, claim: finding.contractClause },
+    { label: t.crSlotSupporting, claim: finding.supportingEvidence },
   ];
   return (
     <li className="border-t border-edge pt-4">

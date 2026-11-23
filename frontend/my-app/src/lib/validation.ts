@@ -487,6 +487,7 @@ export const CONTRACT_DOCUMENT_TYPES: readonly ContractDocumentType[] = [
   "recruiter_communication",
   "offer_letter",
   "employment_contract",
+  "other",
 ];
 
 export const COMPARISON_STATUSES: readonly ComparisonStatus[] = [
@@ -630,6 +631,7 @@ const FINDING_SLOTS = [
   { key: "recruiterStatement", types: ["recruiter_communication"] as const, label: "recruiter" },
   { key: "advertisementClaim", types: ["job_advertisement"] as const, label: "advertisement" },
   { key: "contractClause", types: ["offer_letter", "employment_contract"] as const, label: "contract" },
+  { key: "supportingEvidence", types: ["other"] as const, label: "supporting" },
 ] as const;
 
 interface SlotPartition {
@@ -680,10 +682,16 @@ function checkFindingCoherence(
   }
   if (status === "not_addressed") {
     const hasContract = claims.some(({ slot }) => slot === "contractClause");
-    const allPromiseSide = claims.every(({ claim }) =>
-      (PROMISE_SIDE_TYPES as readonly string[]).includes(claim.documentReference.documentType),
+    // Supporting evidence is neutral: it may sit beside promise-side
+    // claims without breaking the "no written counterpart" meaning.
+    const allPromiseSideOrSupporting = claims.every(
+      ({ claim }) =>
+        claim.documentReference.documentType === "other" ||
+        (PROMISE_SIDE_TYPES as readonly string[]).includes(
+          claim.documentReference.documentType,
+        ),
     );
-    if (hasContract || !allPromiseSide) {
+    if (hasContract || !allPromiseSideOrSupporting) {
       return "not_addressed findings must cite promise-side claims only, with no written clause";
     }
     return null;
@@ -762,6 +770,9 @@ export function validatePromiseToPaperFinding(
         : {}),
       ...(bySlot.has("contractClause")
         ? { contractClause: bySlot.get("contractClause") as EmploymentClaim }
+        : {}),
+      ...(bySlot.has("supportingEvidence")
+        ? { supportingEvidence: bySlot.get("supportingEvidence") as EmploymentClaim }
         : {}),
       status: value["status"] as ComparisonStatus,
       explanation: (value["explanation"] as string).trim(),
@@ -1122,6 +1133,9 @@ export function parsePromiseComparison(
         : {}),
       ...(bySlot.has("contractClause")
         ? { contractClause: bySlot.get("contractClause") as EmploymentClaim }
+        : {}),
+      ...(bySlot.has("supportingEvidence")
+        ? { supportingEvidence: bySlot.get("supportingEvidence") as EmploymentClaim }
         : {}),
       status: statusValue as ComparisonStatus,
       explanation: (item["explanation"] as string).trim(),

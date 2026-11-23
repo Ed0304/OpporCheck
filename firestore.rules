@@ -39,6 +39,34 @@ rules_version = '2';
 //   - where(ownerId == uid) + orderBy(createdAt desc) + limit (needs
 //     a composite index; single get() and doc delete/update by ID)
 //
+// Collection: comparisons
+// Document ID: auto-ID
+// Fields:
+//   - ownerId: string, required, immutable, == request.auth.uid
+//   - title: string, required, 1..120 chars - user-editable title
+//   - documents: list, required, 1..6 items - per-document summaries
+//       (id, fileName, documentType, source, pageCount, wasTrimmed,
+//       termCount); page text itself is never stored
+//   - findings: list, required, <= 60 items - validated comparison
+//       findings with quoted excerpts
+//   - droppedCount: number, required, >= 0 - findings dropped in validation
+//   - limitations: list, required, <= 20 strings - report caveats
+//   - comparisonSource: string, required, <= 32 chars - e.g. on_device
+//   - createdAt: timestamp, required, == request.time on create, immutable
+//   - updatedAt: timestamp, required, == request.time on every write
+//
+// Rules-language limits (honest statement): documents, findings, and
+// limitations are checked for list type and size only. Nested element
+// contents are NOT validated here; the client validates them at
+// runtime instead (validatePromiseToPaperFinding per finding).
+//
+// Client update surface: title and updatedAt ONLY. Everything else is
+// immutable after creation.
+//
+// Queries the app performs:
+//   - where(ownerId == uid) + orderBy(createdAt desc) + limit (needs
+//     a composite index; single get() and doc delete/update by ID)
+//
 // ===============================================================
 
 service cloud.firestore {
@@ -88,6 +116,28 @@ service cloud.firestore {
            report.missing_information.size() <= 100)) &&
         (!('concerns' in report) ||
           (report.concerns is list && report.concerns.size() <= 50));
+    }
+
+    function isValidComparison(data) {
+      return hasOnlyAllowedFields([
+          'ownerId', 'title', 'documents', 'findings', 'droppedCount',
+          'limitations', 'comparisonSource', 'createdAt', 'updatedAt'
+        ]) &&
+        hasRequiredFields([
+          'ownerId', 'title', 'documents', 'findings', 'droppedCount',
+          'limitations', 'comparisonSource', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() > 0 &&
+        data.ownerId.size() <= 128 &&
+        data.title is string && data.title.size() >= 1 &&
+        data.title.size() <= 120 &&
+        data.documents is list && data.documents.size() >= 1 &&
+        data.documents.size() <= 6 &&
+        data.findings is list && data.findings.size() <= 60 &&
+        data.droppedCount is number && data.droppedCount >= 0 &&
+        data.limitations is list && data.limitations.size() <= 20 &&
+        data.comparisonSource is string && data.comparisonSource.size() <= 32 &&
+        data.createdAt is timestamp && data.updatedAt is timestamp;
     }
 
     function isValidInvestigation(data) {
@@ -150,6 +200,37 @@ service cloud.firestore {
         isValidInvestigation(request.resource.data);
 
       // Owners delete their own documents.
+      allow delete: if isDocOwner();
+    }
+
+    // =============================================================
+    // comparisons: owner-only access, title-only update surface
+    // =============================================================
+
+    match /comparisons/{comparisonId} {
+      // Owners read their own reports only.
+      allow read: if isDocOwner();
+
+      // Owners create their own reports: UID must match the caller,
+      // both timestamps must be server time, and the schema must validate.
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time &&
+        isValidComparison(request.resource.data);
+
+      // Owners update the title and updatedAt only. updatedAt must be
+      // server time; ownerId, createdAt, and the report content cannot
+      // change after creation.
+      allow update: if isDocOwner() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['title', 'updatedAt']) &&
+        request.resource.data.updatedAt == request.time &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidComparison(request.resource.data);
+
+      // Owners delete their own reports.
       allow delete: if isDocOwner();
     }
 

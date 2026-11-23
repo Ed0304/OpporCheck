@@ -601,6 +601,49 @@ test("comparison amputates mistyped slots but keeps coherent survivors", () => {
   assert.equal(parsedEmpty.findings.length, 0);
 });
 
+test("comparison accepts supporting evidence from other documents", () => {
+  const invoice: ContractDocumentText = {
+    documentId: "doc-invoice",
+    documentType: "other",
+    fileName: "invoice.pdf",
+    pages: ["Invoice total: £120 accommodation charge for March."],
+  };
+  const docs = [...DOCS, invoice];
+  const withSupporting = {
+    ...comparisonFinding(),
+    supportingEvidence: {
+      documentId: "doc-invoice",
+      claim: "£120 accommodation charge invoiced.",
+      sourceExcerpt: "Invoice total: £120 accommodation charge for March.",
+    },
+  };
+  const parsed = parsePromiseComparison(JSON.stringify([withSupporting]), docs);
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(
+    parsed.findings[0]?.supportingEvidence?.documentReference.documentId,
+    "doc-invoice",
+  );
+
+  const gap = {
+    category: "deductions",
+    recruiterStatement: {
+      documentId: "doc-msg",
+      claim: "Accommodation is free.",
+      sourceExcerpt: "Accommodation is completely free.",
+    },
+    supportingEvidence: {
+      documentId: "doc-invoice",
+      claim: "£120 accommodation charge invoiced.",
+      sourceExcerpt: "Invoice total: £120 accommodation charge for March.",
+    },
+    status: "not_addressed",
+    explanation: "The promise-side term has no written counterpart in the supplied documents.",
+    followUpQuestion: "Where is the accommodation term written?",
+  };
+  const parsedGap = parsePromiseComparison(JSON.stringify([gap]), docs);
+  assert.equal(parsedGap.findings.length, 1);
+});
+
 test("comparison counts dropped findings separately from issue lines", () => {
   const bad = {
     ...comparisonFinding(),

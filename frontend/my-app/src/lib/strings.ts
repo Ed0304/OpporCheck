@@ -309,6 +309,7 @@ const EN = {
   wsNavOverview: "Overview",
   wsNavReview: "Review opportunity",
   wsNavCompare: "Compare documents",
+  wsNavComparisons: "Saved comparisons",
   wsNavInvestigations: "My investigations",
   wsNavResources: "Resources",
   wsNavSettings: "Settings",
@@ -717,6 +718,7 @@ const EN = {
   crSlotRecruiter: "Recruiter statement",
   crSlotAdvertisement: "Advertisement",
   crSlotContract: "Written clause",
+  crSlotSupporting: "Supporting evidence",
   crNoTerms:
     "No terms could be compared across these documents — the extracted terms did not " +
     "overlap, or every comparison result failed validation and was dropped.",
@@ -736,6 +738,16 @@ const EN = {
     "Ambiguous wording needs a human reviewer — statuses reflect the model's reading of short quotes, not legal analysis.",
   crMissingMeans:
     "Missing information means unverified — not false, and not proof of fraud.",
+  // ---- Saved comparisons ----
+  cmpRepTitle: "Saved comparisons",
+  cmpRepSubtitle: "Every Promise-to-Paper report you kept, with its quoted evidence.",
+  cmpRepNew: "New comparison",
+  cmpRepEmptyTitle: "No saved comparisons",
+  cmpRepEmptyDesc: "Compared reports you save appear here with their findings and quotes.",
+  cmpRepSave: "Save comparison",
+  cmpRepSaving: "Saving…",
+  cmpRepSaved: "Saved to your comparisons.",
+  cmpRepBack: "All comparisons",
   // ---- Privacy Check panel ----
   pvIntro:
     "Employment documents often mix personal details in with the evidence you " +
@@ -1157,6 +1169,7 @@ const ID: UiStrings = {
   wsNavOverview: "Ringkasan",
   wsNavReview: "Tinjau peluang",
   wsNavCompare: "Bandingkan dokumen",
+  wsNavComparisons: "Perbandingan tersimpan",
   wsNavInvestigations: "Investigasi saya",
   wsNavResources: "Sumber daya",
   wsNavSettings: "Pengaturan",
@@ -1556,6 +1569,7 @@ const ID: UiStrings = {
   crSlotRecruiter: "Pernyataan perekrut",
   crSlotAdvertisement: "Iklan",
   crSlotContract: "Klausul tertulis",
+  crSlotSupporting: "Bukti pendukung",
   crNoTerms:
     "Tidak ada ketentuan yang dapat dibandingkan antar dokumen ini — ketentuan yang diekstrak tidak " +
     "tumpang tindih, atau setiap hasil perbandingan gagal validasi dan dibuang.",
@@ -1575,6 +1589,15 @@ const ID: UiStrings = {
     "Wording yang ambigu perlu peninjau manusia — status mencerminkan pembacaan model atas kutipan pendek, bukan analisis hukum.",
   crMissingMeans:
     "Informasi yang hilang berarti belum terverifikasi — bukan salah, dan bukan bukti penipuan.",
+  cmpRepTitle: "Perbandingan tersimpan",
+  cmpRepSubtitle: "Setiap laporan Promise-to-Paper yang Anda simpan, beserta bukti kutipannya.",
+  cmpRepNew: "Perbandingan baru",
+  cmpRepEmptyTitle: "Belum ada perbandingan tersimpan",
+  cmpRepEmptyDesc: "Laporan perbandingan yang disimpan muncul di sini beserta temuan dan kutipannya.",
+  cmpRepSave: "Simpan perbandingan",
+  cmpRepSaving: "Menyimpan…",
+  cmpRepSaved: "Disimpan ke perbandingan Anda.",
+  cmpRepBack: "Semua perbandingan",
   pvIntro:
     "Dokumen kerja sering mencampur detail personal dengan bukti yang perlu " +
     "dianalisis. Pemeriksaan ini menandai teks yang tampak seperti informasi " +

@@ -121,7 +121,8 @@ function invalidInput(issues: string[]): StoreFail {
   };
 }
 
-function classifyError(err: unknown): StoreFail {
+/** Shared Firestore failure mapping, reused by sibling repositories. */
+export function classifyError(err: unknown): StoreFail {
   const message = err instanceof Error ? err.message : String(err);
   const code = (err as { code?: unknown }).code;
   const codeText = typeof code === "string" ? code : "";

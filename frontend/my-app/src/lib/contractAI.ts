@@ -141,6 +141,7 @@ export const promiseComparisonSchema = Schema.array({
       recruiterStatement: comparisonClaimSchema,
       advertisementClaim: comparisonClaimSchema,
       contractClause: comparisonClaimSchema,
+      supportingEvidence: comparisonClaimSchema,
       status: Schema.enumString({
         description:
           "consistent: documents agree. discrepancy: documents differ. not_addressed: a promise-side term has no written counterpart. needs_clarification: wording is ambiguous or information is insufficient.",
@@ -153,7 +154,12 @@ export const promiseComparisonSchema = Schema.array({
         description: "One concrete question the worker should ask before signing.",
       }),
     },
-    optionalProperties: ["recruiterStatement", "advertisementClaim", "contractClause"],
+    optionalProperties: [
+      "recruiterStatement",
+      "advertisementClaim",
+      "contractClause",
+      "supportingEvidence",
+    ],
   }),
 });
 

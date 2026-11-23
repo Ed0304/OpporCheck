@@ -33,6 +33,7 @@ export const DOCUMENT_TYPE_LABELS: Record<ContractDocumentType, string> = {
   recruiter_communication: "Recruiter communication",
   offer_letter: "Offer letter",
   employment_contract: "Employment contract",
+  other: "Other document",
 };
 
 export const CATEGORY_GUIDE: Record<ContractCategory, string> = {
@@ -177,10 +178,13 @@ export function buildPromiseComparisonPrompt(
     "- Every explanation MUST state the comparison's limitation in one sentence.\n" +
     "- Skip terms no excerpt addresses rather than guessing.\n" +
     "- Shape per finding: {\"category\": \"...\", \"recruiterStatement\"?: {\"documentId\": \"...\", \"claim\": \"...\", \"sourceExcerpt\": \"...\"}, " +
-    '"advertisementClaim\"?: {...}, "contractClause"?: {...}, "status": "...", "explanation": "...", "followUpQuestion": "..."}. ' +
+    '"advertisementClaim\"?: {...}, "contractClause"?: {...}, "supportingEvidence"?: {...}, ' +
+    '"status": "...", "explanation": "...", "followUpQuestion": "..."}. ' +
     "Use recruiterStatement only for recruiter communications, advertisementClaim only for job advertisements, " +
     "contractClause only for offer letters and employment contracts. An offer letter is a written document: " +
-    "never file it under recruiterStatement or advertisementClaim.\n\n" +
+    "never file it under recruiterStatement or advertisementClaim. " +
+    "Use supportingEvidence only for 'Other document' uploads such as invoices and receipts; " +
+    "it adds context alongside promise and written terms.\n\n" +
     `Documents:\n${header}\n\n` +
     `Extracted terms:\n${lines.join("\n")}`
   );
