@@ -17,7 +17,7 @@
   --oc-soft: #e8edf9;
   --oc-canvas: #f4f6fb;
   --oc-card: #ffffff;
-  --oc-border: #d9e1ec;
+  --oc-border: #c0cbdc;
   --oc-ink: #16233a;
   --oc-muted: #4f5f78;
   --oc-focus: #3d55b4;
@@ -37,7 +37,7 @@
   /* Desk shell: the navigation rail sits a notch dimmer than the canvas
      so the working area takes precedence (structure felt, not seen). */
   --oc-rail: #e9edf4;
-  --oc-rail-edge: #d3dae6;
+  --oc-rail-edge: #bcc7d9;
   --oc-shadow-card: 0 1px 2px rgba(23, 59, 112, 0.06), 0 1px 3px rgba(23, 59, 112, 0.05);
   --oc-shadow-pop: 0 12px 32px rgba(23, 59, 112, 0.14);
   --oc-glow: rgba(61, 85, 180, 0.28);
@@ -51,7 +51,7 @@
   --oc-soft: #18223e;
   --oc-canvas: #0b1020;
   --oc-card: #131a2e;
-  --oc-border: #273052;
+  --oc-border: #2f3a61;
   --oc-ink: #edf1f9;
   --oc-muted: #a9b4c9;
   --oc-focus: #a8bfff;
@@ -69,7 +69,7 @@
   --oc-page-edge: #2f2a22;
   --oc-paper-shadow: rgba(0, 0, 0, 0.55);
   --oc-rail: #060a15;
-  --oc-rail-edge: #1c2440;
+  --oc-rail-edge: #232c4e;
   --oc-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
   --oc-shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.5);
   --oc-glow: rgba(168, 191, 255, 0.3);
@@ -340,6 +340,35 @@ body {
   .oc-glass-rail {
     background-color: var(--oc-rail);
   }
+}
+
+/* Crystal edge: a faint top inner highlight so glass surfaces read as
+   dimensional crystal against dark backgrounds. Light theme keeps the
+   flat soft shadow, where the highlight would wash out. */
+.dark .oc-glass,
+.dark .oc-glass-strong,
+.dark .oc-glass-rail {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    var(--oc-shadow-card);
+}
+
+/* Active glass emphasis: an accent ring plus local glow for selected
+   or emphasized glass panels. Defined after the crystal rule (and with
+   a dark variant) so it wins the cascade in both themes. */
+.oc-glass-active {
+  box-shadow:
+    0 0 0 1px var(--oc-blue),
+    0 10px 28px -8px var(--oc-glow),
+    var(--oc-shadow-card);
+}
+
+.dark .oc-glass-active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 0 0 1px var(--oc-blue),
+    0 10px 28px -8px var(--oc-glow),
+    var(--oc-shadow-card);
 }
 
 /* Shared lift treatment for interactive cards and tiles: brighter

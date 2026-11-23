@@ -63,8 +63,8 @@ export default function HeroComposition() {
 
         <StaggerItem>
           <div
-            className={`oc-glass rounded-xl border p-5 text-left transition-colors ${
-              active ? "border-brand" : "border-edge"
+            className={`oc-glass rounded-xl border border-edge p-5 text-left transition-shadow ${
+              active ? "oc-glass-active" : ""
             }`}
           >
             <div className="flex items-center justify-between gap-3">
