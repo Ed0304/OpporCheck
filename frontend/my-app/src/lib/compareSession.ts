@@ -249,6 +249,17 @@ export function summarizeFindings(findings: PromiseToPaperFinding[]): FindingSum
   return summary;
 }
 
+/**
+ * Display title for a comparison report from its document names: one or
+ * two names join with "vs", longer lists show the first two plus a count.
+ */
+export function buildComparisonTitle(fileNames: string[]): string {
+  if (fileNames.length <= 2) {
+    return fileNames.join(" vs ");
+  }
+  return `${fileNames.slice(0, 2).join(" vs ")} +${fileNames.length - 2}`;
+}
+
 /** Follow-up questions across findings, deduplicated, in first-seen order. */
 export function collectQuestions(findings: PromiseToPaperFinding[]): string[] {
   const seen = new Set<string>();

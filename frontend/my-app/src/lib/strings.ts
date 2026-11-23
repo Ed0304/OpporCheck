@@ -748,6 +748,20 @@ const EN = {
   cmpRepSaving: "Saving…",
   cmpRepSaved: "Saved to your comparisons.",
   cmpRepBack: "All comparisons",
+  cmpRepView: "View saved report",
+  cmpLibComparison: "Comparison",
+  cmpLibDocs: "Documents",
+  cmpLibFindings: "Findings",
+  cmpLibLoading: "Loading comparisons…",
+  cmpLibLoadFailed: "Couldn't load comparisons:",
+  cmpdLoading: "Loading comparison…",
+  cmpdUnavailable: "Comparison unavailable",
+  cmpdBack: "Back to comparisons",
+  cmpdNotExist: "This comparison doesn't exist or was deleted.",
+  cmpdOtherAccount: "This comparison belongs to a different account.",
+  cmpdAll: "← All comparisons",
+  cmpdComparedOn: "Compared",
+  cmpdUpdatedOn: "Updated",
   // ---- Privacy Check panel ----
   pvIntro:
     "Employment documents often mix personal details in with the evidence you " +
@@ -1598,6 +1612,20 @@ const ID: UiStrings = {
   cmpRepSaving: "Menyimpan…",
   cmpRepSaved: "Disimpan ke perbandingan Anda.",
   cmpRepBack: "Semua perbandingan",
+  cmpRepView: "Lihat laporan tersimpan",
+  cmpLibComparison: "Perbandingan",
+  cmpLibDocs: "Dokumen",
+  cmpLibFindings: "Temuan",
+  cmpLibLoading: "Memuat perbandingan…",
+  cmpLibLoadFailed: "Tidak dapat memuat perbandingan:",
+  cmpdLoading: "Memuat perbandingan…",
+  cmpdUnavailable: "Perbandingan tidak tersedia",
+  cmpdBack: "Kembali ke perbandingan",
+  cmpdNotExist: "Perbandingan ini tidak ada atau telah dihapus.",
+  cmpdOtherAccount: "Perbandingan ini milik akun lain.",
+  cmpdAll: "← Semua perbandingan",
+  cmpdComparedOn: "Dibandingkan",
+  cmpdUpdatedOn: "Diperbarui",
   pvIntro:
     "Dokumen kerja sering mencampur detail personal dengan bukti yang perlu " +
     "dianalisis. Pemeriksaan ini menandai teks yang tampak seperti informasi " +

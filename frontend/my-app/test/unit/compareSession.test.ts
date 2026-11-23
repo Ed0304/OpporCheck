@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildComparisonTitle,
   collectQuestions,
   summarizeFindings,
   toContractText,
@@ -74,4 +75,18 @@ test("every contract category has a display label", () => {
   for (const label of Object.values(COMPARE_CATEGORY_LABELS)) {
     assert.ok(label.trim().length > 0);
   }
+});
+
+test("buildComparisonTitle joins names with vs and counts the rest", () => {
+  assert.equal(buildComparisonTitle([]), "");
+  assert.equal(buildComparisonTitle(["contract.pdf"]), "contract.pdf");
+  assert.equal(buildComparisonTitle(["ad.txt", "contract.pdf"]), "ad.txt vs contract.pdf");
+  assert.equal(
+    buildComparisonTitle(["ad.txt", "message.txt", "contract.pdf"]),
+    "ad.txt vs message.txt +1",
+  );
+  assert.equal(
+    buildComparisonTitle(["a", "b", "c", "d"]),
+    "a vs b +2",
+  );
 });

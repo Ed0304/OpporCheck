@@ -26,6 +26,7 @@ export function getWorkspaceNav(language: UiLanguage): WorkspaceNavItem[] {
     { href: "/workspace", label: t.wsNavOverview, short: "Ov" },
     { href: "/workspace/review", label: t.wsNavReview, short: "Re" },
     { href: "/workspace/compare", label: t.wsNavCompare, short: "Co" },
+    { href: "/workspace/comparisons", label: t.wsNavComparisons, short: "Sa" },
     { href: "/workspace/investigations", label: t.wsNavInvestigations, short: "In" },
     { href: "/workspace/resources", label: t.wsNavResources, short: "Rs" },
     { href: "/workspace/settings", label: t.wsNavSettings, short: "Se" },

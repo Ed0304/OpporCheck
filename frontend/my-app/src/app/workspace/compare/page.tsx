@@ -45,6 +45,7 @@ import {
   approvedPageCount,
   approvedPagesOrThrow,
   beginExtractionRun,
+  buildComparisonTitle,
   completeExtractionRun,
   emptyDocPrivacy,
   failedPagesLimitation,
@@ -534,7 +535,7 @@ export default function ComparePage() {
   };
 
   const handleSave = async () => {
-    if (!user || !findings || saving) {
+    if (!user || !findings || saving || savedId !== null) {
       return;
     }
     // Saving re-verifies live approvals, exactly like comparison: only
@@ -550,11 +551,7 @@ export default function ComparePage() {
     setSaving(true);
     setSaveMessage(null);
     try {
-      const names = reportDocs.map((doc) => doc.fileName);
-      const title =
-        names.length <= 2
-          ? names.join(" vs ")
-          : `${names.slice(0, 2).join(" vs ")} +${names.length - 2}`;
+      const title = buildComparisonTitle(reportDocs.map((doc) => doc.fileName));
       const saved = await saveComparisonReport(getInvestigationsDb(getFirebaseClient().app), {
         ownerId: user.uid,
         title,
@@ -1157,6 +1154,26 @@ export default function ComparePage() {
                 {comparing ? t.cmpComparing : t.cmpRegenerate}
               </Button>
             </div>
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-edge pt-4">
+              <Button onClick={() => void handleSave()} disabled={saving || savedId !== null}>
+                {saving ? t.cmpRepSaving : t.cmpRepSave}
+              </Button>
+              {saveMessage && (
+                <span className="text-sm" role="status">
+                  {saveMessage}{" "}
+                  {savedId && (
+                    <Link href={`/workspace/comparisons/${savedId}`} className="text-brand underline">
+                      {t.cmpRepView}
+                    </Link>
+                  )}
+                </span>
+              )}
+            </div>
+            <p className="mt-2 text-sm">
+              <Link href="/workspace/comparisons" className="text-brand underline">
+                {t.cmpRepBack}
+              </Link>
+            </p>
           </div>
         )}
         </Crossfade>
