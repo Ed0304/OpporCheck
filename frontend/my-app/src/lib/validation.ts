@@ -632,24 +632,44 @@ const FINDING_SLOTS = [
   { key: "contractClause", types: ["offer_letter", "employment_contract"] as const, label: "contract" },
 ] as const;
 
-function checkFindingStructure(
+interface SlotPartition {
+  kept: Array<{ slot: string; claim: EmploymentClaim }>;
+  dropped: string[];
+}
+
+/**
+ * Drops claims filed in the wrong slot (e.g. an offer letter cited as a
+ * recruiter statement) while keeping verified, correctly filed claims.
+ * Slot mistyping amputates the slot; it never kills the finding alone —
+ * coherence below still decides whether the survivors stand.
+ */
+function partitionValidSlots(
   claims: Array<{ slot: string; claim: EmploymentClaim }>,
-  status: ComparisonStatus,
-): string | null {
-  if (claims.length === 0) {
-    return "finding must include at least one claim";
-  }
+): SlotPartition {
+  const kept: Array<{ slot: string; claim: EmploymentClaim }> = [];
+  const dropped: string[] = [];
   for (const { slot, claim } of claims) {
     const spec = FINDING_SLOTS.find((entry) => entry.key === slot);
     const allowed = spec ? (spec.types as readonly string[]) : [];
     if (!allowed.includes(claim.documentReference.documentType)) {
       const ref = claim.documentReference;
-      return (
-        `finding.${slot} cites '${ref.fileName}' (${ref.documentType}) ` +
-        `but must cite a ${spec?.label ?? slot} document — ` +
-        "check each document's assigned type"
+      dropped.push(
+        `finding.${slot} cites '${ref.fileName}' (${ref.documentType}), ` +
+          `not a ${spec?.label ?? slot} document — slot skipped`,
       );
+      continue;
     }
+    kept.push({ slot, claim });
+  }
+  return { kept, dropped };
+}
+
+function checkFindingCoherence(
+  claims: Array<{ slot: string; claim: EmploymentClaim }>,
+  status: ComparisonStatus,
+): string | null {
+  if (claims.length === 0) {
+    return "finding must include at least one claim";
   }
   const distinctDocs = new Set(claims.map(({ claim }) => claim.documentReference.documentId));
   if (status === "consistent" || status === "discrepancy") {
@@ -724,11 +744,12 @@ export function validatePromiseToPaperFinding(
   if (issues.length > 0) {
     return fail(issues);
   }
-  const structural = checkFindingStructure(claims, value["status"] as ComparisonStatus);
-  if (structural) {
-    return fail([...slotIssues, structural]);
+  const partition = partitionValidSlots(claims);
+  const coherent = checkFindingCoherence(partition.kept, value["status"] as ComparisonStatus);
+  if (coherent) {
+    return fail([...slotIssues, ...partition.dropped, coherent]);
   }
-  const bySlot = new Map(claims.map(({ slot, claim }) => [slot, claim]));
+  const bySlot = new Map(partition.kept.map(({ slot, claim }) => [slot, claim]));
   return {
     valid: true,
     value: {
@@ -746,7 +767,7 @@ export function validatePromiseToPaperFinding(
       explanation: (value["explanation"] as string).trim(),
       followUpQuestion: (value["followUpQuestion"] as string).trim(),
     },
-    issues: slotIssues,
+    issues: [...slotIssues, ...partition.dropped],
   };
 }
 
@@ -1075,12 +1096,16 @@ export function parsePromiseComparison(
       parsedClaim.claim.category = category;
       slotClaims.push({ slot: slot.key, claim: parsedClaim.claim });
     }
-    const structural = checkFindingStructure(slotClaims, statusValue as ComparisonStatus);
-    if (structural) {
-      issues.push(`${label}: ${structural}`);
+    const partition = partitionValidSlots(slotClaims);
+    for (const dropped of partition.dropped) {
+      issues.push(`${label}: ${dropped}`);
+    }
+    const coherent = checkFindingCoherence(partition.kept, statusValue as ComparisonStatus);
+    if (coherent) {
+      issues.push(`${label}: ${coherent}`);
       return;
     }
-    const bySlot = new Map(slotClaims.map(({ slot, claim }) => [slot, claim]));
+    const bySlot = new Map(partition.kept.map(({ slot, claim }) => [slot, claim]));
     findings.push({
       category,
       ...(bySlot.has("recruiterStatement")

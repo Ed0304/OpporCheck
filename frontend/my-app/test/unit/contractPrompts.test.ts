@@ -110,6 +110,7 @@ test("comparison prompt embeds terms, document labels, statuses, and the worked 
     assert.ok(prompt.includes(status), `missing status ${status}`);
   }
   assert.match(prompt, /human reviewer should examine/i);
+  assert.match(prompt, /offer letter is a written document/i);
   assert.match(prompt, /numerical differences/);
   assert.match(prompt, /Do not label any employer/i);
   assert.match(prompt, /recruiter says accommodation is free/);

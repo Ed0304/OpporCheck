@@ -179,7 +179,8 @@ export function buildPromiseComparisonPrompt(
     "- Shape per finding: {\"category\": \"...\", \"recruiterStatement\"?: {\"documentId\": \"...\", \"claim\": \"...\", \"sourceExcerpt\": \"...\"}, " +
     '"advertisementClaim\"?: {...}, "contractClause"?: {...}, "status": "...", "explanation": "...", "followUpQuestion": "..."}. ' +
     "Use recruiterStatement only for recruiter communications, advertisementClaim only for job advertisements, " +
-    "contractClause only for offer letters and employment contracts.\n\n" +
+    "contractClause only for offer letters and employment contracts. An offer letter is a written document: " +
+    "never file it under recruiterStatement or advertisementClaim.\n\n" +
     `Documents:\n${header}\n\n` +
     `Extracted terms:\n${lines.join("\n")}`
   );

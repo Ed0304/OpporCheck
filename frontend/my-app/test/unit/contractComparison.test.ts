@@ -536,6 +536,39 @@ test("standalone finding validator skips malformed slots", () => {
   assert.ok(result.issues.length > 0, "skipped slots stay recorded");
 });
 
+test("comparison amputates mistyped slots but keeps coherent survivors", () => {
+  const misfiled = {
+    ...comparisonFinding(),
+    advertisementClaim: {
+      documentId: "doc-contract",
+      claim: "£120 monthly accommodation deduction.",
+      sourceExcerpt: "Accommodation fee of £120 will be deducted monthly from wages.",
+    },
+  };
+  const parsed = parsePromiseComparison(JSON.stringify([misfiled]), DOCS);
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(parsed.findings[0]?.advertisementClaim, undefined);
+  assert.ok(parsed.findings[0]?.recruiterStatement);
+  assert.ok(parsed.findings[0]?.contractClause);
+  assert.match(parsed.issues.join(";"), /slot skipped/);
+
+  const onlyMistyped = {
+    ...comparisonFinding(),
+    recruiterStatement: {
+      documentId: "doc-contract",
+      claim: "£120 monthly accommodation deduction.",
+      sourceExcerpt: "Accommodation fee of £120 will be deducted monthly from wages.",
+    },
+    contractClause: {
+      documentId: "doc-contract",
+      claim: "£120 monthly accommodation deduction.",
+      sourceExcerpt: "Accommodation fee of £120 will be deducted monthly from wages.",
+    },
+  };
+  const parsedEmpty = parsePromiseComparison(JSON.stringify([onlyMistyped]), DOCS);
+  assert.equal(parsedEmpty.findings.length, 0);
+});
+
 test("comparison counts dropped findings separately from issue lines", () => {
   const bad = {
     ...comparisonFinding(),
