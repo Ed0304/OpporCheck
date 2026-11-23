@@ -11,6 +11,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import AppHeader from "@/components/AppHeader";
 import { getPublicLinks } from "@/components/PublicShell";
+import SiteFooter from "@/components/SiteFooter";
 import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import { Spinner } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
@@ -50,6 +51,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
         <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-16 sm:px-6">
           <Spinner label={loading ? t.wsCheckingSignIn : t.wsRedirecting} />
         </div>
+        <SiteFooter />
       </div>
     );
   }
@@ -81,6 +83,7 @@ export default function WorkspaceLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+      <SiteFooter />
     </div>
   );
 }
