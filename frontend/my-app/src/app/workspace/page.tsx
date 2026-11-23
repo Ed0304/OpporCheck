@@ -91,10 +91,10 @@ export default function WorkspaceOverviewPage() {
 
   // Title-only actions: the page subtitles they used to repeat already
   // appear on their own pages, and the sidebar covers navigation. The
-  // review action is visually primary to match the header CTA.
+  // comparison action is visually primary to match the header CTA.
   const quickActions = [
-    { href: "/workspace/review", title: t.wsNavReview, primary: true, Art: SpotDocLens },
-    { href: "/workspace/compare", title: t.wsNavCompare, primary: false, Art: SpotCompare },
+    { href: "/workspace/compare", title: t.wsNavCompare, primary: true, Art: SpotCompare },
+    { href: "/workspace/review", title: t.wsNavReview, primary: false, Art: SpotDocLens },
     { href: "/workspace/resources", title: t.wsNavResources, primary: false, Art: SpotBook },
   ];
 
@@ -106,10 +106,10 @@ export default function WorkspaceOverviewPage() {
         description={t.ovIntro}
         actions={
           <Link
-            href="/workspace/review"
+            href="/workspace/compare"
             className="inline-flex min-h-12 items-center rounded-lg bg-brand px-6 text-base font-medium text-on-action shadow-sm transition-colors duration-200 ease-out hover:bg-brand-strong"
           >
-            {t.ovReviewCta}
+            {t.ovCompareCta}
           </Link>
         }
       />

@@ -359,7 +359,7 @@ export function Stepper({ steps, label }: { steps: DeskStep[]; label: string }) 
             {index > 0 && <span aria-hidden className="h-px w-6 bg-edge sm:w-10" />}
             <span
               aria-current={step.state === "current" ? "step" : undefined}
-              className={`inline-flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13px] font-medium ${
+              className={`inline-flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[13px] font-medium whitespace-nowrap ${
                 step.state === "done"
                   ? "border-evidence/30 bg-evidence-soft text-evidence"
                   : step.state === "current"

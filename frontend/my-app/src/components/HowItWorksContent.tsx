@@ -7,7 +7,7 @@
 import Link from "next/link";
 import GetStartedLink from "@/components/GetStartedLink";
 import { Enter, Reveal } from "@/components/motion";
-import { DeskArt, SpotBook, SpotCheck, SpotDocLens, SpotUpload } from "@/components/spot";
+import { DeskArt, SpotBook, SpotCheck, SpotDocLens, SpotShield, SpotUpload } from "@/components/spot";
 import { StatusLabel } from "@/components/ui";
 import type { FindingAssessment } from "@/lib/investigations";
 import { useLang } from "@/lib/lang";
@@ -19,9 +19,10 @@ export default function HowItWorksContent() {
   const t = getStrings(language);
   const steps = [
     { n: "1", title: t.howStep1Title, text: t.howStep1Text, Art: SpotUpload },
-    { n: "2", title: t.howStep2Title, text: t.howStep2Text, Art: SpotDocLens },
-    { n: "3", title: t.howStep3Title, text: t.howStep3Text, Art: SpotBook },
+    { n: "2", title: t.howStep2Title, text: t.howStep2Text, Art: SpotShield },
+    { n: "3", title: t.howStep3Title, text: t.howStep3Text, Art: SpotDocLens },
     { n: "4", title: t.howStep4Title, text: t.howStep4Text, Art: SpotCheck },
+    { n: "5", title: t.howStep5Title, text: t.howStep5Text, Art: SpotBook },
   ];
   const labels = getAssessmentLabels(language);
   const glossary: Array<{ assessment: FindingAssessment; meaning: string }> = [

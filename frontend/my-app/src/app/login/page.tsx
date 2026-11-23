@@ -110,7 +110,10 @@ function LoginForm() {
             <Link href="/forgot-password" className="text-brand underline">
               {t.authForgot}
             </Link>
-            <Link href="/register" className="text-brand underline">
+            <Link
+              href={`/register?next=${encodeURIComponent(next)}`}
+              className="text-brand underline"
+            >
               {t.authCreateAccount}
             </Link>
           </div>

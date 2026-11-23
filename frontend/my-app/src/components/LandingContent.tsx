@@ -153,10 +153,10 @@ export default function LandingContent() {
                 {t.landingGetStarted}
               </GetStartedLink>
               <Link
-                href="/how-it-works"
+                href="/workspace/review"
                 className="inline-flex min-h-12 items-center rounded-lg border border-edge px-7 text-base font-medium text-ink transition-colors hover:bg-brand-soft"
               >
-                {t.landingHowItWorks}
+                {t.landingReviewOne}
               </Link>
             </div>
           </StaggerItem>

@@ -142,7 +142,8 @@ const EN = {
   landingSubtitle:
     "OpporCheck helps you understand what was promised, what appears in your written " +
     "employment agreement, what remains unclear, and what you should verify before signing.",
-  landingGetStarted: "Get started",
+  landingGetStarted: "Start a Promise-to-Paper check",
+  landingReviewOne: "Review one opportunity",
   landingHowItWorks: "How it works",
   landingExampleAria: "Illustrative example of an OpporCheck finding",
   landingExampleBadge: "Example finding",
@@ -165,24 +166,24 @@ const EN = {
   landingPreviewAnnotation: "Pinned to the exact term",
   landingWhatIs: "What is OpporCheck?",
   landingWhatIsText:
-    "OpporCheck is an investigation workspace for overseas employment. Instead of reading a " +
-    "posting and guessing, you get a structured review: what the offer actually says, what " +
-    "is missing, which parts deserve a second look, and which official guidance applies. " +
-    "It helps you ask better questions — it does not verify employers or approve offers.",
-  landingWorkflow: "How the investigation workflow works",
-  landingStep1Title: "Share the opportunity",
+    "OpporCheck is an investigation workspace for overseas employment. Its core check " +
+    "compares what you were told — in listings and recruiter messages — with what written " +
+    "offers and contracts say: what matches, what differs, what is missing, and what needs " +
+    "clarification. It helps you ask better questions — it does not verify employers or approve offers.",
+  landingWorkflow: "How a Promise-to-Paper check works",
+  landingStep1Title: "Add your documents",
   landingStep1Text:
-    "Paste the job description or upload the offer document. Your text stays in your own investigation.",
-  landingStep2Title: "Get a structured review",
+    "Add the job listing, recruiter message, offer letter, or contract — as PDFs or pasted text.",
+  landingStep2Title: "Compare promise with paper",
   landingStep2Text:
-    "OpporCheck extracts the role, employer, pay, country, and employment type, then flags concerns, missing details, and questions worth asking.",
+    "OpporCheck extracts employment terms with quoted evidence, then shows what matches, differs, is missing, or needs clarification.",
   landingStep3Title: "Check official guidance",
   landingStep3Text:
     "Compare claims against curated official sources and keep everything in one investigation report.",
   landingCapabilities: "Key capabilities",
-  landingCap1Title: "Clear employment summaries",
+  landingCap1Title: "Promise-to-paper findings",
   landingCap1Text:
-    "Role, employer, salary, destination country, and contract type pulled into one readable overview.",
+    "Matches, conflicts, missing terms, and clarification questions across your documents, each tied to quoted evidence.",
   landingCap2Title: "Concerns with evidence",
   landingCap2Text:
     "Each potential concern quotes the original wording and says how confident the finding is.",
@@ -193,41 +194,43 @@ const EN = {
   landingCap4Text:
     "Your investigations belong to your account. Analysis can run on your device when supported, with cloud fallback.",
   landingTransparency: "Transparency and limitations",
-  landingWorkflowIntro: "Three steps from a raw posting to confident questions.",
+  landingWorkflowIntro: "Three steps from scattered documents to confident questions.",
   landingCapabilitiesIntro: "What the workspace gives you for every opportunity.",
   landingClosingTitle: "Bring your opportunity to the desk.",
   landingTransparencyText:
     "OpporCheck works only from the text you provide and the official sources it links " +
     "to. It cannot confirm that an employer is genuine, check registration numbers, or " +
-    "see information outside the posting.",
+    "see information outside the documents you provide.",
   landingLimit1: "A flagged concern is a reason to ask questions, not proof of fraud.",
   landingLimit2: "Missing information means unverified, not false.",
   landingLimit3:
     "Always confirm visa, pay, and contract details with official sources and, where needed, qualified advisers.",
-  landingSamplesTitle: "Bring any of these to the desk",
+  landingSamplesTitle: "Bring your employment evidence to the desk",
   landingSamplesNote:
     "Illustrative examples only. They are not user submissions, and OpporCheck has not verified them.",
   landingSampleBadge: "Sample",
-  landingSampleReceipt: "Receipt",
-  landingSampleReceiptFocus: "Totals, dates, and seller details",
-  landingSampleInvoice: "Invoice",
-  landingSampleInvoiceFocus: "Line items, due dates, and terms",
-  landingSampleContract: "Contract",
+  landingSampleReceipt: "Fee receipt",
+  landingSampleReceiptFocus: "Placement charges to check against promises",
+  landingSampleInvoice: "Fee invoice",
+  landingSampleInvoiceFocus: "Amounts and references linked to your case",
+  landingSampleContract: "Employment contract",
   landingSampleContractFocus: "Pay, hours, and key clauses",
-  landingSampleListing: "Opportunity listing",
+  landingSampleListing: "Job listing & recruiter messages",
   landingSampleListingFocus: "Promises to check against paperwork",
   // ---- About page ----
   aboutTitle: "About OpporCheck",
   aboutP1:
-    "OpporCheck is an AI-powered overseas employment investigation workspace. It helps " +
-    "people understand job opportunities through evidence, official sources, and clear " +
-    "explanations — before signing anything or paying any fee.",
+    "OpporCheck is an AI-powered overseas employment investigation workspace. It " +
+    "compares what you were told — in job listings and recruiter messages — with what " +
+    "written offers and contracts say, so you can see what matches, conflicts, is " +
+    "missing, or needs clarification — before signing anything or paying any fee.",
   aboutP2:
     "Many overseas job seekers first meet an opportunity as a short message or a " +
     "photocopied offer: some details, many gaps, and no easy way to tell which is " +
-    "which. OpporCheck turns that text into a structured review — extracted facts, " +
-    "potential concerns with quoted evidence, missing information, and relevant " +
-    "official guidance — so the next conversation starts from facts.",
+    "which. OpporCheck turns those documents into a Promise-to-Paper comparison, shows " +
+    "every term with its quoted evidence, and adds a structured review when you only " +
+    "have one posting — plus missing information and relevant official guidance — so " +
+    "the next conversation starts from facts.",
   aboutNotTitle: "What OpporCheck is not",
   aboutNot1:
     "Not an employer verification service — it never declares an employer genuine or fraudulent.",
@@ -240,19 +243,22 @@ const EN = {
     "account and are never shared between users.",
   // ---- How-it-works page ----
   howTitle: "How it works",
-  howSubtitle: "Four steps from a raw posting to an evidence-backed investigation report.",
-  howStep1Title: "Share the opportunity",
+  howSubtitle: "Five steps from scattered documents to an evidence-backed comparison report.",
+  howStep1Title: "Add your documents",
   howStep1Text:
-    "Paste the job description or upload the offer as a PDF. OpporCheck reads the text and keeps it in your private workspace.",
-  howStep2Title: "Review the analysis",
+    "Add the job listing, recruiter message, offer letter, or contract as PDFs or pasted text.",
+  howStep2Title: "Review and clean the text",
   howStep2Text:
-    "You get an opportunity summary, extracted employment details, potential concerns with quoted evidence, a missing-information checklist, and a recommended next action.",
-  howStep3Title: "Investigate with sources",
+    "A privacy step highlights personal details so you can redact or replace them before analysis. Nothing is analyzed until you approve the cleaned text.",
+  howStep3Title: "Inspect the extracted terms",
   howStep3Text:
-    "Save the review as an investigation and compare its claims against curated official guidance, with each finding labelled as supported, conflicting, or insufficient evidence.",
-  howStep4Title: "Decide with evidence",
+    "Each employment term is shown with the exact excerpt it came from, so every claim stays traceable to its source document.",
+  howStep4Title: "Compare promise with paper",
   howStep4Text:
-    "Bring the report — facts, gaps, concerns, and follow-up questions — to your decision or your adviser.",
+    "See what matches, what differs, what the written documents never address, and which questions to ask before signing.",
+  howStep5Title: "Check official guidance",
+  howStep5Text:
+    "Where useful, compare claims against curated official sources and keep everything in your saved report.",
   howBrowse: "Browse guidance",
   howGlossaryTitle: "Reading your findings",
   howGlossaryIntro: "Every evidence finding carries one of three labels:",
@@ -286,6 +292,7 @@ const EN = {
   authForgot: "Forgot password?",
   authCreateAccount: "Create account",
   authLoadingSignIn: "Loading sign-in…",
+  authLoading: "Loading…",
   authPasswordHint: "At least 6 characters.",
   authCreating: "Creating account…",
   authHaveAccount: "Already have an account?",
@@ -307,8 +314,8 @@ const EN = {
   wsExpand: "Expand",
   wsCloseMenuAria: "Close workspace menu",
   wsNavOverview: "Overview",
-  wsNavReview: "Review opportunity",
-  wsNavCompare: "Compare documents",
+  wsNavReview: "Review one opportunity",
+  wsNavCompare: "Promise-to-Paper",
   wsNavComparisons: "Saved comparisons",
   wsNavInvestigations: "My investigations",
   wsNavResources: "Resources",
@@ -316,9 +323,11 @@ const EN = {
   // ---- Workspace overview ----
   ovWelcome: "Welcome",
   ovIntro:
-    "OpporCheck turns a job posting into a structured review — facts, concerns with " +
-    "quoted evidence, missing details, and relevant official guidance — saved as an " +
-    "investigation you can revisit any time.",
+    "OpporCheck compares what you were told with what written employment documents say — " +
+    "matches, conflicts, missing terms, and clarification questions, each tied to quoted " +
+    "evidence. Two or more sources are useful for comparison; a single posting can still " +
+    "be reviewed on its own.",
+  ovCompareCta: "Start a Promise-to-Paper check",
   ovReviewCta: "Review an opportunity",
   ovRecent: "Recent investigations",
   ovViewAll: "View all",
@@ -328,7 +337,7 @@ const EN = {
   ovEmptyDesc:
     "Review your first opportunity to see it here with its facts, concerns, and evidence.",
   // ---- Review page ----
-  revTitle: "Review an opportunity",
+  revTitle: "Review one opportunity",
   revSubtitle:
     "Paste a job posting or upload it as a PDF. You get a structured review with " +
     "quoted evidence — then you can save it as an investigation.",
@@ -599,7 +608,8 @@ const EN = {
   cmpSubtitle:
     "Compare what was promised with what the written agreement says. Upload a " +
     "contract, an offer letter, a job ad, or recruiter messages — any combination " +
-    "works. Documents stay in your browser session and are never saved.",
+    "works. Source documents stay in your browser session and are never stored; only " +
+    "reports you explicitly save are kept, under Saved comparisons.",
   cmpErrorTitle: "Something went wrong",
   cmpDocsTitle: "1. Documents",
   cmpDocsDesc:
@@ -1024,7 +1034,8 @@ const ID: UiStrings = {
   landingSubtitle:
     "OpporCheck membantu Anda memahami apa yang dijanjikan, apa yang tercantum dalam " +
     "perjanjian kerja tertulis Anda, apa yang masih belum jelas, dan apa yang harus Anda verifikasi sebelum menandatangani.",
-  landingGetStarted: "Mulai",
+  landingGetStarted: "Mulai pemeriksaan Promise-to-Paper",
+  landingReviewOne: "Tinjau satu peluang",
   landingHowItWorks: "Cara kerja",
   landingExampleAria: "Contoh ilustratif temuan OpporCheck",
   landingExampleBadge: "Contoh temuan",
@@ -1047,24 +1058,25 @@ const ID: UiStrings = {
   landingPreviewAnnotation: "Disematkan pada ketentuan yang tepat",
   landingWhatIs: "Apa itu OpporCheck?",
   landingWhatIsText:
-    "OpporCheck adalah ruang kerja investigasi untuk pekerjaan luar negeri. Daripada membaca " +
-    "lowongan dan menebak, Anda mendapatkan ulasan terstruktur: apa isi tawaran sebenarnya, apa " +
-    "yang hilang, bagian mana yang perlu dilihat kedua kali, dan panduan resmi mana yang berlaku. " +
-    "OpporCheck membantu Anda mengajukan pertanyaan yang lebih baik — OpporCheck tidak memverifikasi pemberi kerja atau menyetujui tawaran.",
-  landingWorkflow: "Cara kerja alur investigasi",
-  landingStep1Title: "Bagikan peluang",
+    "OpporCheck adalah ruang kerja investigasi untuk pekerjaan luar negeri. Pemeriksaan " +
+    "utamanya membandingkan apa yang Anda dengar — dalam lowongan dan pesan perekrut — dengan " +
+    "apa yang dinyatakan dalam penawaran tertulis dan kontrak: apa yang cocok, apa yang berbeda, " +
+    "apa yang hilang, dan apa yang perlu klarifikasi. OpporCheck membantu Anda mengajukan " +
+    "pertanyaan yang lebih baik — OpporCheck tidak memverifikasi pemberi kerja atau menyetujui tawaran.",
+  landingWorkflow: "Cara kerja pemeriksaan Promise-to-Paper",
+  landingStep1Title: "Tambahkan dokumen Anda",
   landingStep1Text:
-    "Tempel deskripsi pekerjaan atau unggah dokumen tawaran. Teks Anda tetap dalam investigasi Anda sendiri.",
-  landingStep2Title: "Dapatkan ulasan terstruktur",
+    "Tambahkan lowongan kerja, pesan perekrut, surat penawaran, atau kontrak — sebagai PDF atau teks tempelan.",
+  landingStep2Title: "Bandingkan janji dengan dokumen",
   landingStep2Text:
-    "OpporCheck mengekstrak peran, pemberi kerja, gaji, negara, dan jenis pekerjaan, lalu menandai masalah, detail yang hilang, dan pertanyaan yang layak ditanyakan.",
+    "OpporCheck mengekstrak ketentuan kerja dengan bukti kutipan, lalu menunjukkan apa yang cocok, berbeda, hilang, atau perlu klarifikasi.",
   landingStep3Title: "Periksa panduan resmi",
   landingStep3Text:
     "Bandingkan klaim dengan sumber resmi yang dikurasi dan simpan semuanya dalam satu laporan investigasi.",
   landingCapabilities: "Kemampuan utama",
-  landingCap1Title: "Ringkasan kerja yang jelas",
+  landingCap1Title: "Temuan janji-ke-dokumen",
   landingCap1Text:
-    "Peran, pemberi kerja, gaji, negara tujuan, dan jenis kontrak dirangkum dalam satu gambaran yang mudah dibaca.",
+    "Kecocokan, perbedaan, ketentuan yang hilang, dan pertanyaan klarifikasi di seluruh dokumen Anda, masing-masing terkait dengan bukti kutipan.",
   landingCap2Title: "Potensi masalah disertai bukti",
   landingCap2Text:
     "Setiap potensi masalah mengutip wording asli dan menyatakan tingkat kepercayaan temuan.",
@@ -1074,40 +1086,43 @@ const ID: UiStrings = {
   landingCap4Title: "Privat sejak awal",
   landingCap4Text:
     "Investigasi Anda milik akun Anda. Analisis dapat berjalan di perangkat Anda bila didukung, dengan fallback cloud.",
-  landingWorkflowIntro: "Tiga langkah dari lowongan mentah menjadi pertanyaan yang meyakinkan.",
+  landingWorkflowIntro: "Tiga langkah dari dokumen yang tersebar menjadi pertanyaan yang meyakinkan.",
   landingCapabilitiesIntro: "Apa yang diberikan ruang kerja untuk setiap peluang.",
   landingClosingTitle: "Bawa peluang Anda ke meja.",
   landingTransparency: "Transparansi dan batasan",
   landingTransparencyText:
     "OpporCheck hanya bekerja dari teks yang Anda berikan dan sumber resmi yang ditautkannya. " +
     "OpporCheck tidak dapat memastikan pemberi kerja itu asli, memeriksa nomor registrasi, atau " +
-    "melihat informasi di luar lowongan.",
+    "melihat informasi di luar dokumen yang Anda berikan.",
   landingLimit1:
     "Masalah yang ditandai adalah alasan untuk bertanya, bukan bukti penipuan.",
   landingLimit2: "Informasi yang hilang berarti belum terverifikasi, bukan salah.",
   landingLimit3:
     "Selalu konfirmasi detail visa, gaji, dan kontrak dengan sumber resmi dan, bila perlu, penasihat yang berkualifikasi.",
-  landingSamplesTitle: "Bawa salah satu dokumen ini ke meja",
+  landingSamplesTitle: "Bawa bukti ketenagakerjaan Anda ke meja",
   landingSamplesNote:
     "Hanya contoh ilustratif. Ini bukan kiriman pengguna, dan OpporCheck belum memverifikasinya.",
   landingSampleBadge: "Contoh",
-  landingSampleReceipt: "Kuitansi",
-  landingSampleReceiptFocus: "Total, tanggal, dan detail penjual",
-  landingSampleInvoice: "Faktur",
-  landingSampleInvoiceFocus: "Rincian item, jatuh tempo, dan ketentuan",
-  landingSampleContract: "Kontrak",
+  landingSampleReceipt: "Kuitansi biaya",
+  landingSampleReceiptFocus: "Biaya penempatan untuk dicocokkan dengan janji",
+  landingSampleInvoice: "Faktur biaya",
+  landingSampleInvoiceFocus: "Jumlah dan referensi yang terkait dengan kasus Anda",
+  landingSampleContract: "Kontrak kerja",
   landingSampleContractFocus: "Gaji, jam kerja, dan klausul utama",
-  landingSampleListing: "Lowongan peluang",
+  landingSampleListing: "Lowongan & pesan perekrut",
   landingSampleListingFocus: "Janji yang perlu dicocokkan dengan dokumen",
   aboutTitle: "Tentang OpporCheck",
   aboutP1:
-    "OpporCheck adalah ruang kerja investigasi pekerjaan luar negeri bertenaga AI. OpporCheck membantu " +
-    "orang memahami peluang kerja melalui bukti, sumber resmi, dan penjelasan yang jelas — sebelum menandatangani apa pun atau membayar biaya apa pun.",
+    "OpporCheck adalah ruang kerja investigasi pekerjaan luar negeri bertenaga AI. OpporCheck " +
+    "membandingkan apa yang Anda dengar — dalam lowongan kerja dan pesan perekrut — dengan apa yang " +
+    "dinyatakan dalam penawaran tertulis dan kontrak, sehingga Anda dapat melihat apa yang cocok, " +
+    "bertentangan, hilang, atau perlu klarifikasi — sebelum menandatangani apa pun atau membayar biaya apa pun.",
   aboutP2:
     "Banyak pencari kerja luar negeri pertama kali mengenal peluang sebagai pesan singkat atau " +
     "tawaran fotokopian: sebagian detail, banyak celah, dan tidak ada cara mudah untuk membedakannya. " +
-    "OpporCheck mengubah teks itu menjadi ulasan terstruktur — fakta yang diekstrak, potensi masalah " +
-    "dengan bukti kutipan, informasi yang hilang, dan panduan resmi yang relevan — sehingga percakapan berikutnya berangkat dari fakta.",
+    "OpporCheck mengubah dokumen-dokumen itu menjadi perbandingan Promise-to-Paper, menunjukkan setiap " +
+    "ketentuan dengan bukti kutipannya, dan menambahkan ulasan terstruktur bila Anda hanya memiliki satu " +
+    "lowongan — plus informasi yang hilang dan panduan resmi yang relevan — sehingga percakapan berikutnya berangkat dari fakta.",
   aboutNotTitle: "Apa yang bukan OpporCheck",
   aboutNot1:
     "Bukan layanan verifikasi pemberi kerja — OpporCheck tidak pernah menyatakan pemberi kerja asli atau curang.",
@@ -1119,19 +1134,22 @@ const ID: UiStrings = {
     "dengan fallback cloud bila tidak. Lowongan dan laporan Anda disimpan di akun Anda sendiri " +
     "dan tidak pernah dibagikan antar pengguna.",
   howTitle: "Cara kerja",
-  howSubtitle: "Empat langkah dari lowongan mentah menjadi laporan investigasi berbasis bukti.",
-  howStep1Title: "Bagikan peluang",
+  howSubtitle: "Lima langkah dari dokumen yang tersebar menjadi laporan perbandingan berbasis bukti.",
+  howStep1Title: "Tambahkan dokumen Anda",
   howStep1Text:
-    "Tempel deskripsi pekerjaan atau unggah tawaran sebagai PDF. OpporCheck membaca teks dan menyimpannya di ruang kerja privat Anda.",
-  howStep2Title: "Tinjau analisis",
+    "Tambahkan lowongan kerja, pesan perekrut, surat penawaran, atau kontrak sebagai PDF atau teks tempelan.",
+  howStep2Title: "Tinjau dan bersihkan teks",
   howStep2Text:
-    "Anda mendapatkan ringkasan peluang, detail pekerjaan yang diekstrak, potensi masalah dengan bukti kutipan, daftar periksa informasi yang hilang, dan tindakan berikutnya yang disarankan.",
-  howStep3Title: "Investigasi dengan sumber",
+    "Langkah privasi menandai detail personal sehingga Anda dapat menyensor atau menggantinya sebelum analisis. Tidak ada yang dianalisis sebelum Anda menyetujui teks yang dibersihkan.",
+  howStep3Title: "Periksa ketentuan yang diekstrak",
   howStep3Text:
-    "Simpan ulasan sebagai investigasi dan bandingkan klaimnya dengan panduan resmi yang dikurasi, dengan setiap temuan diberi label didukung, bertentangan, atau bukti tidak cukup.",
-  howStep4Title: "Putuskan dengan bukti",
+    "Setiap ketentuan kerja ditampilkan dengan kutipan persis asalnya, sehingga setiap klaim tetap terlacak ke dokumen sumbernya.",
+  howStep4Title: "Bandingkan janji dengan dokumen",
   howStep4Text:
-    "Bawa laporan — fakta, celah, masalah, dan pertanyaan lanjutan — ke keputusan Anda atau penasihat Anda.",
+    "Lihat apa yang cocok, apa yang berbeda, apa yang tidak pernah dibahas dokumen tertulis, dan pertanyaan apa yang perlu ditanyakan sebelum menandatangani.",
+  howStep5Title: "Periksa panduan resmi",
+  howStep5Text:
+    "Bila berguna, bandingkan klaim dengan sumber resmi yang dikurasi dan simpan semuanya dalam laporan tersimpan Anda.",
   howBrowse: "Jelajahi panduan",
   howGlossaryTitle: "Membaca temuan Anda",
   howGlossaryIntro: "Setiap temuan bukti memiliki satu dari tiga label:",
@@ -1162,6 +1180,7 @@ const ID: UiStrings = {
   authForgot: "Lupa kata sandi?",
   authCreateAccount: "Buat akun",
   authLoadingSignIn: "Memuat halaman masuk…",
+  authLoading: "Memuat…",
   authPasswordHint: "Minimal 6 karakter.",
   authCreating: "Membuat akun…",
   authHaveAccount: "Sudah punya akun?",
@@ -1182,17 +1201,19 @@ const ID: UiStrings = {
   wsExpand: "Bentangkan",
   wsCloseMenuAria: "Tutup menu ruang kerja",
   wsNavOverview: "Ringkasan",
-  wsNavReview: "Tinjau peluang",
-  wsNavCompare: "Bandingkan dokumen",
+  wsNavReview: "Tinjau satu peluang",
+  wsNavCompare: "Promise-to-Paper",
   wsNavComparisons: "Perbandingan tersimpan",
   wsNavInvestigations: "Investigasi saya",
   wsNavResources: "Sumber daya",
   wsNavSettings: "Pengaturan",
   ovWelcome: "Selamat datang",
   ovIntro:
-    "OpporCheck mengubah lowongan kerja menjadi ulasan terstruktur — fakta, masalah dengan " +
-    "bukti kutipan, detail yang hilang, dan panduan resmi yang relevan — disimpan sebagai " +
-    "investigasi yang dapat Anda buka kapan saja.",
+    "OpporCheck membandingkan apa yang Anda dengar dengan apa yang dinyatakan dokumen kerja " +
+    "tertulis — kecocokan, perbedaan, ketentuan yang hilang, dan pertanyaan klarifikasi, " +
+    "masing-masing terkait dengan bukti kutipan. Dua sumber atau lebih berguna untuk " +
+    "perbandingan; satu lowongan saja tetap dapat ditinjau tersendiri.",
+  ovCompareCta: "Mulai pemeriksaan Promise-to-Paper",
   ovReviewCta: "Tinjau peluang",
   ovRecent: "Investigasi terbaru",
   ovViewAll: "Lihat semua",
@@ -1201,7 +1222,7 @@ const ID: UiStrings = {
   ovEmptyTitle: "Belum ada investigasi",
   ovEmptyDesc:
     "Tinjau peluang pertama Anda agar muncul di sini beserta fakta, masalah, dan buktinya.",
-  revTitle: "Tinjau peluang",
+  revTitle: "Tinjau satu peluang",
   revSubtitle:
     "Tempel lowongan kerja atau unggah sebagai PDF. Anda mendapatkan ulasan terstruktur dengan " +
     "bukti kutipan — lalu Anda dapat menyimpannya sebagai investigasi.",
@@ -1466,7 +1487,8 @@ const ID: UiStrings = {
   cmpSubtitle:
     "Bandingkan apa yang dijanjikan dengan apa yang dinyatakan dalam perjanjian tertulis. Unggah " +
     "kontrak, surat penawaran, iklan lowongan, atau pesan perekrut — kombinasi apa pun bisa. " +
-    "Dokumen tetap di sesi browser Anda dan tidak pernah disimpan.",
+    "Dokumen sumber tetap di sesi browser Anda dan tidak pernah disimpan; hanya laporan yang Anda " +
+    "simpan secara eksplisit yang disimpan, di bagian Perbandingan tersimpan.",
   cmpErrorTitle: "Terjadi kesalahan",
   cmpDocsTitle: "1. Dokumen",
   cmpDocsDesc:

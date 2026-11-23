@@ -1,19 +1,22 @@
 "use client";
 
-// Registration: email/password plus Google. New accounts land in /workspace.
+// Registration: email/password plus Google. Honors ?next= for
+// post-registration routing, defaulting to /workspace like sign-in.
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import PublicShell from "@/components/PublicShell";
 import { AuthArt } from "@/components/spot";
-import { Button, Card, Field, TextInput } from "@/components/ui";
+import { Button, Card, Field, Spinner, TextInput } from "@/components/ui";
 import { friendlyAuthError, useAuth } from "@/lib/auth";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/workspace";
   const { user, loading, setupError, signUp, signInWithGoogle } = useAuth();
   const { language } = useLang();
   const t = getStrings(language);
@@ -24,9 +27,9 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/workspace");
+      router.replace(next);
     }
-  }, [loading, user, router]);
+  }, [loading, user, next, router]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -34,7 +37,7 @@ export default function RegisterPage() {
     setError(null);
     try {
       await signUp(email, password);
-      router.replace("/workspace");
+      router.replace(next);
     } catch (err) {
       setError(friendlyAuthError(err, language));
     } finally {
@@ -47,7 +50,7 @@ export default function RegisterPage() {
     setError(null);
     try {
       await signInWithGoogle();
-      router.replace("/workspace");
+      router.replace(next);
     } catch (err) {
       setError(friendlyAuthError(err, language));
     } finally {
@@ -56,7 +59,6 @@ export default function RegisterPage() {
   };
 
   return (
-    <PublicShell>
       <div className="mx-auto grid w-full max-w-4xl items-center gap-10 lg:grid-cols-2">
         <AuthArt />
         <div className="mx-auto w-full max-w-md">
@@ -112,7 +114,10 @@ export default function RegisterPage() {
                 </div>
                 <p className="mt-4 text-sm">
                   {t.authHaveAccount}{" "}
-                  <Link href="/login" className="text-brand underline">
+                  <Link
+                    href={`/login?next=${encodeURIComponent(next)}`}
+                    className="text-brand underline"
+                  >
                     {t.authSignInTitle}
                   </Link>
                 </p>
@@ -120,6 +125,21 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+  );
+}
+
+function RegisterFallback() {
+  const { language } = useLang();
+  const t = getStrings(language);
+  return <Spinner label={t.authLoading} />;
+}
+
+export default function RegisterPage() {
+  return (
+    <PublicShell>
+      <Suspense fallback={<RegisterFallback />}>
+        <RegisterForm />
+      </Suspense>
     </PublicShell>
   );
 }
