@@ -37,7 +37,7 @@ function Glyph({
   );
 }
 
-/** Review an opportunity: document under a magnifier. */
+/** Review one opportunity: document under a magnifier. */
 export function SpotDocLens({ size, className }: { size?: number; className?: string }) {
   return (
     <Glyph size={size} className={className}>

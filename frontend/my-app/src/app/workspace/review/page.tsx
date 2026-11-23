@@ -1,6 +1,6 @@
 "use client";
 
-// Review an opportunity: paste text or upload a PDF, analyze with the
+// Review one opportunity: paste text or upload a PDF, analyze with the
 // existing hybrid AI Logic analyzer, and save as an investigation.
 // Plain-language UI: no model IDs, inference modes, latency, or raw JSON.
 
