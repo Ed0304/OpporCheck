@@ -1,7 +1,7 @@
-// Landing page: centered welcome with a clear primary action, a hero
-// product composition (HeroComposition), and fictional sample documents
-// below. Client component so copy follows the UI language preference;
-// the server page keeps its metadata export and renders this.
+// Landing page: split hero with headline, Promise-to-Paper action, and a
+// three-card comparison graphic (HeroComposition), with fictional sample
+// documents below. Client component so copy follows the UI language
+// preference; the server page keeps its metadata export and renders this.
 //
 // Page chrome uses theme tokens (canvas/card/ink/muted) so light mode
 // renders light and dark mode renders black. The sample previews are
@@ -23,7 +23,6 @@ import GetStartedLink from "@/components/GetStartedLink";
 import HeroComposition from "@/components/HeroComposition";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { SpotBook, SpotCheck, SpotDocLens, SpotInfo, SpotShield, SpotText, SpotUpload } from "@/components/spot";
-import { getConciseNotice } from "@/lib/disclaimer";
 import { useLang } from "@/lib/lang";
 import { getStrings } from "@/lib/strings";
 
@@ -135,39 +134,53 @@ export default function LandingContent() {
   ];
   return (
     <div className="-mx-4 -my-10 bg-canvas text-ink sm:-mx-6 lg:-my-14">
-      <div className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6 lg:pt-24">
-        <Stagger className="mx-auto max-w-3xl text-center">
-          <StaggerItem>
-            <h1 className="text-4xl leading-[1.08] font-semibold tracking-tight text-balance text-navy sm:text-5xl lg:text-6xl">
-              {t.landingTitle}
-            </h1>
-          </StaggerItem>
-          <StaggerItem>
-            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-muted">
-              {t.landingSubtitle}
-            </p>
-          </StaggerItem>
-          <StaggerItem>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <GetStartedLink className="inline-flex min-h-12 items-center rounded-lg bg-brand px-7 text-base font-medium text-on-action transition-colors hover:bg-brand-strong">
-                {t.landingGetStarted}
-              </GetStartedLink>
-              <Link
-                href="/workspace/review"
-                className="inline-flex min-h-12 items-center rounded-lg border border-edge px-7 text-base font-medium text-ink transition-colors hover:bg-brand-soft"
-              >
-                {t.landingReviewOne}
-              </Link>
-            </div>
-          </StaggerItem>
-          <StaggerItem>
-            <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-muted" role="note">
-              {getConciseNotice(language)}
-            </p>
-          </StaggerItem>
-        </Stagger>
-
-        <div className="mx-auto mt-14 max-w-5xl">
+      <div className="mx-auto max-w-6xl px-4 pt-10 pb-20 sm:px-6 lg:pt-16">
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
+          <Stagger className="mx-auto w-full max-w-3xl text-center lg:mx-0 lg:text-left">
+            <StaggerItem>
+              <p>
+                <span className="inline-flex rounded-full border border-edge bg-card px-3 py-1 text-xs font-semibold tracking-wider text-brand uppercase">
+                  {t.wsNavCompare}
+                </span>
+              </p>
+            </StaggerItem>
+            <StaggerItem>
+              <h1 className="mt-4 text-4xl leading-[1.08] font-semibold tracking-tight text-balance text-navy sm:text-5xl lg:text-6xl">
+                {t.landingTitle}
+              </h1>
+            </StaggerItem>
+            <StaggerItem>
+              <p className="mt-5 text-lg leading-8 text-muted">
+                {t.landingSubtitle}
+              </p>
+            </StaggerItem>
+            <StaggerItem>
+              <div className="mt-8 flex flex-wrap justify-center gap-3 lg:justify-start">
+                <GetStartedLink className="inline-flex min-h-12 items-center rounded-lg bg-brand px-7 text-base font-medium text-on-action transition-colors hover:bg-brand-strong">
+                  {t.landingGetStarted}
+                </GetStartedLink>
+                <Link
+                  href="/how-it-works"
+                  className="inline-flex min-h-12 items-center rounded-lg border border-edge px-7 text-base font-medium text-ink transition-colors hover:bg-brand-soft"
+                >
+                  {t.landingSeeHow}
+                </Link>
+              </div>
+              <p className="mt-3 text-sm leading-6">
+                <Link
+                  href="/workspace/review"
+                  className="font-medium text-brand underline decoration-brand/40 underline-offset-2 transition-colors hover:decoration-brand"
+                >
+                  {t.landingReviewOneAlt}
+                </Link>
+              </p>
+            </StaggerItem>
+            <StaggerItem>
+              <p className="mt-5 text-sm leading-6 text-muted" role="note">
+                {t.landingHeroNote}
+              </p>
+            </StaggerItem>
+          </Stagger>
           <HeroComposition />
         </div>
 

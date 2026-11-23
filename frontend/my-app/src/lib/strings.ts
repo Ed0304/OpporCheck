@@ -138,30 +138,29 @@ const EN = {
   guidanceCountry: "Country:",
   guidanceReviewed: "Reviewed for OpporCheck:",
   // ---- Landing page ----
-  landingTitle: "Understand the opportunity before you commit.",
+  landingTitle: "What they promised. What the contract says. See the difference before you sign.",
   landingSubtitle:
-    "OpporCheck helps you understand what was promised, what appears in your written " +
-    "employment agreement, what remains unclear, and what you should verify before signing.",
+    "Compare job listings and recruiter messages with written offers and contracts. " +
+    "See what matches, what differs, what's missing, and what to clarify.",
   landingGetStarted: "Start a Promise-to-Paper check",
   landingReviewOne: "Review one opportunity",
+  landingReviewOneAlt: "Or review one opportunity",
+  landingSeeHow: "See how it works",
+  landingHeroNote: "Decision support, not employer verification or legal advice.",
   landingHowItWorks: "How it works",
   landingExampleAria: "Illustrative example of an OpporCheck finding",
   landingExampleBadge: "Example finding",
   landingExampleStatus: "Needs clarification",
   landingExampleClaim: "Overtime paid at 1.5× the hourly rate",
   landingExampleQuote: "Overtime compensation provided through time off",
-  landingExampleSource: "Source: Example employment terms · p. 2",
   landingExampleCaption: "Illustrative example — not a real investigation.",
-  landingExampleDocTitle: "Example employment terms",
-  landingExamplePromiseLabel: "Recruiter promise",
-  landingExamplePara1:
-    "The standard work week is five days, Monday to Friday, eight hours per day.",
-  landingExamplePara3: "Any schedule change is confirmed in writing before it takes effect.",
+  landingExamplePromiseLabel: "Recruiter message",
+  landingExampleContractHeading: "Written contract",
+  landingExampleContractLabel: "Employment agreement · p. 2",
   landingExampleDetail:
     "The written term describes a different compensation arrangement from the promise.",
   landingExamplePinLabel: "Highlight the pinned term",
   landingPreviewPromise: "Promise",
-  landingPreviewTerm: "Term",
   landingPreviewClarification: "Clarification",
   landingPreviewAnnotation: "Pinned to the exact term",
   landingWhatIs: "What is OpporCheck?",
@@ -171,15 +170,15 @@ const EN = {
     "offers and contracts say: what matches, what differs, what is missing, and what needs " +
     "clarification. It helps you ask better questions — it does not verify employers or approve offers.",
   landingWorkflow: "How a Promise-to-Paper check works",
-  landingStep1Title: "Add your documents",
+  landingStep1Title: "Add the documents",
   landingStep1Text:
-    "Add the job listing, recruiter message, offer letter, or contract — as PDFs or pasted text.",
-  landingStep2Title: "Compare promise with paper",
+    "Add a job listing, recruiter message, offer letter, or contract.",
+  landingStep2Title: "Compare the terms",
   landingStep2Text:
-    "OpporCheck extracts employment terms with quoted evidence, then shows what matches, differs, is missing, or needs clarification.",
-  landingStep3Title: "Check official guidance",
+    "Review quoted evidence and see what matches, differs, or is missing.",
+  landingStep3Title: "Know what to ask",
   landingStep3Text:
-    "Compare claims against curated official sources and keep everything in one investigation report.",
+    "Use the findings and relevant official guidance to prepare follow-up questions.",
   landingCapabilities: "Key capabilities",
   landingCap1Title: "Promise-to-paper findings",
   landingCap1Text:
@@ -1030,30 +1029,29 @@ const ID: UiStrings = {
   guidancePublisher: "Penerbit:",
   guidanceCountry: "Negara:",
   guidanceReviewed: "Ditinjau untuk OpporCheck:",
-  landingTitle: "Pahami peluang sebelum Anda berkomitmen.",
+  landingTitle: "Apa yang mereka janjikan. Apa kata kontrak. Lihat perbedaannya sebelum menandatangani.",
   landingSubtitle:
-    "OpporCheck membantu Anda memahami apa yang dijanjikan, apa yang tercantum dalam " +
-    "perjanjian kerja tertulis Anda, apa yang masih belum jelas, dan apa yang harus Anda verifikasi sebelum menandatangani.",
+    "Bandingkan lowongan kerja dan pesan perekrut dengan penawaran tertulis dan kontrak. " +
+    "Lihat apa yang cocok, berbeda, hilang, dan perlu diklarifikasi.",
   landingGetStarted: "Mulai pemeriksaan Promise-to-Paper",
   landingReviewOne: "Tinjau satu peluang",
+  landingReviewOneAlt: "Atau tinjau satu peluang",
+  landingSeeHow: "Lihat cara kerja",
+  landingHeroNote: "Dukungan keputusan, bukan verifikasi pemberi kerja atau nasihat hukum.",
   landingHowItWorks: "Cara kerja",
   landingExampleAria: "Contoh ilustratif temuan OpporCheck",
   landingExampleBadge: "Contoh temuan",
   landingExampleStatus: "Perlu klarifikasi",
   landingExampleClaim: "Lembur dibayar sebesar 1,5× upah per jam.",
   landingExampleQuote: "Kompensasi lembur diberikan dalam bentuk waktu libur",
-  landingExampleSource: "Sumber: Contoh ketentuan kerja · hlm. 2",
   landingExampleCaption: "Contoh ilustratif — bukan investigasi nyata.",
-  landingExampleDocTitle: "Contoh ketentuan kerja",
-  landingExamplePromiseLabel: "Janji perekrut",
-  landingExamplePara1:
-    "Minggu kerja standar adalah lima hari, Senin sampai Jumat, delapan jam per hari.",
-  landingExamplePara3: "Setiap perubahan jadwal dikonfirmasi secara tertulis sebelum berlaku.",
+  landingExamplePromiseLabel: "Pesan perekrut",
+  landingExampleContractHeading: "Kontrak tertulis",
+  landingExampleContractLabel: "Perjanjian kerja · hlm. 2",
   landingExampleDetail:
     "Ketentuan tertulis menjelaskan pengaturan kompensasi yang berbeda dari janji tersebut.",
   landingExamplePinLabel: "Sorot ketentuan yang disematkan",
   landingPreviewPromise: "Janji",
-  landingPreviewTerm: "Ketentuan",
   landingPreviewClarification: "Klarifikasi",
   landingPreviewAnnotation: "Disematkan pada ketentuan yang tepat",
   landingWhatIs: "Apa itu OpporCheck?",
@@ -1064,15 +1062,15 @@ const ID: UiStrings = {
     "apa yang hilang, dan apa yang perlu klarifikasi. OpporCheck membantu Anda mengajukan " +
     "pertanyaan yang lebih baik — OpporCheck tidak memverifikasi pemberi kerja atau menyetujui tawaran.",
   landingWorkflow: "Cara kerja pemeriksaan Promise-to-Paper",
-  landingStep1Title: "Tambahkan dokumen Anda",
+  landingStep1Title: "Tambahkan dokumen",
   landingStep1Text:
-    "Tambahkan lowongan kerja, pesan perekrut, surat penawaran, atau kontrak — sebagai PDF atau teks tempelan.",
-  landingStep2Title: "Bandingkan janji dengan dokumen",
+    "Tambahkan lowongan kerja, pesan perekrut, surat penawaran, atau kontrak.",
+  landingStep2Title: "Bandingkan ketentuan",
   landingStep2Text:
-    "OpporCheck mengekstrak ketentuan kerja dengan bukti kutipan, lalu menunjukkan apa yang cocok, berbeda, hilang, atau perlu klarifikasi.",
-  landingStep3Title: "Periksa panduan resmi",
+    "Tinjau bukti kutipan dan lihat apa yang cocok, berbeda, atau hilang.",
+  landingStep3Title: "Ketahui apa yang ditanyakan",
   landingStep3Text:
-    "Bandingkan klaim dengan sumber resmi yang dikurasi dan simpan semuanya dalam satu laporan investigasi.",
+    "Gunakan temuan dan panduan resmi yang relevan untuk menyiapkan pertanyaan lanjutan.",
   landingCapabilities: "Kemampuan utama",
   landingCap1Title: "Temuan janji-ke-dokumen",
   landingCap1Text:
