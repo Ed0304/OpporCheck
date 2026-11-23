@@ -10,6 +10,7 @@ import test from "node:test";
 import type { ContractDocumentText } from "../../src/lib/contractTypes";
 import {
   locateExcerptPage,
+  MIN_ATTRIBUTION_CHARS_OTHER,
   parseExtractionOutput,
   parsePromiseComparison,
   validateEmploymentClaim,
@@ -45,6 +46,13 @@ const CONTRACT: ContractDocumentText = {
 };
 
 const DOCS = [AD, RECRUITER, CONTRACT];
+
+const INVOICE: ContractDocumentText = {
+  documentId: "doc-invoice",
+  documentType: "other",
+  fileName: "invoice.pdf",
+  pages: ["Invoice total: £120 accommodation charge for March."],
+};
 
 function extractionPayload() {
   return {
@@ -687,4 +695,139 @@ test("locateExcerptPage tolerates quoted page markers but never trusts them", ()
     locateExcerptPage(CONTRACT.pages, "[Page 1] clause that appears nowhere in the text"),
     null,
   );
+});
+
+test("extraction files miscellaneous terms under the other category", () => {
+  const parsed = parseExtractionOutput(
+    JSON.stringify({
+      terms: [
+        {
+          category: "other",
+          claim: "£120 accommodation charge invoiced for March.",
+          sourceExcerpt: "Invoice total: £120 accommodation charge for March.",
+        },
+      ],
+      missing_categories: ["compensation"],
+    }),
+    INVOICE,
+  );
+  assert.equal(parsed.parseError, null);
+  assert.deepEqual(parsed.issues, []);
+  assert.equal(parsed.terms.length, 1);
+  assert.equal(parsed.terms[0]?.category, "other");
+  assert.equal(parsed.terms[0]?.documentReference.pageNumber, 1);
+});
+
+test("other documents accept short verbatim excerpts that strict docs reject", () => {
+  // "total: £120" sits between the lenient floor for miscellaneous
+  // documents and the strict 20-char bar for employment documents.
+  const shortExcerpt = "total: £120";
+  assert.ok(shortExcerpt.length >= MIN_ATTRIBUTION_CHARS_OTHER);
+  assert.ok(shortExcerpt.length < 20);
+  assert.equal(locateExcerptPage(INVOICE.pages, shortExcerpt), null);
+  assert.equal(
+    locateExcerptPage(INVOICE.pages, shortExcerpt, MIN_ATTRIBUTION_CHARS_OTHER),
+    1,
+  );
+
+  const lenient = parseExtractionOutput(
+    JSON.stringify({
+      terms: [
+        {
+          category: "other",
+          claim: "Invoice total is £120.",
+          sourceExcerpt: shortExcerpt,
+        },
+      ],
+    }),
+    INVOICE,
+  );
+  assert.equal(lenient.terms.length, 1);
+  assert.deepEqual(lenient.issues, []);
+
+  const strict = parseExtractionOutput(
+    JSON.stringify({
+      terms: [
+        {
+          category: "compensation",
+          claim: "Salary mentions £12.50.",
+          sourceExcerpt: "salary is £12.50",
+        },
+      ],
+    }),
+    CONTRACT,
+  );
+  assert.equal(strict.terms.length, 0);
+  assert.match(strict.issues.join(";"), /excerpt/i);
+});
+
+test("other-category findings survive alone as needs_clarification", () => {
+  const docs = [...DOCS, INVOICE];
+  const solo = {
+    category: "other",
+    supportingEvidence: {
+      documentId: "doc-invoice",
+      claim: "£120 accommodation charge invoiced for March.",
+      sourceExcerpt: "Invoice total: £120 accommodation charge for March.",
+    },
+    status: "consistent",
+    explanation:
+      "The invoice records a charge with no counterpart in the supplied documents. Excerpts only were compared.",
+    followUpQuestion: "What does the invoiced charge cover?",
+  };
+  const parsed = parsePromiseComparison(JSON.stringify([solo]), docs);
+  assert.equal(parsed.parseError, null);
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(parsed.findings[0]?.category, "other");
+  assert.equal(parsed.findings[0]?.status, "needs_clarification");
+  assert.ok(parsed.issues.length > 0, "downgrade stays recorded");
+  assert.equal(parsed.dropped, 0);
+});
+
+test("other-category findings with mixed documents downgrade instead of dropping", () => {
+  const docs = [...DOCS, INVOICE];
+  const mixed = {
+    category: "other",
+    contractClause: {
+      documentId: "doc-contract",
+      claim: "Base salary is £12.50 per hour.",
+      sourceExcerpt: "Base salary is £12.50 per hour.",
+    },
+    supportingEvidence: {
+      documentId: "doc-invoice",
+      claim: "£120 accommodation charge invoiced for March.",
+      sourceExcerpt: "Invoice total: £120 accommodation charge for March.",
+    },
+    status: "not_addressed",
+    explanation:
+      "The invoice total sits beside a written salary term. Excerpts only were compared.",
+    followUpQuestion: "Does the salary already account for the invoiced charge?",
+  };
+  const parsed = parsePromiseComparison(JSON.stringify([mixed]), docs);
+  assert.equal(parsed.findings.length, 1);
+  assert.equal(parsed.findings[0]?.status, "needs_clarification");
+  assert.ok(parsed.findings[0]?.contractClause);
+  assert.ok(parsed.findings[0]?.supportingEvidence);
+});
+
+test("stored-report validator accepts other-category findings", () => {
+  const result = validatePromiseToPaperFinding({
+    category: "other",
+    supportingEvidence: {
+      category: "other",
+      claim: "£120 accommodation charge invoiced for March.",
+      documentReference: {
+        documentId: "doc-invoice",
+        documentType: "other",
+        fileName: "invoice.pdf",
+        pageNumber: 1,
+      },
+      sourceExcerpt: "Invoice total: £120 accommodation charge for March.",
+    },
+    status: "needs_clarification",
+    explanation:
+      "The invoice records a charge no other document addresses. Excerpts only were compared.",
+    followUpQuestion: "What does the invoiced charge cover?",
+  });
+  assert.equal(result.valid, true);
 });

@@ -81,6 +81,7 @@ const CATEGORY_ENUM = [
   "termination",
   "immigration",
   "responsibilities",
+  "other",
 ];
 
 const STATUS_ENUM = ["consistent", "discrepancy", "not_addressed", "needs_clarification"];

@@ -20,7 +20,11 @@ export type ComparisonStatus =
   | "not_addressed"
   | "needs_clarification";
 
-/** Fixed employment-term categories (§3 of the milestone brief). */
+/**
+ * Employment-term categories (§3 of the milestone brief) plus a
+ * miscellaneous catch-all for supporting documents (invoices, …) whose
+ * terms fit none of the employment categories.
+ */
 export type ContractCategory =
   | "compensation"
   | "deductions"
@@ -29,7 +33,8 @@ export type ContractCategory =
   | "benefits"
   | "termination"
   | "immigration"
-  | "responsibilities";
+  | "responsibilities"
+  | "other";
 
 /** Pointer to the exact place a claim was taken from. */
 export interface DocumentReference {

@@ -54,6 +54,7 @@ test("extraction prompt embeds pages with markers and category rules", () => {
     "termination",
     "immigration",
     "responsibilities",
+    "other",
   ]) {
     assert.ok(prompt.includes(category), `missing category ${category}`);
   }
@@ -115,6 +116,33 @@ test("comparison prompt embeds terms, document labels, statuses, and the worked 
   assert.match(prompt, /numerical differences/);
   assert.match(prompt, /Do not label any employer/i);
   assert.match(prompt, /recruiter says accommodation is free/);
+});
+
+test("extraction prompt files miscellaneous documents leniently under other", () => {
+  const invoice: ContractDocumentText = {
+    ...DOC,
+    documentType: "other",
+    fileName: "invoice.pdf",
+  };
+  const prompt = buildExtractionPrompt(invoice);
+  assert.match(prompt, /miscellaneous supporting document/i);
+  assert.match(prompt, /under "other"/);
+  assert.match(prompt, /never force a term into an employment category/i);
+  assert.ok(
+    !buildExtractionPrompt(DOC).includes("miscellaneous supporting document"),
+    "strict documents keep the unmodified prompt",
+  );
+});
+
+test("comparison prompt compares other-category terms leniently", () => {
+  const inputs: ComparisonInput[] = [
+    { documentId: "doc-1", documentType: "employment_contract", fileName: "c.pdf", terms: [claim()] },
+  ];
+  assert.match(buildPromiseComparisonPrompt(inputs), /category "other".*leniently/i);
+  assert.match(
+    buildPromiseComparisonPrompt(inputs),
+    /prefer 'needs_clarification' over 'discrepancy'/,
+  );
 });
 
 test("default prompts carry no output-language rule (byte-identical English)", () => {

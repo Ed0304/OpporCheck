@@ -272,6 +272,7 @@ export const COMPARE_CATEGORY_LABELS: Record<ContractCategory, string> = {
   termination: "Termination",
   immigration: "Immigration & work authorization",
   responsibilities: "Responsibilities",
+  other: "Others",
 };
 
 export const COMPARE_DOC_TYPE_LABELS: Record<ContractDocumentType, string> = {
@@ -292,6 +293,7 @@ export const COMPARE_CATEGORY_LABELS_ID: Record<ContractCategory, string> = {
   termination: "Pemutusan hubungan kerja",
   immigration: "Imigrasi & otorisasi kerja",
   responsibilities: "Tanggung jawab",
+  other: "Lainnya",
 };
 
 export const COMPARE_DOC_TYPE_LABELS_ID: Record<ContractDocumentType, string> = {

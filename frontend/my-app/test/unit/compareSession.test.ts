@@ -70,7 +70,7 @@ test("toContractText maps session input to comparison text", () => {
 });
 
 test("every contract category has a display label", () => {
-  assert.equal(Object.keys(COMPARE_CATEGORY_LABELS).length, 8);
+  assert.equal(Object.keys(COMPARE_CATEGORY_LABELS).length, 9);
   for (const label of Object.values(COMPARE_CATEGORY_LABELS)) {
     assert.ok(label.trim().length > 0);
   }

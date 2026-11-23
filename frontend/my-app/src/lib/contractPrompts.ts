@@ -52,6 +52,8 @@ export const CATEGORY_GUIDE: Record<ContractCategory, string> = {
     "immigration: visa or permit references, sponsorship claims, work authorization conditions.",
   responsibilities:
     "responsibilities: job title, duties, workplace location, reporting arrangements.",
+  other:
+    "other: miscellaneous related terms that fit none of the above (invoice totals, payment references, receipt details, dates).",
 };
 
 const CATEGORY_NAMES = Object.keys(CATEGORY_GUIDE) as ContractCategory[];
@@ -98,6 +100,15 @@ export function buildExtractionPrompt(
 ): string {
   const { text, trimmed } = truncateWithMarker(formatDocumentPages(doc), EXTRACTION_MAX_CHARS);
   const categories = CATEGORY_NAMES.map((name) => `- ${CATEGORY_GUIDE[name]}`).join("\n");
+  // Miscellaneous uploads (invoices, receipts) extract leniently: forcing
+  // their terse lines into employment categories backfires into false
+  // terms, so anything without a clear match files under "other".
+  const otherDocRule =
+    doc.documentType === "other"
+      ? "- This is a miscellaneous supporting document (invoice, receipt, or similar): extract related terms leniently, " +
+        'file anything that fits none of the employment categories under "other", ' +
+        "and never force a term into an employment category it does not clearly match.\n"
+      : "";
   return (
     `You extract structured employment terms from the ${DOCUMENT_TYPE_LABELS[doc.documentType].toLowerCase()} below. ` +
     "Output JSON only.\n" +
@@ -106,6 +117,7 @@ export function buildExtractionPrompt(
     "- For each employment term found, output its category, a short neutral claim, and the sourceExcerpt copied VERBATIM from the document text below. Never paraphrase or invent quotations.\n" +
     "- Use only these categories:\n" +
     `${categories}\n` +
+    otherDocRule +
     "- If a category has no stated term, list it under missing_categories. Never invent a value for a missing term.\n" +
     "- Do not judge whether any clause is legal, illegal, fair, or unfair. Describe only what the document states.\n" +
     "- Do not label any employer, recruiter, or offer legitimate or fraudulent.\n" +
@@ -184,7 +196,10 @@ export function buildPromiseComparisonPrompt(
     "contractClause only for offer letters and employment contracts. An offer letter is a written document: " +
     "never file it under recruiterStatement or advertisementClaim. " +
     "Use supportingEvidence only for 'Other document' uploads such as invoices and receipts; " +
-    "it adds context alongside promise and written terms.\n\n" +
+    "it adds context alongside promise and written terms.\n" +
+    '- Terms filed under category "other" come from miscellaneous supporting documents: compare them leniently, ' +
+    "prefer 'needs_clarification' over 'discrepancy' when wording is terse or amounts lack context, " +
+    "and never treat a missing counterpart alone as a discrepancy.\n\n" +
     `Documents:\n${header}\n\n` +
     `Extracted terms:\n${lines.join("\n")}`
   );

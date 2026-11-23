@@ -369,6 +369,14 @@ export interface AttributableSource {
 /** Minimum normalized excerpt length for a match (avoids trivial substrings). */
 export const MIN_ATTRIBUTION_CHARS = 20;
 
+/**
+ * Lenient floor for miscellaneous ("other") documents only. Invoices and
+ * receipts state terms tersely ("total: £120"), so the strict 20-char bar
+ * would drop genuine verbatim quotes. Still long enough to avoid matching
+ * stray words; employment documents keep the strict floor.
+ */
+export const MIN_ATTRIBUTION_CHARS_OTHER = 10;
+
 function normalizeForAttribution(text: string): string {
   return text.replace(/\s+/g, " ").trim().toLowerCase();
 }
@@ -506,6 +514,7 @@ export const CONTRACT_CATEGORIES: readonly ContractCategory[] = [
   "termination",
   "immigration",
   "responsibilities",
+  "other",
 ];
 
 /** Promise-side slots (advertisements, recruiter messages) vs written terms. */
@@ -791,15 +800,22 @@ export function validatePromiseToPaperFinding(
  * verbatim quote may include them; the retry below strips that
  * scaffolding before giving up. Fabrication still cannot match, and the
  * page always comes from search, never from a quoted marker.
+ *
+ * Callers pass the lenient floor for miscellaneous ("other") documents;
+ * the default strict floor applies everywhere else.
  */
-export function locateExcerptPage(pages: string[], excerpt: string): number | null {
+export function locateExcerptPage(
+  pages: string[],
+  excerpt: string,
+  minChars: number = MIN_ATTRIBUTION_CHARS,
+): number | null {
   const normalized = normalizeForAttribution(excerpt);
-  if (normalized.length < MIN_ATTRIBUTION_CHARS) {
+  if (normalized.length < minChars) {
     return null;
   }
   const candidates = [normalized];
   const stripped = normalized.replace(/\[page\s+\d+\]/g, " ").replace(/\s+/g, " ").trim();
-  if (stripped.length >= MIN_ATTRIBUTION_CHARS && stripped !== normalized) {
+  if (stripped.length >= minChars && stripped !== normalized) {
     candidates.push(stripped);
   }
   for (const candidate of candidates) {
@@ -810,6 +826,13 @@ export function locateExcerptPage(pages: string[], excerpt: string): number | nu
     }
   }
   return null;
+}
+
+/** Lenient attribution floor for miscellaneous documents, strict otherwise. */
+function attributionFloor(documentType: ContractDocumentType): number {
+  return documentType === "other"
+    ? MIN_ATTRIBUTION_CHARS_OTHER
+    : MIN_ATTRIBUTION_CHARS;
 }
 
 export interface ParsedExtraction {
@@ -886,7 +909,11 @@ export function parseExtractionOutput(
       return;
     }
     const excerpt = (item["sourceExcerpt"] as string).trim();
-    const pageNumber = locateExcerptPage(doc.pages, excerpt);
+    const pageNumber = locateExcerptPage(
+      doc.pages,
+      excerpt,
+      attributionFloor(doc.documentType),
+    );
     if (pageNumber === null) {
       issues.push(`${label}.sourceExcerpt does not appear in ${doc.fileName}`);
       return;
@@ -1037,7 +1064,11 @@ export function parsePromiseComparison(
       return null;
     }
     const excerpt = (raw["sourceExcerpt"] as string).trim();
-    const pageNumber = locateExcerptPage(doc.pages, excerpt);
+    const pageNumber = locateExcerptPage(
+      doc.pages,
+      excerpt,
+      attributionFloor(doc.documentType),
+    );
     if (pageNumber === null) {
       issues.push(`${label}.${slotKey}.sourceExcerpt does not appear in ${doc.fileName}`);
       return null;
@@ -1118,9 +1149,19 @@ export function parsePromiseComparison(
       issues.push(`${label}: ${dropped}`);
     }
     const coherent = checkFindingCoherence(partition.kept, statusValue as ComparisonStatus);
+    let status = statusValue as ComparisonStatus;
     if (coherent) {
-      issues.push(`${label}: ${coherent}`);
-      return;
+      // Miscellaneous findings stay visible: single-document or mixed
+      // "other" evidence downgrades to needs_clarification instead of
+      // dropping, so invoices and receipts never vanish from the report.
+      // Empty findings still drop — leniency never invents evidence.
+      if (category === "other" && partition.kept.length > 0) {
+        issues.push(`${label}: ${coherent} — kept as needs_clarification for lenient review`);
+        status = "needs_clarification";
+      } else {
+        issues.push(`${label}: ${coherent}`);
+        return;
+      }
     }
     const bySlot = new Map(partition.kept.map(({ slot, claim }) => [slot, claim]));
     findings.push({
@@ -1137,7 +1178,7 @@ export function parsePromiseComparison(
       ...(bySlot.has("supportingEvidence")
         ? { supportingEvidence: bySlot.get("supportingEvidence") as EmploymentClaim }
         : {}),
-      status: statusValue as ComparisonStatus,
+      status,
       explanation: (item["explanation"] as string).trim(),
       followUpQuestion: (item["followUpQuestion"] as string).trim(),
     });
