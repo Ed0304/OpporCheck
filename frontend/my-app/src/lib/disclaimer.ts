@@ -39,9 +39,9 @@ export const INVESTIGATION_CONTEXT_NOTICE =
 export const UPLOAD_SENSITIVITY_NOTICE =
   "Employment documents may contain sensitive personal information such as names, addresses, identity numbers, and bank details. Upload only documents you are authorized to share.";
 
-/** Shown before document upload: keep sensitive PII out of uploaded files. */
+/** Shown before document upload: remove high-risk identifiers first. */
 export const UPLOAD_PII_WARNING =
-  "Please ensure no sensitive information, such as DOB, ID numbers, as well as other sensitive PII is included before you upload any documents.";
+  "Remove highly sensitive identifiers such as ID numbers and bank details before uploading; Privacy Check will help you review the rest.";
 
 /** Review-page processing disclosure: fixed hybrid mode, stated plainly. */
 export const REVIEW_PROCESSING_NOTICE =
@@ -74,7 +74,7 @@ export const UPLOAD_SENSITIVITY_NOTICE_ID =
   "Dokumen pekerjaan dapat memuat informasi personal yang sensitif seperti nama, alamat, nomor identitas, dan detail bank. Unggah hanya dokumen yang boleh Anda bagikan.";
 
 export const UPLOAD_PII_WARNING_ID =
-  "Pastikan tidak ada informasi sensitif, seperti tanggal lahir, nomor identitas, serta PII sensitif lainnya, yang disertakan sebelum Anda mengunggah dokumen apa pun.";
+  "Hapus pengidentifikasi yang sangat sensitif seperti nomor identitas dan detail bank sebelum mengunggah; Periksa Privasi akan membantu Anda meninjau sisanya.";
 
 export const REVIEW_PROCESSING_NOTICE_ID =
   "Analisis berjalan di perangkat bila browser Anda mendukungnya, atau di cloud via Firebase AI Logic. Teks lowongan Anda keluar dari perangkat hanya untuk analisis cloud.";
