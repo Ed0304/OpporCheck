@@ -650,7 +650,7 @@ export default function ReviewPage() {
               <ContextualNotice>{getUploadSensitivityNotice(language)}</ContextualNotice>
               <ContextualNotice>{getUploadPiiWarning(language)}</ContextualNotice>
             </div>
-            <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-wrap items-start gap-3">
               <Field label={t.revDocLanguage} htmlFor="pdf-language">
                 <select
                   id="pdf-language"
@@ -809,7 +809,7 @@ export default function ReviewPage() {
               <ContextualNotice>{getUploadSensitivityNotice(language)}</ContextualNotice>
               <ContextualNotice>{getUploadPiiWarning(language)}</ContextualNotice>
             </div>
-            <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-wrap items-start gap-3">
               <Field label={t.revDocLanguage} htmlFor="ocr-language">
                 <select
                   id="ocr-language"

@@ -10,7 +10,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useId, useState } from "react";
+import { Suspense, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ActivePill, OC_DURATION, OC_EASE } from "@/components/motion";
 import { useAuth } from "@/lib/auth";
@@ -86,11 +86,12 @@ function ThemeSwitcher() {
   );
 }
 
-function AccountMenu() {
+function AccountMenu({ inline = false, onNavigate }: { inline?: boolean; onNavigate?: () => void }) {
   const { user, signOutUser } = useAuth();
   const { language } = useLang();
   const t = getStrings(language);
   const [open, setOpen] = useState(false);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
   if (!user) {
     return (
       <Link
@@ -102,9 +103,19 @@ function AccountMenu() {
     );
   }
   const label = user.displayName || user.email || t.headerAccountFallback;
+  const handleNavigate = () => {
+    if (detailsRef.current) {
+      detailsRef.current.open = false;
+    }
+    onNavigate?.();
+  };
   return (
-    <details className="relative" onToggle={(event) => setOpen(event.currentTarget.open)}>
-      <summary className="inline-flex h-9 cursor-pointer list-none items-center rounded-md border border-edge px-3 text-sm font-medium hover:bg-brand-soft [&::-webkit-details-marker]:hidden">
+    <details ref={detailsRef} className="relative" onToggle={(event) => setOpen(event.currentTarget.open)}>
+      <summary
+        className={`inline-flex h-9 cursor-pointer list-none items-center rounded-md border border-edge px-3 text-sm font-medium hover:bg-brand-soft [&::-webkit-details-marker]:hidden${
+          inline ? " w-full" : ""
+        }`}
+      >
         {label.length > 24 ? `${label.slice(0, 24)}…` : label}
       </summary>
       {open && (
@@ -112,17 +123,23 @@ function AccountMenu() {
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: OC_DURATION.fast, ease: OC_EASE }}
-        className="oc-glass-strong absolute right-0 z-40 mt-2 w-52 rounded-md border border-edge p-1"
+        className={
+          inline
+            ? "oc-glass-strong mt-2 w-full rounded-md border border-edge p-1"
+            : "oc-glass-strong absolute right-0 z-40 mt-2 w-52 rounded-md border border-edge p-1"
+        }
       >
         <p className="truncate px-3 py-2 text-xs text-muted">{user.email}</p>
         <Link
           href="/workspace"
+          onClick={handleNavigate}
           className="block rounded px-3 py-2 text-sm hover:bg-brand-soft"
         >
           {t.headerWorkspace}
         </Link>
         <Link
           href="/workspace/settings"
+          onClick={handleNavigate}
           className="block rounded px-3 py-2 text-sm hover:bg-brand-soft"
         >
           {t.headerSettings}
@@ -285,7 +302,9 @@ export default function AppHeader({ links }: { links: NavLink[] }) {
               <div className="mt-2 flex items-center gap-2 border-t border-edge pt-3">
                 <LanguageSelector />
                 <ThemeSwitcher />
-                <AccountMenu />
+              </div>
+              <div className="mt-2">
+                <AccountMenu inline onNavigate={closeMenu} />
               </div>
             </div>
           </motion.nav>

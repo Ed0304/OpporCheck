@@ -679,7 +679,7 @@ export default function ComparePage() {
           <ContextualNotice>{getUploadSensitivityNotice(language)}</ContextualNotice>
           <ContextualNotice>{getUploadPiiWarning(language)}</ContextualNotice>
         </div>
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-start gap-3">
           <Field label={t.cmpNextDocLabel} htmlFor="next-doc-type">
             <select
               id="next-doc-type"
