@@ -19,10 +19,9 @@ import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import { SpotImage, SpotPdf, SpotText } from "@/components/spot";
 import { Button, Card, EmptyState, Field, FilePicker, PageHeader, StatusLabel, Stepper } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
-import { getReviewProcessingNotice, getUploadSensitivityNotice } from "@/lib/disclaimer";
+import { getReviewProcessingNotice, getUploadPiiWarning, getUploadSensitivityNotice } from "@/lib/disclaimer";
 import {
   OCR_LANGUAGES,
-  apiBase,
   failedPageNumbers,
   ocrConfidenceSummary,
   shouldWarnLowConfidence,
@@ -647,8 +646,9 @@ export default function ReviewPage() {
 
         {tab === "pdf" && (
           <div role="tabpanel" className="mt-3">
-            <div className="mb-3">
+            <div className="mb-3 flex flex-col gap-2">
               <ContextualNotice>{getUploadSensitivityNotice(language)}</ContextualNotice>
+              <ContextualNotice>{getUploadPiiWarning(language)}</ContextualNotice>
             </div>
             <div className="flex flex-wrap items-end gap-3">
               <Field label={t.revDocLanguage} htmlFor="pdf-language">
@@ -671,7 +671,7 @@ export default function ReviewPage() {
               <Field
                 label={t.revPdfLabel}
                 htmlFor="pdf-file"
-                hint={format(t.revPdfHint, { base: apiBase() })}
+                hint={t.revPdfHint}
                 error={pdf.phase === "error" ? pdf.message : null}
               >
                 <FilePicker
@@ -805,8 +805,9 @@ export default function ReviewPage() {
 
         {tab === "image" && (
           <div role="tabpanel" className="mt-3">
-            <div className="mb-3">
+            <div className="mb-3 flex flex-col gap-2">
               <ContextualNotice>{getUploadSensitivityNotice(language)}</ContextualNotice>
+              <ContextualNotice>{getUploadPiiWarning(language)}</ContextualNotice>
             </div>
             <div className="flex flex-wrap items-end gap-3">
               <Field label={t.revDocLanguage} htmlFor="ocr-language">
@@ -832,7 +833,7 @@ export default function ReviewPage() {
               <Field
                 label={t.revImageLabel}
                 htmlFor="ocr-file"
-                hint={format(t.revImageHint, { base: apiBase() })}
+                hint={t.revImageHint}
                 error={
                   ocr.phase === "invalid" || ocr.phase === "error" ? ocr.message : null
                 }

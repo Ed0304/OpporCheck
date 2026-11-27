@@ -238,10 +238,8 @@ export function uploadPdf(
       reject(
         new Error(
           id
-            ? `Tidak dapat menghubungi layanan dokumen di ${base}. Jalankan backend terlebih ` +
-              "dahulu (lihat backend/README.md), atau tempel teks sebagai gantinya."
-            : `Cannot reach the document service at ${base}. Start the backend first ` +
-              "(see backend/README.md), or paste the text instead.",
+            ? "Tidak dapat menghubungi layanan dokumen. Periksa koneksi Anda dan coba lagi, atau tempel teks sebagai gantinya."
+            : "Cannot reach the document service. Check your connection and try again, or paste the text instead.",
         ),
       );
     };
@@ -485,10 +483,8 @@ export function uploadImage(
       reject(
         new Error(
           id
-            ? `Tidak dapat menghubungi layanan dokumen di ${base}. Jalankan backend terlebih ` +
-              "dahulu (lihat backend/README.md), atau tempel teks sebagai gantinya."
-            : `Cannot reach the document service at ${base}. Start the backend first ` +
-              "(see backend/README.md), or paste the text instead.",
+            ? "Tidak dapat menghubungi layanan dokumen. Periksa koneksi Anda dan coba lagi, atau tempel teks sebagai gantinya."
+            : "Cannot reach the document service. Check your connection and try again, or paste the text instead.",
         ),
       );
     };

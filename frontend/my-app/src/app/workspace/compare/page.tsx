@@ -18,7 +18,7 @@ import { ContextualNotice } from "@/components/Disclaimer";
 import { Crossfade, Enter, ProgressBar } from "@/components/motion";
 import PrivacyCheckPanel from "@/components/PrivacyCheckPanel";
 import { Button, Card, EmptyState, EvidenceQuote, Field, FilePicker, PageHeader, Spinner, StatusLabel, Stepper } from "@/components/ui";
-import { getUploadSensitivityNotice } from "@/lib/disclaimer";
+import { getUploadPiiWarning, getUploadSensitivityNotice } from "@/lib/disclaimer";
 import {
   createExtractionModel,
   createPromiseComparisonModel,
@@ -68,7 +68,7 @@ import { useLang } from "@/lib/lang";
 import { format, getStrings, type UiLanguage } from "@/lib/strings";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { mapServiceError } from "@/lib/aiErrors";
-import { apiBase, uploadPdf, validatePdfFile } from "@/lib/documents";
+import { uploadPdf, validatePdfFile } from "@/lib/documents";
 import { getFirebaseClient, probeFirebaseConfig } from "@/lib/firebaseClient";
 import { getInvestigationsDb } from "@/lib/investigations";
 
@@ -675,8 +675,9 @@ export default function ComparePage() {
         eyebrow="01"
         description={format(t.cmpDocsDesc, { max: String(MAX_DOCS) })}
       >
-        <div className="mb-3">
+        <div className="mb-3 flex flex-col gap-2">
           <ContextualNotice>{getUploadSensitivityNotice(language)}</ContextualNotice>
+          <ContextualNotice>{getUploadPiiWarning(language)}</ContextualNotice>
         </div>
         <div className="flex flex-wrap items-end gap-3">
           <Field label={t.cmpNextDocLabel} htmlFor="next-doc-type">
@@ -696,7 +697,7 @@ export default function ComparePage() {
           <Field
             label={t.cmpUploadPdf}
             htmlFor="compare-pdf"
-            hint={format(t.cmpUploadPdfHint, { base: apiBase() })}
+            hint={t.cmpUploadPdfHint}
           >
             <FilePicker
               id="compare-pdf"

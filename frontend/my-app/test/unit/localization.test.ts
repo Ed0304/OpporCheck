@@ -24,6 +24,7 @@ import {
   FULL_DISCLAIMER_PARAGRAPHS,
   INVESTIGATION_CONTEXT_NOTICE,
   REVIEW_PROCESSING_NOTICE,
+  UPLOAD_PII_WARNING,
   UPLOAD_SENSITIVITY_NOTICE,
   getAnalysisContextNotice,
   getComparisonContextNotice,
@@ -31,6 +32,7 @@ import {
   getFullDisclaimerParagraphs,
   getInvestigationContextNotice,
   getReviewProcessingNotice,
+  getUploadPiiWarning,
   getUploadSensitivityNotice,
 } from "../../src/lib/disclaimer";
 import {
@@ -92,6 +94,7 @@ test("disclaimer getters keep canonical English and draft Indonesian", () => {
   assert.equal(getComparisonContextNotice("en"), COMPARISON_CONTEXT_NOTICE);
   assert.equal(getInvestigationContextNotice("en"), INVESTIGATION_CONTEXT_NOTICE);
   assert.equal(getUploadSensitivityNotice("en"), UPLOAD_SENSITIVITY_NOTICE);
+  assert.equal(getUploadPiiWarning("en"), UPLOAD_PII_WARNING);
   assert.equal(getReviewProcessingNotice("en"), REVIEW_PROCESSING_NOTICE);
   assert.equal(getFullDisclaimerParagraphs("id").length, 4);
   for (const paragraph of getFullDisclaimerParagraphs("id")) {
@@ -103,6 +106,7 @@ test("disclaimer getters keep canonical English and draft Indonesian", () => {
     getComparisonContextNotice("id"),
     getInvestigationContextNotice("id"),
     getUploadSensitivityNotice("id"),
+    getUploadPiiWarning("id"),
     getReviewProcessingNotice("id"),
   ]) {
     assert.ok(notice.length > 0);

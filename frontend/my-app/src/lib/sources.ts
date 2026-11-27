@@ -48,12 +48,10 @@ export interface RetrievalResult {
   errors: SourceRetrievalError[];
 }
 
-function serviceHint(base: string, language: UiLanguage): string {
+function serviceHint(language: UiLanguage): string {
   return language === "id"
-    ? `Tidak dapat menghubungi layanan bukti di ${base}. Jalankan backend terlebih dahulu ` +
-      "(lihat backend/README.md)."
-    : `Cannot reach the evidence service at ${base}. Start the backend first ` +
-      "(see backend/README.md).";
+    ? "Tidak dapat menghubungi layanan bukti. Periksa koneksi Anda dan coba lagi."
+    : "Cannot reach the evidence service. Check your connection and try again.";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -126,7 +124,7 @@ export async function listOfficialSources(
       { headers },
     );
   } catch {
-    throw new Error(serviceHint(base, language));
+    throw new Error(serviceHint(language));
   }
   let data: unknown = null;
   try {
@@ -187,7 +185,7 @@ export async function retrieveOfficialSources(
       body: JSON.stringify({ source_ids: sourceIds, queries, profile }),
     });
   } catch {
-    throw new Error(serviceHint(base, language));
+    throw new Error(serviceHint(language));
   }
   let data: unknown = null;
   try {

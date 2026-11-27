@@ -39,6 +39,10 @@ export const INVESTIGATION_CONTEXT_NOTICE =
 export const UPLOAD_SENSITIVITY_NOTICE =
   "Employment documents may contain sensitive personal information such as names, addresses, identity numbers, and bank details. Upload only documents you are authorized to share.";
 
+/** Shown before document upload: keep sensitive PII out of uploaded files. */
+export const UPLOAD_PII_WARNING =
+  "Please ensure no sensitive information, such as DOB, ID numbers, as well as other sensitive PII is included before you upload any documents.";
+
 /** Review-page processing disclosure: fixed hybrid mode, stated plainly. */
 export const REVIEW_PROCESSING_NOTICE =
   "Analysis runs on-device when your browser supports it, otherwise in the cloud via Firebase AI Logic. Your posting text leaves the device only for cloud analysis.";
@@ -69,6 +73,9 @@ export const INVESTIGATION_CONTEXT_NOTICE_ID =
 export const UPLOAD_SENSITIVITY_NOTICE_ID =
   "Dokumen pekerjaan dapat memuat informasi personal yang sensitif seperti nama, alamat, nomor identitas, dan detail bank. Unggah hanya dokumen yang boleh Anda bagikan.";
 
+export const UPLOAD_PII_WARNING_ID =
+  "Pastikan tidak ada informasi sensitif, seperti tanggal lahir, nomor identitas, serta PII sensitif lainnya, yang disertakan sebelum Anda mengunggah dokumen apa pun.";
+
 export const REVIEW_PROCESSING_NOTICE_ID =
   "Analisis berjalan di perangkat bila browser Anda mendukungnya, atau di cloud via Firebase AI Logic. Teks lowongan Anda keluar dari perangkat hanya untuk analisis cloud.";
 
@@ -94,6 +101,10 @@ export function getInvestigationContextNotice(language: UiLanguage): string {
 
 export function getUploadSensitivityNotice(language: UiLanguage): string {
   return language === "id" ? UPLOAD_SENSITIVITY_NOTICE_ID : UPLOAD_SENSITIVITY_NOTICE;
+}
+
+export function getUploadPiiWarning(language: UiLanguage): string {
+  return language === "id" ? UPLOAD_PII_WARNING_ID : UPLOAD_PII_WARNING;
 }
 
 export function getReviewProcessingNotice(language: UiLanguage): string {

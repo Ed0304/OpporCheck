@@ -369,7 +369,7 @@ const EN = {
   revDocLanguage: "Document language",
   revPdfLabel: "PDF offer document",
   revPdfHint:
-    "PDF up to 10 MB and 30 pages. Text pages extract directly; scanned pages are OCRed by the document service at {base}. Thai and Vietnamese are not supported.",
+    "PDF up to 10 MB and 30 pages. Text pages extract directly; scanned pages are OCRed. Thai and Vietnamese are not supported.",
   revPdfProgressAria: "PDF upload progress",
   revPdfExtracted:
     "Extracted {pages} {pageWord} from {name}{trimmed}: {native} {nativeWord}, {ocr} OCR{failed}. {review}",
@@ -393,7 +393,7 @@ const EN = {
   revPageFailed: "Failed",
   revImageLabel: "Image offer document",
   revImageHint:
-    "JPG or PNG up to 10 MB (max 8000 px per side). Text is extracted by the document service at {base}. Thai and Vietnamese are not supported.",
+    "JPG or PNG up to 10 MB (max 8000 px per side). Text is extracted automatically. Thai and Vietnamese are not supported.",
   revImageProgressAria: "Image upload and OCR progress",
   revOcrLowWarn:
     "Low confidence on {low} of {lines} lines (mean {mean}%). Check figures, " +
@@ -616,7 +616,7 @@ const EN = {
   cmpNextDocLabel: "Next document is a",
   cmpUploadPdf: "Upload PDF",
   cmpUploadPdfHint:
-    "PDF up to 10 MB and 30 pages via {base}. Text pages extract directly; scanned pages are OCRed.",
+    "PDF up to 10 MB and 30 pages. Text pages extract directly; scanned pages are OCRed.",
   cmpPasteLabel: "Or paste document text",
   cmpPastePlaceholder: "Paste a recruiter message, ad, offer, or contract clause…",
   cmpPasteNameLabel: "Pasted document name",
@@ -1253,7 +1253,7 @@ const ID: UiStrings = {
   revDocLanguage: "Bahasa dokumen",
   revPdfLabel: "Dokumen penawaran PDF",
   revPdfHint:
-    "PDF hingga 10 MB dan 30 halaman. Halaman teks diekstrak langsung; halaman pindaian di-OCR oleh layanan dokumen di {base}. Bahasa Thai dan Vietnam tidak didukung.",
+    "PDF hingga 10 MB dan 30 halaman. Halaman teks diekstrak langsung; halaman pindaian di-OCR. Bahasa Thai dan Vietnam tidak didukung.",
   revPdfProgressAria: "Kemajuan unggahan PDF",
   revPdfExtracted:
     "{pages} {pageWord} diekstrak dari {name}{trimmed}: {native} {nativeWord}, {ocr} OCR{failed}. {review}",
@@ -1277,7 +1277,7 @@ const ID: UiStrings = {
   revPageFailed: "Gagal",
   revImageLabel: "Dokumen penawaran gambar",
   revImageHint:
-    "JPG atau PNG hingga 10 MB (maks 8000 px per sisi). Teks diekstrak oleh layanan dokumen di {base}. Bahasa Thai dan Vietnam tidak didukung.",
+    "JPG atau PNG hingga 10 MB (maks 8000 px per sisi). Teks diekstrak otomatis. Bahasa Thai dan Vietnam tidak didukung.",
   revImageProgressAria: "Kemajuan unggahan gambar dan OCR",
   revOcrLowWarn:
     "Kepercayaan rendah pada {low} dari {lines} baris (rata-rata {mean}%). Periksa angka, " +
@@ -1494,7 +1494,7 @@ const ID: UiStrings = {
   cmpNextDocLabel: "Dokumen berikutnya adalah",
   cmpUploadPdf: "Unggah PDF",
   cmpUploadPdfHint:
-    "PDF hingga 10 MB dan 30 halaman via {base}. Halaman teks diekstrak langsung; halaman pindaian di-OCR.",
+    "PDF hingga 10 MB dan 30 halaman. Halaman teks diekstrak langsung; halaman pindaian di-OCR.",
   cmpPasteLabel: "Atau tempel teks dokumen",
   cmpPastePlaceholder: "Tempel pesan perekrut, iklan, penawaran, atau klausul kontrak…",
   cmpPasteNameLabel: "Nama dokumen yang ditempel",

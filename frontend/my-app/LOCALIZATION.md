@@ -24,7 +24,7 @@ cover the whole site. No i18n framework, no new dependencies.
 | Flat website-wide UI strings (EN canonical, ID drafts) | `src/lib/strings.ts` | `getStrings(lang)` → `t.key`, `format(tpl, {…})` |
 | Plan-item / official-source category labels | `src/lib/strings.ts` | `getPlanCategoryLabel(lang, cat)`, `getSourceCategoryLabel(lang, cat)` |
 | Assessment / comparison status labels, phrases | `src/lib/reportLanguage.ts` | `getAssessmentLabels`, `getComparisonStatusLabels`, `getMissingInfoLabel`, `getUnverifiedPhrase` |
-| Full disclaimer + contextual notices | `src/lib/disclaimer.ts` | `getFullDisclaimerParagraphs`, `getConciseNotice`, `getAnalysisContextNotice`, `getComparisonContextNotice`, `getInvestigationContextNotice`, `getUploadSensitivityNotice`, `getReviewProcessingNotice` |
+| Full disclaimer + contextual notices | `src/lib/disclaimer.ts` | `getFullDisclaimerParagraphs`, `getConciseNotice`, `getAnalysisContextNotice`, `getComparisonContextNotice`, `getInvestigationContextNotice`, `getUploadSensitivityNotice`, `getUploadPiiWarning`, `getReviewProcessingNotice` |
 | Compare category / doc-type labels, gate reasons | `src/lib/compareSession.ts` | `getCompareCategoryLabels`, `getCompareDocTypeLabels`, `analysisGate(…, lang?)`, `failedPagesLimitation(…, lang?)`, `recordPageApproval(…, lang?)`, `approvedPagesOrThrow(…, lang?)` |
 | Privacy-gate disclosures and enforcement messages | `src/lib/privacyGate.ts` | `describeInference(…, lang?)`, `describeActualSource(…, lang?)`, `assertAnalysisAllowed(…, lang?)`, `resolveSavePayload({…, language?})` |
 | Privacy category titles, detection labels/reasons | `src/lib/privacyDetection.ts` | `getCategoryTitles(lang)`, `detectSensitiveInfo(text, lang?)` |

@@ -14,6 +14,7 @@ import {
   FULL_DISCLAIMER_PARAGRAPHS,
   INVESTIGATION_CONTEXT_NOTICE,
   REVIEW_PROCESSING_NOTICE,
+  UPLOAD_PII_WARNING,
   UPLOAD_SENSITIVITY_NOTICE,
 } from "../../src/lib/disclaimer";
 import {
@@ -54,6 +55,9 @@ test("contextual notices carry their placement-specific meaning", () => {
   assert.match(INVESTIGATION_CONTEXT_NOTICE, /does not independently verify any specific employer/);
   assert.match(UPLOAD_SENSITIVITY_NOTICE, /sensitive personal information/);
   assert.match(UPLOAD_SENSITIVITY_NOTICE, /only documents you are authorized to share/);
+  assert.match(UPLOAD_PII_WARNING, /no sensitive information/);
+  assert.match(UPLOAD_PII_WARNING, /DOB, ID numbers/);
+  assert.match(UPLOAD_PII_WARNING, /before you upload any documents/);
   assert.match(REVIEW_PROCESSING_NOTICE, /on-device when your browser supports it/);
   assert.match(REVIEW_PROCESSING_NOTICE, /leaves the device only for cloud analysis/);
 });
@@ -91,6 +95,7 @@ test("no user-facing label carries a fraud verdict or guarantee", () => {
     INVESTIGATION_CONTEXT_NOTICE,
     CONCISE_NOTICE,
     UPLOAD_SENSITIVITY_NOTICE,
+    UPLOAD_PII_WARNING,
     REVIEW_PROCESSING_NOTICE,
   ];
   for (const label of labels) {
