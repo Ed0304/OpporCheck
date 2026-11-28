@@ -215,6 +215,42 @@ class CorridorRouteTests(unittest.TestCase):
         self.assertIn("sg-mom", kwargs["catalog"])
         self.assertNotIn("minimum-wage-rates", kwargs["catalog"])
 
+    def test_retrieve_request_accepts_planner_max_payload(self):
+        """The largest real frontend payload must validate (no 422).
+
+        The investigation planner emits up to 12 questions and the
+        evidence panel sends every catalog id covering the plan's
+        categories, so the request model must accept a full-catalog
+        id list plus 12 queries.
+        """
+        from app.main import RetrieveRequest
+
+        largest = max(PROFILES.values(), key=lambda profile: len(profile.sources))
+        body = RetrieveRequest(
+            source_ids=[source.id for source in largest.sources],
+            queries=[f"research question {index}" for index in range(12)],
+            profile=largest.code,
+        )
+        self.assertEqual(len(body.source_ids or []), len(largest.sources))
+        self.assertEqual(len(body.queries), 12)
+
+    def test_retrieve_caps_cover_every_catalog(self):
+        """Guard: catalog growth must fail here, not as a user-facing 422."""
+        from app.main import RetrieveRequest
+
+        fields = RetrieveRequest.model_fields
+        id_cap = next(
+            constraint.max_length
+            for constraint in fields["source_ids"].metadata
+            if hasattr(constraint, "max_length")
+        )
+        for profile in PROFILES.values():
+            self.assertLessEqual(
+                len(profile.sources),
+                id_cap,
+                f"{profile.code} catalog outgrew the source_ids cap",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

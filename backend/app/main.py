@@ -59,8 +59,12 @@ def health() -> dict[str, str]:
 class RetrieveRequest(BaseModel):
     """Source ids come from GET /api/v1/sources; raw URLs are never accepted."""
 
-    source_ids: list[str] | None = Field(default=None, max_length=10)
-    queries: list[str] = Field(default_factory=list, max_length=10)
+    # Caps must cover the largest real frontend payload: the evidence
+    # panel sends every catalog id covering the plan's categories (largest
+    # catalog today is 15) and the planner emits up to 12 questions.
+    # Tighter caps reject legitimate runs with a 422.
+    source_ids: list[str] | None = Field(default=None, max_length=20)
+    queries: list[str] = Field(default_factory=list, max_length=12)
     profile: str | None = Field(default=None, max_length=8)
 
 

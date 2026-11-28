@@ -38,7 +38,9 @@ MAX_RESPONSE_BYTES = 512 * 1024  # 512 KB; official pages are far smaller
 MAX_REDIRECTS = 5
 MAX_EXCERPTS = 3
 MAX_EXCERPT_CHARS = 600
-MAX_QUERIES = 10
+# Matches the RetrieveRequest queries cap (and the frontend planner's
+# 12-item cap): every accepted query is used for excerpt ranking.
+MAX_QUERIES = 12
 MAX_QUERY_CHARS = 500
 MIN_BLOCK_CHARS = 30
 
